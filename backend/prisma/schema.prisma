@@ -1,0 +1,55 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Question {
+  id           String    @id @default(uuid())
+  text         String
+  options      Json      // string[], length 2–5
+  correctIndex Int
+  timerSeconds Int
+  status       Status    @default(DRAFT)
+  liveDate     DateTime?
+  createdAt    DateTime  @default(now())
+  attempts     Attempt[]
+}
+
+enum Status {
+  DRAFT
+  LIVE
+  CLOSED
+}
+
+model Attempt {
+  id             String   @id @default(uuid())
+  questionId     String
+  question       Question @relation(fields: [questionId], references: [id])
+  anonId         String
+  nickname       String
+  selectedOption Int?     // null if timed out
+  result         Result
+  timeTakenMs    Int?
+  submittedAt    DateTime @default(now())
+
+  @@unique([anonId, questionId])
+}
+
+enum Result {
+  CORRECT
+  WRONG
+  TIMEOUT
+}
+
+model Admin {
+  id           String @id @default(uuid())
+  email        String @unique
+  passwordHash String
+}
