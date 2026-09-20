@@ -68,9 +68,15 @@ export default function QuestionPage() {
   const [submitting, setSubmitting] = useState(false);
   const timedOut = useRef(false);
 
-  // Redirect if navigated directly without state
+  // Redirect if navigated directly without state or if unauthenticated
   useEffect(() => {
-    if (!state) navigate('/');
+    if (!state) {
+      navigate('/auth');
+      return;
+    }
+    api.getMe().catch(() => {
+      navigate('/auth');
+    });
   }, [state, navigate]);
 
   const submit = useCallback(async (optionIndex: number | null) => {
@@ -78,9 +84,13 @@ export default function QuestionPage() {
     setSubmitting(true);
     try {
       const result = await api.submitAttempt(state.token, state.nickname, optionIndex);
-      navigate('/result', { state: { result, poll: state.poll, questionId: state.poll.questionId } });
-    } catch {
-      navigate('/result', { state: { result: { result: 'timeout', correctIndex: 0 }, poll: state.poll, questionId: state.poll.questionId } });
+      navigate('/result', { state: { result, poll: state.poll, pollLaunchId: state.poll.pollLaunchId, questionId: state.poll.questionId } });
+    } catch (err: any) {
+      if (err?.status === 401 || err?.error === 'not_authenticated') {
+        navigate('/auth');
+        return;
+      }
+      navigate('/result', { state: { result: { result: 'timeout', correctIndex: 0 }, poll: state.poll, pollLaunchId: state.poll.pollLaunchId, questionId: state.poll.questionId } });
     }
   }, [submitting, state, navigate]);
 

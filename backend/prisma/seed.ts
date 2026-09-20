@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, AdminRole, QuestionStatus } from '@prisma/client';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -7,116 +7,115 @@ dotenv.config();
 const prisma = new PrismaClient();
 
 async function main() {
-  // ── Admin ──────────────────────────────────────────────────────────────────
-  const email = process.env.ADMIN_EMAIL || 'admin@quizpop.dev';
-  const password = process.env.ADMIN_PASSWORD || 'admin123';
-  const passwordHash = await bcrypt.hash(password, 12);
+  // ── Admins ──────────────────────────────────────────────────────────────────
+  const superAdminEmail = process.env.ADMIN_EMAIL || 'admin@quizpop.dev';
+  const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+  const superAdminPasswordHash = await bcrypt.hash(adminPassword, 12);
 
-  const admin = await prisma.admin.upsert({
-    where: { email },
-    update: { passwordHash },
-    create: { email, passwordHash },
+  const superAdmin = await prisma.admin.upsert({
+    where: { email: superAdminEmail },
+    update: {
+      passwordHash: superAdminPasswordHash,
+      role: AdminRole.SUPER_ADMIN,
+    },
+    create: {
+      email: superAdminEmail,
+      passwordHash: superAdminPasswordHash,
+      role: AdminRole.SUPER_ADMIN,
+    },
   });
-  console.log(`✅ Admin seeded: ${admin.email}`);
-  console.log(`   Login with: ${email} / ${password}`);
+  console.log(`✅ Super Admin seeded: ${superAdmin.email} [${superAdmin.role}]`);
+  console.log(`   Login with: ${superAdminEmail} / ${adminPassword}`);
 
-  // ── Questions ──────────────────────────────────────────────────────────────
-  const questions = [
+  const staffAdminEmail = 'staff@quizpop.dev';
+  const staffAdminPasswordHash = await bcrypt.hash('admin123', 12);
+
+  const staffAdmin = await prisma.admin.upsert({
+    where: { email: staffAdminEmail },
+    update: {
+      passwordHash: staffAdminPasswordHash,
+      role: AdminRole.ADMIN,
+    },
+    create: {
+      email: staffAdminEmail,
+      passwordHash: staffAdminPasswordHash,
+      role: AdminRole.ADMIN,
+    },
+  });
+  console.log(`✅ Admin seeded: ${staffAdmin.email} [${staffAdmin.role}]`);
+  console.log(`   Login with: ${staffAdminEmail} / admin123`);
+
+  // ── Sample Students ────────────────────────────────────────────────────────
+  const sampleStudents = [
+    { nickname: 'testplayer1', password: 'test123' },
+    { nickname: 'testplayer2', password: 'test123' },
+  ];
+
+  for (const s of sampleStudents) {
+    const passwordHash = await bcrypt.hash(s.password, 12);
+    const student = await prisma.student.upsert({
+      where: { nickname: s.nickname },
+      update: { passwordHash },
+      create: {
+        nickname: s.nickname,
+        passwordHash,
+      },
+    });
+    console.log(`✅ Student seeded: ${student.nickname}`);
+    console.log(`   Login with: ${s.nickname} / ${s.password}`);
+  }
+
+  // ── Sample Questions ────────────────────────────────────────────────────────
+  // All sample questions start in DRAFT status with createdById referencing seeded admins.
+  const sampleQuestions = [
     {
-      text: 'What is the capital of France?',
-      options: ['Berlin', 'Madrid', 'Paris', 'Rome'],
-      correctIndex: 2,
+      text: 'What is the output of typeof null in JavaScript?',
+      options: ['object', 'null', 'undefined', 'number'],
+      correctIndex: 0,
       timerSeconds: 15,
-      status: 'CLOSED' as const,
-      liveDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
+      status: QuestionStatus.DRAFT,
+      createdById: superAdmin.id,
     },
     {
-      text: 'Which planet is known as the Red Planet?',
-      options: ['Venus', 'Mars', 'Jupiter', 'Saturn'],
+      text: 'Which data structure operates on a Last In, First Out (LIFO) basis?',
+      options: ['Queue', 'Stack', 'Linked List', 'Binary Tree'],
       correctIndex: 1,
       timerSeconds: 20,
-      status: 'CLOSED' as const,
-      liveDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+      status: QuestionStatus.DRAFT,
+      createdById: staffAdmin.id,
     },
     {
-      text: 'What is 12 × 12?',
-      options: ['132', '144', '156', '124'],
-      correctIndex: 1,
-      timerSeconds: 10,
-      status: 'CLOSED' as const,
-      liveDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // yesterday
-    },
-    {
-      text: 'Who wrote "Romeo and Juliet"?',
-      options: ['Charles Dickens', 'Jane Austen', 'William Shakespeare', 'Mark Twain'],
-      correctIndex: 2,
-      timerSeconds: 20,
-      status: 'LIVE' as const,
-      liveDate: new Date(),
-    },
-    {
-      text: 'What is the chemical symbol for Gold?',
-      options: ['Go', 'Gd', 'Au', 'Ag'],
+      text: 'What is the time complexity of searching an element in a balanced binary search tree?',
+      options: ['O(1)', 'O(n)', 'O(log n)', 'O(n log n)'],
       correctIndex: 2,
       timerSeconds: 15,
-      status: 'DRAFT' as const,
-      liveDate: null,
-    },
-    {
-      text: 'In which year did World War II end?',
-      options: ['1943', '1944', '1945', '1946'],
-      correctIndex: 2,
-      timerSeconds: 25,
-      status: 'DRAFT' as const,
-      liveDate: null,
+      status: QuestionStatus.DRAFT,
+      createdById: superAdmin.id,
     },
   ];
 
-  const created = [];
-  for (const q of questions) {
+  const createdQuestions = [];
+  for (const q of sampleQuestions) {
     const existing = await prisma.question.findFirst({ where: { text: q.text } });
     if (existing) {
-      created.push(existing);
+      createdQuestions.push(existing);
       console.log(`⏭️  Skipped (exists): "${q.text.slice(0, 40)}"`);
       continue;
     }
     const newQ = await prisma.question.create({ data: q });
-    created.push(newQ);
-    console.log(`✅ Question created: "${q.text.slice(0, 40)}" [${q.status}]`);
+    createdQuestions.push(newQ);
+    console.log(`✅ Question created: "${q.text.slice(0, 40)}" [${q.status}] (createdBy: ${q.createdById})`);
   }
 
-  // ── Fake Attempts for CLOSED questions ────────────────────────────────────
-  const closedQuestions = created.filter((_, i) => questions[i].status === 'CLOSED');
-  const nicknames = ['Alice', 'Bob', 'Charlie', 'Diana', 'Eve', 'Frank', 'Grace', 'Hank', 'Ivy', 'Jack'];
-  const results = ['CORRECT', 'CORRECT', 'CORRECT', 'WRONG', 'WRONG', 'TIMEOUT'] as const;
-
-  let attemptCount = 0;
-  for (const q of closedQuestions) {
-    const existingAttempts = await prisma.attempt.count({ where: { questionId: q.id } });
-    if (existingAttempts > 0) {
-      console.log(`⏭️  Skipped attempts for: "${q.text.slice(0, 40)}"`);
-      continue;
-    }
-    for (let i = 0; i < nicknames.length; i++) {
-      const result = results[i % results.length];
-      await prisma.attempt.create({
-        data: {
-          questionId: q.id,
-          anonId: `fake-anon-${q.id.slice(0, 8)}-${i}`,
-          nickname: nicknames[i],
-          selectedOption: result === 'TIMEOUT' ? null : (result === 'CORRECT' ? q.correctIndex : (q.correctIndex + 1) % 4),
-          result,
-          timeTakenMs: result === 'TIMEOUT' ? null : Math.floor(Math.random() * 8000) + 2000,
-        },
-      });
-      attemptCount++;
-    }
-    console.log(`✅ Seeded ${nicknames.length} attempts for: "${q.text.slice(0, 40)}"`);
-  }
-
-  console.log(`\n🎉 Seed complete! ${created.length} questions, ${attemptCount} attempts.`);
+  // PollLaunch, Follow, and Attempt rows are deliberately left empty.
+  console.log(`\n🎉 Seed complete! ${createdQuestions.length} sample questions, 2 admins, 2 students seeded.`);
 }
 
 main()
-  .catch(console.error)
-  .finally(() => prisma.$disconnect());
+  .catch((e) => {
+    console.error('❌ Error during seeding:', e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

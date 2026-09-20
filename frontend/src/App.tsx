@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Landing from './pages/Landing';
+import StudentAuth from './pages/StudentAuth';
 import QuestionPage from './pages/QuestionPage';
 import ResultPage from './pages/ResultPage';
 import Leaderboard from './pages/Leaderboard';
@@ -12,10 +13,12 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         {/* Student flow */}
+        <Route path="/auth" element={<StudentAuth />} />
         <Route path="/" element={<Landing />} />
         <Route path="/play" element={<QuestionPage />} />
         <Route path="/result" element={<ResultPage />} />
-        <Route path="/leaderboard/:questionId" element={<Leaderboard />} />
+        <Route path="/leaderboard/:pollLaunchId" element={<Leaderboard />} />
+        <Route path="/leaderboard/q/:questionId" element={<Leaderboard />} />
 
         {/* Admin flow */}
         <Route path="/admin" element={<AdminLogin />} />

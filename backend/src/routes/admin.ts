@@ -41,7 +41,11 @@ router.post('/login', async (req: Request, res: Response) => {
     }
 
     const secret = process.env.ADMIN_JWT_SECRET!;
-    const token = jwt.sign({ adminId: admin.id, email: admin.email }, secret, { expiresIn: '8h' });
+    const token = jwt.sign(
+      { adminId: admin.id, email: admin.email, role: admin.role },
+      secret,
+      { expiresIn: '8h' }
+    );
 
     res.cookie('admin_token', token, {
       httpOnly: true,
@@ -49,8 +53,8 @@ router.post('/login', async (req: Request, res: Response) => {
       maxAge: 8 * 60 * 60 * 1000, // 8 hours
     });
 
-    res.json({ message: 'Logged in', email: admin.email });
-  } catch (err) {
+    res.json({ message: 'Logged in', email: admin.email, role: admin.role });
+  } catch {
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -76,7 +80,12 @@ router.get('/questions', adminAuthMiddleware, async (req: Request, res: Response
     const questions = await prisma.question.findMany({
       where,
       orderBy: { createdAt: 'desc' },
-      include: { _count: { select: { attempts: true } } },
+      include: {
+        _count: { select: { launches: true } },
+        launches: {
+          select: { id: true, launchedAt: true, closedAt: true },
+        },
+      },
     });
     res.json(questions);
   } catch {
@@ -86,6 +95,7 @@ router.get('/questions', adminAuthMiddleware, async (req: Request, res: Response
 
 // POST /api/admin/questions — create DRAFT
 router.post('/questions', adminAuthMiddleware, async (req: Request, res: Response) => {
+  const adminId = (req as any).admin?.adminId;
   const parsed = QuestionSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: 'Invalid input', details: parsed.error.flatten() });
@@ -99,7 +109,14 @@ router.post('/questions', adminAuthMiddleware, async (req: Request, res: Respons
 
   try {
     const q = await prisma.question.create({
-      data: { text, options, correctIndex, timerSeconds, status: 'DRAFT' },
+      data: {
+        text,
+        options,
+        correctIndex,
+        timerSeconds,
+        status: 'DRAFT',
+        createdById: adminId,
+      },
     });
     res.status(201).json(q);
   } catch {
@@ -108,6 +125,7 @@ router.post('/questions', adminAuthMiddleware, async (req: Request, res: Respons
 });
 
 // PUT /api/admin/questions/:id — edit DRAFT
+// Guard: question must have never been launched (launches.length === 0)
 router.put('/questions/:id', adminAuthMiddleware, async (req: Request, res: Response) => {
   const id = req.params.id as string;
   const parsed = QuestionSchema.partial().safeParse(req.body);
@@ -116,10 +134,16 @@ router.put('/questions/:id', adminAuthMiddleware, async (req: Request, res: Resp
     return;
   }
   try {
-    const existing = await prisma.question.findUnique({ where: { id } });
-    if (!existing) { res.status(404).json({ error: 'Not found' }); return; }
-    if (existing.status !== 'DRAFT') {
-      res.status(400).json({ error: 'Only DRAFT questions can be edited' });
+    const existing = await prisma.question.findUnique({
+      where: { id },
+      include: { launches: true },
+    });
+    if (!existing) {
+      res.status(404).json({ error: 'Not found' });
+      return;
+    }
+    if (existing.launches.length > 0) {
+      res.status(409).json({ error: 'Question cannot be edited because it has already been launched' });
       return;
     }
     const updated = await prisma.question.update({ where: { id }, data: parsed.data });
@@ -132,25 +156,64 @@ router.put('/questions/:id', adminAuthMiddleware, async (req: Request, res: Resp
 // POST /api/admin/questions/:id/launch
 router.post('/questions/:id/launch', adminAuthMiddleware, async (req: Request, res: Response) => {
   const id = req.params.id as string;
+  const adminId = (req as any).admin?.adminId;
+
   try {
     const question = await prisma.question.findUnique({ where: { id } });
-    if (!question) { res.status(404).json({ error: 'Not found' }); return; }
+    if (!question) {
+      res.status(404).json({ error: 'Not found' });
+      return;
+    }
     if (question.status === 'LIVE') {
       res.status(400).json({ error: 'Question is already live' });
       return;
     }
 
-    // Transaction: close existing LIVE question, launch this one
+    // Atomic transaction:
+    // (a) Find currently active PollLaunch (closedAt = null), set closedAt = now() & parent Question status to CLOSED
+    // (b) Create new PollLaunch row for target question with launchedById = adminId
+    // (c) Set target Question's status to LIVE
     const result = await prisma.$transaction(async (tx) => {
+      const now = new Date();
+
+      // Find active PollLaunch if one exists
+      const activeLaunch = await tx.pollLaunch.findFirst({
+        where: { closedAt: null },
+      });
+
+      if (activeLaunch) {
+        await tx.pollLaunch.update({
+          where: { id: activeLaunch.id },
+          data: { closedAt: now },
+        });
+        await tx.question.update({
+          where: { id: activeLaunch.questionId },
+          data: { status: 'CLOSED' },
+        });
+      }
+
+      // Close any other questions marked LIVE
       await tx.question.updateMany({
         where: { status: 'LIVE' },
         data: { status: 'CLOSED' },
       });
-      const launched = await tx.question.update({
-        where: { id },
-        data: { status: 'LIVE', liveDate: new Date() },
+
+      // Create new PollLaunch row
+      await tx.pollLaunch.create({
+        data: {
+          questionId: id,
+          launchedById: adminId,
+          launchedAt: now,
+        },
       });
-      return launched;
+
+      // Set target Question to LIVE
+      const launchedQuestion = await tx.question.update({
+        where: { id },
+        data: { status: 'LIVE' },
+      });
+
+      return launchedQuestion;
     });
 
     res.json(result);
@@ -159,30 +222,35 @@ router.post('/questions/:id/launch', adminAuthMiddleware, async (req: Request, r
   }
 });
 
-// GET /api/admin/stats
+// GET /api/admin/stats — aggregate per PollLaunch
 router.get('/stats', adminAuthMiddleware, async (_req: Request, res: Response) => {
   try {
-    const questions = await prisma.question.findMany({
-      where: { status: { in: ['LIVE', 'CLOSED'] } },
-      orderBy: { liveDate: 'desc' },
-      include: { attempts: true },
+    const launches = await prisma.pollLaunch.findMany({
+      orderBy: { launchedAt: 'desc' },
+      include: {
+        question: true,
+        attempts: true,
+      },
     });
 
-    const stats = questions.map((q) => {
-      const totalAttempts = q.attempts.length;
-      const correctCount = q.attempts.filter((a) => a.result === 'CORRECT').length;
-      const wrongCount = q.attempts.filter((a) => a.result === 'WRONG').length;
-      const timeoutCount = q.attempts.filter((a) => a.result === 'TIMEOUT').length;
-      const timings = q.attempts.filter((a) => a.timeTakenMs != null).map((a) => a.timeTakenMs!);
+    const stats = launches.map((l) => {
+      const totalAttempts = l.attempts.length;
+      const correctCount = l.attempts.filter((a) => a.result === 'CORRECT').length;
+      const wrongCount = l.attempts.filter((a) => a.result === 'WRONG').length;
+      const timeoutCount = l.attempts.filter((a) => a.result === 'TIMEOUT').length;
+      const timings = l.attempts.filter((a) => a.timeTakenMs != null).map((a) => a.timeTakenMs!);
       const avgTimeTakenMs = timings.length > 0
         ? Math.round(timings.reduce((s, t) => s + t, 0) / timings.length)
         : null;
 
       return {
-        questionId: q.id,
-        date: q.liveDate?.toISOString().split('T')[0] ?? null,
-        questionText: q.text,
-        status: q.status,
+        pollLaunchId: l.id,
+        questionId: l.questionId,
+        date: l.launchedAt.toISOString().split('T')[0],
+        launchedAt: l.launchedAt.toISOString(),
+        closedAt: l.closedAt?.toISOString() ?? null,
+        questionText: l.question.text,
+        status: l.closedAt ? 'CLOSED' : l.question.status,
         totalAttempts,
         correctCount,
         wrongCount,
@@ -197,32 +265,41 @@ router.get('/stats', adminAuthMiddleware, async (_req: Request, res: Response) =
   }
 });
 
-// GET /api/admin/stats/:questionId
-router.get('/stats/:questionId', adminAuthMiddleware, async (req: Request, res: Response) => {
-  const questionId = req.params.questionId as string;
+// GET /api/admin/stats/:pollLaunchId — breakdown for one specific launch
+router.get('/stats/:pollLaunchId', adminAuthMiddleware, async (req: Request, res: Response) => {
+  const pollLaunchId = req.params.pollLaunchId as string;
   try {
-    const q = await prisma.question.findUnique({
-      where: { id: questionId },
-      include: { attempts: true },
+    const l = await prisma.pollLaunch.findUnique({
+      where: { id: pollLaunchId },
+      include: {
+        question: true,
+        attempts: true,
+      },
     });
-    if (!q) { res.status(404).json({ error: 'Not found' }); return; }
+    if (!l) {
+      res.status(404).json({ error: 'Not found' });
+      return;
+    }
 
-    const totalAttempts = q.attempts.length;
-    const correctCount = q.attempts.filter((a) => a.result === 'CORRECT').length;
-    const wrongCount = q.attempts.filter((a) => a.result === 'WRONG').length;
-    const timeoutCount = q.attempts.filter((a) => a.result === 'TIMEOUT').length;
-    const timings = q.attempts.filter((a) => a.timeTakenMs != null).map((a) => a.timeTakenMs!);
+    const totalAttempts = l.attempts.length;
+    const correctCount = l.attempts.filter((a) => a.result === 'CORRECT').length;
+    const wrongCount = l.attempts.filter((a) => a.result === 'WRONG').length;
+    const timeoutCount = l.attempts.filter((a) => a.result === 'TIMEOUT').length;
+    const timings = l.attempts.filter((a) => a.timeTakenMs != null).map((a) => a.timeTakenMs!);
     const avgTimeTakenMs = timings.length > 0
       ? Math.round(timings.reduce((s, t) => s + t, 0) / timings.length)
       : null;
 
     res.json({
-      questionId: q.id,
-      date: q.liveDate?.toISOString().split('T')[0] ?? null,
-      questionText: q.text,
-      options: q.options,
-      correctIndex: q.correctIndex,
-      status: q.status,
+      pollLaunchId: l.id,
+      questionId: l.questionId,
+      date: l.launchedAt.toISOString().split('T')[0],
+      launchedAt: l.launchedAt.toISOString(),
+      closedAt: l.closedAt?.toISOString() ?? null,
+      questionText: l.question.text,
+      options: l.question.options,
+      correctIndex: l.question.correctIndex,
+      status: l.closedAt ? 'CLOSED' : l.question.status,
       totalAttempts,
       correctCount,
       wrongCount,

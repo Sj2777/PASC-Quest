@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import adminRouter from './routes/admin';
 import pollRouter from './routes/poll';
+import studentRouter from './routes/student';
 
 dotenv.config();
 
@@ -27,6 +28,7 @@ app.get('/api/health', (_req, res) => {
 // Routes
 app.use('/api/admin', adminRouter);
 app.use('/api/poll', pollRouter);
+app.use('/api/student', studentRouter);
 
 app.listen(PORT, () => {
   console.log(`QuizPop backend running on http://localhost:${PORT}`);

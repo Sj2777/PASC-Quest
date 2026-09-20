@@ -1,5 +1,69 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// ============================================================
+// QuizPop — v2 Schema Plan
+// ============================================================
+// This is a PLANNING document, not a migration-ready file.
+// Purpose: capture every model/field needed for the confirmed
+// v2 feature set, for team review before implementation.
+//
+// Confirmed v2 features this schema supports:
+//   - Student login (nickname + password, persistent 30-day session)
+//   - Multi-nickname allowed by design (no uniqueness-per-person)
+//     [!] MARKUP: this re-opens a milder version of the old
+//     duplicate-attempt bypass — a student can register a second
+//     nickname instead of clearing cookies. Accepted trade-off for
+//     a low-stakes quiz app; revisit if attempts ever carry grades/
+//     credit.
+//   - Multi-admin support + tracking which admin created/launched a question
+//   - Scheduled question launch
+//   - Streaks + "Steal the Streak" comeback mechanic
+//   - Follow-a-friend comparison
+//   - Branch-wise battles
+//   - Public Hall of Fame (streak milestones)
+//   - Ghost mode / ranked leaderboard (derived from Attempt, no new table)
+//   - Speed King (derived from Attempt.timeTakenMs, no new table)
+//   - Personal stats page (derived from Attempt history, no new table)
+//   - CSV export (derived query, no schema impact)
+//
+// Also addresses (by design, not by immediate code change):
+//   - The old relaunch/stats-scoping bug: a Question can be
+//     launched more than once; attempts now belong to a specific
+//     PollLaunch (one launch instance), not the Question directly.
+//     This means relaunching a question naturally starts a clean
+//     slate for that day's leaderboard/stats, with old launches'
+//     data preserved and separately queryable — no bleed-through.
+//
+// ==================== MARKUP — REVIEW NOTES ====================
+// [!] OPEN ISSUE — Question content is NOT snapshotted per launch.
+//     text/options/correctIndex/timerSeconds live on Question, and
+//     Question is now explicitly reusable across many PollLaunches.
+//     If a Question is edited after it already has launches, every
+//     historical PollLaunch silently inherits the new content, and
+//     a historical leaderboard/CSV export would show a question
+//     that doesn't match what students actually saw.
+//     Attempt.result/selectedOption are stored directly (safe), so
+//     correctness of past attempts is NOT retroactively affected —
+//     but displayed question text/options for old launches WOULD be
+//     wrong if edited later.
+//     DECISION NEEDED (pick one before migrating):
+//       (a) Lock all Question fields once launches.length > 0 —
+//           i.e. extend the old "editable only in DRAFT" rule to
+//           "editable only if it has never been launched". Cheapest,
+//           no schema change — just an endpoint guard. (recommended
+//           for v2 given timeline)
+//       (b) Snapshot text/options/correctIndex/timerSeconds onto
+//           PollLaunch at launch time. More correct, more work.
+//     See guard note near Question model below.
+//
+// [!] IMPLEMENTATION REMINDER (not a schema change) — the atomic
+//     "launch" transaction must also stamp closedAt on the PREVIOUS
+//     active PollLaunch when a new one goes live, not just flip
+//     Question.status. Otherwise closed questions end up with a
+//     PollLaunch.closedAt that's permanently null, which will break
+//     any "how long was this live" / ghost-mode timing logic later.
+//     (Old code only did updateMany on Question.status — that logic
+//     needs a second step now that PollLaunch exists.)
+// =================================================================
+// ============================================================
 
 generator client {
   provider = "prisma-client-js"
@@ -10,46 +74,184 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Question {
-  id           String    @id @default(uuid())
-  text         String
-  options      Json      // string[], length 2–5
-  correctIndex Int
-  timerSeconds Int
-  status       Status    @default(DRAFT)
-  liveDate     DateTime?
-  createdAt    DateTime  @default(now())
-  attempts     Attempt[]
-}
+// ------------------------------------------------------------
+// ENUMS
+// ------------------------------------------------------------
 
-enum Status {
+enum QuestionStatus {
   DRAFT
+  SCHEDULED   // NEW: has a scheduledAt time, will auto-launch
   LIVE
   CLOSED
 }
 
-model Attempt {
-  id             String   @id @default(uuid())
-  questionId     String
-  question       Question @relation(fields: [questionId], references: [id])
-  anonId         String
-  nickname       String
-  selectedOption Int?     // null if timed out
-  result         Result
-  timeTakenMs    Int?
-  submittedAt    DateTime @default(now())
-
-  @@unique([anonId, questionId])
-}
-
-enum Result {
+enum AttemptResult {
   CORRECT
   WRONG
   TIMEOUT
 }
 
+enum AdminRole {
+  SUPER_ADMIN   // can add/remove other admins
+  ADMIN         // can create/launch questions only
+}
+
+enum Branch {
+  COMP
+  IT
+  ENTC
+  MECH
+  CIVIL
+  OTHER
+}
+
+// ------------------------------------------------------------
+// STUDENT
+// ------------------------------------------------------------
+// Replaces the old anonymous "anonId" cookie-only identity.
+// Nickname + password, no email required, no password-reset
+// flow by design (low stakes — if forgotten, register again).
+// Multiple nicknames per real person are explicitly allowed.
+
+model Student {
+  id            String   @id @default(uuid())
+  nickname      String   @unique
+  passwordHash  String
+  branch        Branch?  // optional — powers branch-wise battles
+  createdAt     DateTime @default(now())
+
+  // Streak tracking — stored directly for fast leaderboard/Hall
+  // of Fame queries rather than recomputed from Attempt history
+  // every time.
+  currentStreak     Int       @default(0)
+  bestStreak        Int       @default(0)
+  lastAnsweredDate  DateTime? // used to detect streak breaks/continuations
+  streakFreezeUsed  Boolean   @default(false) // "Steal the Streak" — one comeback per break, reset logic TBD
+
+  attempts        Attempt[]
+
+  // Follow-a-friend (self-referential many-to-many via join table)
+  following   Follow[] @relation("FollowerRelation")
+  followedBy  Follow[] @relation("FollowedRelation")
+
+  @@index([branch])
+}
+
+// ------------------------------------------------------------
+// FOLLOW — join table for follow-a-friend
+// ------------------------------------------------------------
+
+model Follow {
+  id           String   @id @default(uuid())
+  followerId   String
+  followedId   String
+  createdAt    DateTime @default(now())
+
+  follower     Student  @relation("FollowerRelation", fields: [followerId], references: [id])
+  followed     Student  @relation("FollowedRelation", fields: [followedId], references: [id])
+
+  @@unique([followerId, followedId]) // can't follow the same person twice
+}
+
+// ------------------------------------------------------------
+// ADMIN
+// ------------------------------------------------------------
+// Multi-admin support. Role distinguishes who can add new admins
+// vs who can only manage questions.
+
 model Admin {
-  id           String @id @default(uuid())
-  email        String @unique
+  id           String    @id @default(uuid())
+  email        String    @unique
   passwordHash String
+  role         AdminRole @default(ADMIN)
+  createdAt    DateTime  @default(now())
+
+  questionsCreated  Question[]   @relation("CreatedBy")
+  launches          PollLaunch[] @relation("LaunchedBy")
+}
+
+// ------------------------------------------------------------
+// QUESTION
+// ------------------------------------------------------------
+// A question is now a reusable bank entry. It can be launched
+// more than once over time (each launch is tracked separately
+// via PollLaunch below), which is what fixes the old
+// stats-bleeding issue.
+
+model Question {
+  id            String         @id @default(uuid())
+  text          String
+  options       Json           // array of option strings
+  correctIndex  Int
+  timerSeconds  Int
+  status        QuestionStatus @default(DRAFT)
+  scheduledAt   DateTime?      // NEW: for scheduled auto-launch
+  createdAt     DateTime       @default(now())
+
+  createdById   String
+  createdBy     Admin          @relation("CreatedBy", fields: [createdById], references: [id])
+
+  launches      PollLaunch[]
+
+  // [!] MARKUP: no schema change here, but the PUT /questions/:id
+  // endpoint must guard on launches.length === 0 (option (a) above),
+  // not just status === 'DRAFT' as the old code did — a CLOSED
+  // question with prior launches is still editable under the old
+  // rule and would corrupt historical launch data if edited.
+  @@index([status]) // NEW — "give me the current LIVE question" is a hot path
+}
+
+// ------------------------------------------------------------
+// POLL LAUNCH (NEW)
+// ------------------------------------------------------------
+// Represents ONE specific instance of a question going live.
+// A question can have many launches over its lifetime (e.g. if
+// reused weeks later). All attempts, leaderboard rankings, and
+// stats for "today's poll" scope to a single PollLaunch — this
+// is what prevents old attempts from bleeding into a relaunch.
+
+model PollLaunch {
+  id            String    @id @default(uuid())
+  questionId    String
+  question      Question  @relation(fields: [questionId], references: [id])
+
+  launchedById  String
+  launchedBy    Admin     @relation("LaunchedBy", fields: [launchedById], references: [id])
+
+  launchedAt    DateTime  @default(now())
+  closedAt      DateTime?
+
+  attempts      Attempt[]
+
+  @@index([launchedAt])
+}
+
+// ------------------------------------------------------------
+// ATTEMPT
+// ------------------------------------------------------------
+// Now tied to a real Student and a specific PollLaunch (not just
+// a Question). This is the core fix for the scoping bug: the
+// same student CAN answer again if the question is relaunched
+// on a different day, because uniqueness is per-launch, not
+// per-question.
+
+model Attempt {
+  id              String        @id @default(uuid())
+
+  pollLaunchId    String
+  pollLaunch      PollLaunch    @relation(fields: [pollLaunchId], references: [id])
+
+  studentId       String
+  student         Student       @relation(fields: [studentId], references: [id])
+
+  selectedOption  Int?          // null on timeout
+  result          AttemptResult
+  timeTakenMs     Int?
+  submittedAt     DateTime      @default(now())
+
+  // "Predicted before seeing" / confidence-style fields intentionally
+  // NOT included — feature was dropped from v2 scope.
+
+  @@unique([studentId, pollLaunchId]) // one attempt per student per launch
+  @@index([pollLaunchId, result])     // fast stats/leaderboard aggregation
 }

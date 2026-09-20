@@ -2,29 +2,42 @@ import { Router, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
-import { ensureAnonId } from '../middleware/anonId';
+import { studentAuthMiddleware, optionalStudentAuth } from '../middleware/studentAuth';
 
 const router = Router();
 
-// All poll routes get the anon_id middleware
-router.use(ensureAnonId);
-
 interface StartTokenPayload {
-  questionId: string;
-  anonId: string;
+  pollLaunchId: string;
+  studentId: string;
   startedAt: number; // unix ms
 }
 
-// GET /api/poll/current
-router.get('/current', async (req: Request, res: Response) => {
+// GET /api/poll/current — public/unauthenticated
+router.get('/current', async (_req: Request, res: Response) => {
   try {
     const q = await prisma.question.findFirst({ where: { status: 'LIVE' } });
     if (!q) {
       res.json({ status: 'none' });
       return;
     }
+
+    // Find active PollLaunch for the LIVE question
+    const launch = await prisma.pollLaunch.findFirst({
+      where: {
+        questionId: q.id,
+        closedAt: null,
+      },
+      orderBy: { launchedAt: 'desc' },
+    });
+
+    if (!launch) {
+      res.json({ status: 'none' });
+      return;
+    }
+
     res.json({
       status: 'live',
+      pollLaunchId: launch.id,
       questionId: q.id,
       text: q.text,
       options: q.options,
@@ -36,57 +49,61 @@ router.get('/current', async (req: Request, res: Response) => {
   }
 });
 
-// POST /api/poll/:questionId/start
-router.post('/:questionId/start', async (req: Request, res: Response) => {
-  const questionId = req.params.questionId as string;
-  const anonId: string = (req as any).anonId;
-
-  const StartSchema = z.object({ nickname: z.string().min(1).max(50) });
-  const parsed = StartSchema.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: 'Nickname required' });
-    return;
-  }
-  const { nickname: _nickname } = parsed.data;
+// POST /api/poll/:pollLaunchId/start — requires student authentication
+router.post('/:pollLaunchId/start', studentAuthMiddleware, async (req: Request, res: Response) => {
+  const pollLaunchId = req.params.pollLaunchId as string;
+  const studentId = (req as any).studentId as string;
 
   try {
-    // Check question exists and is LIVE
-    const q = await prisma.question.findUnique({ where: { id: questionId } });
-    if (!q || q.status !== 'LIVE') {
-      res.status(404).json({ error: 'No live question found' });
+    // Look up PollLaunch and join to Question
+    const launch = await prisma.pollLaunch.findUnique({
+      where: { id: pollLaunchId },
+      include: { question: true },
+    });
+
+    if (!launch || launch.closedAt !== null || launch.question.status !== 'LIVE') {
+      res.status(404).json({ error: 'No active poll launch found' });
       return;
     }
 
-    // Check if already played
+    // Check if already played via unique constraint [studentId, pollLaunchId]
     const existing = await prisma.attempt.findUnique({
-      where: { anonId_questionId: { anonId, questionId } },
+      where: {
+        studentId_pollLaunchId: {
+          studentId,
+          pollLaunchId,
+        },
+      },
     });
+
     if (existing) {
       res.status(409).json({ reason: 'already_played' });
       return;
     }
 
-    // Issue start token
+    // Issue start token with pollLaunchId, studentId, startedAt
     const payload: StartTokenPayload = {
-      questionId,
-      anonId,
+      pollLaunchId,
+      studentId,
       startedAt: Date.now(),
     };
-    const token = jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: `${q.timerSeconds + 30}s` });
+    const token = jwt.sign(payload, process.env.JWT_SECRET!, {
+      expiresIn: `${launch.question.timerSeconds + 30}s`,
+    });
 
-    res.json({ token, timerSeconds: q.timerSeconds });
+    res.json({ token, timerSeconds: launch.question.timerSeconds });
   } catch {
     res.status(500).json({ error: 'Server error' });
   }
 });
 
-// POST /api/poll/attempts
-router.post('/attempts', async (req: Request, res: Response) => {
-  const anonId: string = (req as any).anonId;
+// POST /api/poll/attempts — requires student authentication
+router.post('/attempts', studentAuthMiddleware, async (req: Request, res: Response) => {
+  const studentId = (req as any).studentId as string;
 
   const AttemptSchema = z.object({
     token: z.string(),
-    nickname: z.string().min(1).max(50),
+    nickname: z.string().optional(),
     selectedOption: z.number().int().min(0).max(4).nullable(),
   });
   const parsed = AttemptSchema.safeParse(req.body);
@@ -94,7 +111,7 @@ router.post('/attempts', async (req: Request, res: Response) => {
     res.status(400).json({ error: 'Invalid input', details: parsed.error.flatten() });
     return;
   }
-  const { token, nickname, selectedOption } = parsed.data;
+  const { token, selectedOption } = parsed.data;
 
   let payload: StartTokenPayload;
   try {
@@ -104,19 +121,23 @@ router.post('/attempts', async (req: Request, res: Response) => {
     return;
   }
 
-  // Verify anonId matches the token (prevents token theft across browsers)
-  if (payload.anonId !== anonId) {
+  // Verify studentId matches the token (prevents token theft across students)
+  if (payload.studentId !== studentId) {
     res.status(403).json({ error: 'Token mismatch' });
     return;
   }
 
   try {
-    const q = await prisma.question.findUnique({ where: { id: payload.questionId } });
-    if (!q) {
-      res.status(404).json({ error: 'Question not found' });
+    const launch = await prisma.pollLaunch.findUnique({
+      where: { id: payload.pollLaunchId },
+      include: { question: true },
+    });
+    if (!launch) {
+      res.status(404).json({ error: 'Poll launch not found' });
       return;
     }
 
+    const q = launch.question;
     const now = Date.now();
     const elapsed = now - payload.startedAt;
     const timeLimitMs = q.timerSeconds * 1000;
@@ -131,12 +152,11 @@ router.post('/attempts', async (req: Request, res: Response) => {
       result = 'WRONG';
     }
 
-    // Upsert the attempt (the @@unique constraint prevents double-play)
+    // Create the attempt with pollLaunchId + studentId
     await prisma.attempt.create({
       data: {
-        questionId: q.id,
-        anonId,
-        nickname,
+        pollLaunchId: launch.id,
+        studentId,
         selectedOption,
         result,
         timeTakenMs: elapsed,
@@ -145,7 +165,7 @@ router.post('/attempts', async (req: Request, res: Response) => {
 
     res.json({ result: result.toLowerCase(), correctIndex: q.correctIndex });
   } catch (err: any) {
-    // Prisma unique constraint violation
+    // Prisma unique constraint violation [studentId, pollLaunchId]
     if (err?.code === 'P2002') {
       res.status(409).json({ reason: 'already_played' });
       return;
@@ -154,27 +174,31 @@ router.post('/attempts', async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/poll/:questionId/leaderboard
-router.get('/:questionId/leaderboard', async (req: Request, res: Response) => {
-  const questionId = req.params.questionId as string;
-  const anonId: string | undefined = (req as any).anonId;
+// GET /api/poll/:pollLaunchId/leaderboard — public/unauthenticated (optional studentAuth for isMe)
+router.get('/:pollLaunchId/leaderboard', optionalStudentAuth, async (req: Request, res: Response) => {
+  const pollLaunchId = req.params.pollLaunchId as string;
+  const studentId = (req as any).studentId as string | undefined;
 
   try {
-    const q = await prisma.question.findUnique({ where: { id: questionId } });
-    if (!q) {
-      res.status(404).json({ error: 'Question not found' });
+    const launch = await prisma.pollLaunch.findUnique({
+      where: { id: pollLaunchId },
+      include: { question: true },
+    });
+    if (!launch) {
+      res.status(404).json({ error: 'Poll launch not found' });
       return;
     }
 
-    // Fetch all attempts for this question
+    // Fetch all attempts for this PollLaunch
     const attempts = await prisma.attempt.findMany({
-      where: { questionId },
-      select: {
-        anonId: true,
-        nickname: true,
-        result: true,
-        timeTakenMs: true,
-        submittedAt: true,
+      where: { pollLaunchId },
+      include: {
+        student: {
+          select: {
+            id: true,
+            nickname: true,
+          },
+        },
       },
     });
 
@@ -194,21 +218,22 @@ router.get('/:questionId/leaderboard', async (req: Request, res: Response) => {
     // Assign ranks
     const ranked = sorted.map((a, i) => ({
       rank: i + 1,
-      nickname: a.nickname,
+      nickname: a.student.nickname,
       result: a.result.toLowerCase() as 'correct' | 'wrong' | 'timeout',
       timeTakenMs: a.timeTakenMs,
-      isMe: a.anonId === anonId,
+      isMe: Boolean(studentId && a.studentId === studentId),
     }));
 
     const top10 = ranked.slice(0, 10);
 
-    // Find caller's entry
-    const myEntry = anonId ? ranked.find((r) => r.isMe) ?? null : null;
+    // Find caller's entry if authenticated
+    const myEntry = studentId ? ranked.find((r) => r.isMe) ?? null : null;
 
     res.json({
-      questionId,
-      questionText: q.text,
-      questionStatus: q.status.toLowerCase(), // 'live' | 'closed' | 'draft'
+      pollLaunchId,
+      questionId: launch.question.id,
+      questionText: launch.question.text,
+      questionStatus: launch.closedAt ? 'closed' : launch.question.status.toLowerCase(),
       total: ranked.length,
       top10,
       myRank: myEntry?.rank ?? null,
@@ -220,4 +245,3 @@ router.get('/:questionId/leaderboard', async (req: Request, res: Response) => {
 });
 
 export default router;
-

@@ -107,7 +107,8 @@ function SkeletonRow() {
 }
 
 export default function Leaderboard() {
-  const { questionId } = useParams<{ questionId: string }>();
+  const { pollLaunchId, questionId } = useParams<{ pollLaunchId?: string; questionId?: string }>();
+  const targetId = pollLaunchId || questionId;
   const navigate = useNavigate();
   const [data, setData] = useState<LeaderboardResponse | null>(null);
   const [error, setError] = useState('');
@@ -118,10 +119,10 @@ export default function Leaderboard() {
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchData = useCallback(async (silent = false) => {
-    if (!questionId) return;
+    if (!targetId) return;
     if (!silent) setLoading(true);
     try {
-      const res = await api.getLeaderboard(questionId);
+      const res = await api.getLeaderboard(targetId);
       setData(res);
       setLastUpdated(new Date());
       setSecondsAgo(0);
@@ -131,7 +132,7 @@ export default function Leaderboard() {
     } finally {
       if (!silent) setLoading(false);
     }
-  }, [questionId]);
+  }, [targetId]);
 
   // Initial fetch
   useEffect(() => {

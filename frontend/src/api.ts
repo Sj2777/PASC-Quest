@@ -12,10 +12,24 @@ async function req<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  // Student Auth
+  registerStudent: (nickname: string, password: string) =>
+    req<{ id: string; nickname: string }>('/api/student/register', {
+      method: 'POST',
+      body: JSON.stringify({ nickname, password }),
+    }),
+  loginStudent: (nickname: string, password: string) =>
+    req<{ id: string; nickname: string }>('/api/student/login', {
+      method: 'POST',
+      body: JSON.stringify({ nickname, password }),
+    }),
+  logoutStudent: () => req<{ message: string }>('/api/student/logout', { method: 'POST' }),
+  getMe: () => req<Student>('/api/student/me'),
+
   // Poll (student)
   getCurrent: () => req<PollCurrent>('/api/poll/current'),
-  startPoll: (questionId: string, nickname: string) =>
-    req<{ token: string; timerSeconds: number }>(`/api/poll/${questionId}/start`, {
+  startPoll: (pollLaunchId: string, nickname: string) =>
+    req<{ token: string; timerSeconds: number }>(`/api/poll/${pollLaunchId}/start`, {
       method: 'POST',
       body: JSON.stringify({ nickname }),
     }),
@@ -27,7 +41,7 @@ export const api = {
 
   // Admin
   adminLogin: (email: string, password: string) =>
-    req<{ message: string; email: string }>('/api/admin/login', {
+    req<{ message: string; email: string; role?: string }>('/api/admin/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     }),
@@ -41,14 +55,23 @@ export const api = {
   launchQuestion: (id: string) =>
     req<Question>(`/api/admin/questions/${id}/launch`, { method: 'POST' }),
   getStats: () => req<Stat[]>('/api/admin/stats'),
-  getStatDetail: (id: string) => req<StatDetail>(`/api/admin/stats/${id}`),
-  getLeaderboard: (questionId: string) =>
-    req<LeaderboardResponse>(`/api/poll/${questionId}/leaderboard`),
+  getStatDetail: (pollLaunchId: string) => req<StatDetail>(`/api/admin/stats/${pollLaunchId}`),
+  getLeaderboard: (pollLaunchId: string) =>
+    req<LeaderboardResponse>(`/api/poll/${pollLaunchId}/leaderboard`),
 };
 
 // Types
+export interface Student {
+  id: string;
+  nickname: string;
+  branch: string | null;
+  currentStreak: number;
+  bestStreak: number;
+}
+
 export interface PollCurrent {
   status: 'live' | 'none';
+  pollLaunchId?: string;
   questionId?: string;
   text?: string;
   options?: string[];
@@ -61,10 +84,11 @@ export interface Question {
   options: string[];
   correctIndex: number;
   timerSeconds: number;
-  status: 'DRAFT' | 'LIVE' | 'CLOSED';
-  liveDate: string | null;
+  status: 'DRAFT' | 'SCHEDULED' | 'LIVE' | 'CLOSED';
+  scheduledAt?: string | null;
   createdAt: string;
-  _count?: { attempts: number };
+  _count?: { launches: number };
+  launches?: Array<{ id: string; launchedAt: string; closedAt: string | null }>;
 }
 
 export interface QuestionInput {
@@ -75,8 +99,11 @@ export interface QuestionInput {
 }
 
 export interface Stat {
+  pollLaunchId: string;
   questionId: string;
   date: string | null;
+  launchedAt?: string;
+  closedAt?: string | null;
   questionText: string;
   status: string;
   totalAttempts: number;
@@ -100,6 +127,7 @@ export interface LeaderboardEntry {
 }
 
 export interface LeaderboardResponse {
+  pollLaunchId: string;
   questionId: string;
   questionText: string;
   questionStatus: 'live' | 'closed' | 'draft';
@@ -108,4 +136,3 @@ export interface LeaderboardResponse {
   myRank: number | null;
   myEntry: LeaderboardEntry | null;
 }
-

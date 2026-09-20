@@ -2,32 +2,52 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { api } from '../api';
-import type { PollCurrent } from '../api';
+import type { PollCurrent, Student } from '../api';
 
 export default function Landing() {
   const navigate = useNavigate();
-  const [nickname, setNickname] = useState('');
+  const [student, setStudent] = useState<Student | null>(null);
   const [poll, setPoll] = useState<PollCurrent | null>(null);
   const [loading, setLoading] = useState(true);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    api.getCurrent()
-      .then(setPoll)
-      .catch(() => setPoll({ status: 'none' }))
+    api.getMe()
+      .then((me) => {
+        setStudent(me);
+        return api.getCurrent();
+      })
+      .then((currentPoll) => {
+        setPoll(currentPoll);
+      })
+      .catch((err) => {
+        if (err?.status === 401 || err?.error === 'not_authenticated') {
+          navigate('/auth');
+        } else {
+          setPoll({ status: 'none' });
+        }
+      })
       .finally(() => setLoading(false));
-  }, []);
+  }, [navigate]);
+
+  const handleLogout = async () => {
+    await api.logoutStudent().catch(() => {});
+    navigate('/auth');
+  };
 
   const handleStart = async () => {
-    if (!nickname.trim()) { setError('Please enter a nickname'); return; }
-    if (!poll?.questionId) return;
+    if (!poll?.pollLaunchId || !student) return;
     setStarting(true);
     setError('');
     try {
-      const { token, timerSeconds } = await api.startPoll(poll.questionId, nickname.trim());
-      navigate('/play', { state: { poll, token, timerSeconds, nickname: nickname.trim() } });
+      const { token, timerSeconds } = await api.startPoll(poll.pollLaunchId, student.nickname);
+      navigate('/play', { state: { poll, token, timerSeconds, nickname: student.nickname } });
     } catch (err: any) {
+      if (err?.status === 401 || err?.error === 'not_authenticated') {
+        navigate('/auth');
+        return;
+      }
       if (err?.reason === 'already_played') {
         setError("You've already answered today's question! Come back tomorrow.");
       } else {
@@ -51,8 +71,27 @@ export default function Landing() {
         transition={{ duration: 0.6, ease: 'easeOut' }}
         className="relative z-10 w-full max-w-md"
       >
+        {/* User bar / Logged in indicator */}
+        {student && (
+          <div className="flex items-center justify-between mb-4 px-3 py-2 rounded-2xl bg-white/70 backdrop-blur-md border border-white/60 shadow-sm">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>
+                {student.nickname}
+              </span>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="text-xs font-semibold px-3 py-1 rounded-xl border transition-all hover:bg-white text-gray-500 hover:text-gray-800"
+              style={{ borderColor: '#E4D9FF' }}
+            >
+              Logout
+            </button>
+          </div>
+        )}
+
         {/* Logo/Brand */}
-        <div className="text-center mb-10">
+        <div className="text-center mb-8">
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -95,32 +134,29 @@ export default function Landing() {
                 Ready to play?
               </h2>
               <p className="text-sm mb-6" style={{ color: '#6B5B8E' }}>
-                Enter a nickname to start today's question. No account needed.
+                Answer today's live question before time runs out.
               </p>
 
-              <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--ink)' }}>
-                Your nickname
-              </label>
-              <input
-                type="text"
-                value={nickname}
-                onChange={(e) => setNickname(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleStart()}
-                placeholder="e.g. MathWizard99"
-                maxLength={50}
-                className="w-full px-4 py-3 rounded-2xl text-base font-medium outline-none border-2 transition-colors"
-                style={{
-                  background: '#F5F0FF',
-                  borderColor: nickname ? 'var(--primary)' : '#E4D9FF',
-                  color: 'var(--ink)',
-                }}
-              />
+              <div
+                className="rounded-2xl p-4 mb-5 flex items-center justify-between"
+                style={{ background: '#F5F0FF', border: '1.5px solid #E4D9FF' }}
+              >
+                <div>
+                  <p className="text-xs uppercase tracking-wider font-bold" style={{ color: '#8A7BA8' }}>
+                    Playing as
+                  </p>
+                  <p className="font-display font-bold text-lg" style={{ color: 'var(--ink)' }}>
+                    {student?.nickname}
+                  </p>
+                </div>
+                <span className="text-2xl">⚡</span>
+              </div>
 
               {error && (
                 <motion.p
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="mt-3 text-sm font-medium"
+                  className="mb-4 text-sm font-medium"
                   style={{ color: 'var(--error)' }}
                 >
                   {error}
@@ -131,14 +167,14 @@ export default function Landing() {
                 whileTap={{ scale: 0.97 }}
                 onClick={handleStart}
                 disabled={starting}
-                className="w-full mt-5 py-4 rounded-2xl text-white font-bold text-lg font-display transition-opacity disabled:opacity-60"
+                className="w-full py-4 rounded-2xl text-white font-bold text-lg font-display transition-opacity disabled:opacity-60"
                 style={{ background: 'var(--primary)', boxShadow: '0 6px 24px rgba(255,77,141,0.4)' }}
               >
                 {starting ? 'Starting…' : 'Start'}
               </motion.button>
 
               <p className="mt-5 text-xs text-center" style={{ color: '#A89BC4' }}>
-                One attempt per device. Timer is {poll?.timerSeconds}s — answer fast!
+                One attempt per student. Timer is {poll?.timerSeconds}s — answer fast!
               </p>
             </>
           )}

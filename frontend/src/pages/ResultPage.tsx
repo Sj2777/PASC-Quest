@@ -19,7 +19,8 @@ interface ResultState {
     correctIndex: number;
   };
   poll: PollCurrent;
-  questionId: string;
+  pollLaunchId?: string;
+  questionId?: string;
 }
 
 export default function ResultPage() {
@@ -29,7 +30,7 @@ export default function ResultPage() {
   const confettiFired = useRef(false);
 
   useEffect(() => {
-    if (!state) { navigate('/'); return; }
+    if (!state) { navigate('/auth'); return; }
     if (state.result.result === 'correct' && !confettiFired.current) {
       confettiFired.current = true;
       confetti({
@@ -44,7 +45,8 @@ export default function ResultPage() {
 
   if (!state) return null;
 
-  const { result, poll, questionId } = state;
+  const { result, poll, pollLaunchId, questionId } = state;
+  const targetLaunchId = pollLaunchId || poll.pollLaunchId || questionId;
   const { result: outcome, correctIndex } = result;
 
   const config = {
@@ -182,7 +184,7 @@ export default function ResultPage() {
         >
           <button
             id="see-leaderboard-btn"
-            onClick={() => navigate(`/leaderboard/${questionId}`)}
+            onClick={() => navigate(`/leaderboard/${targetLaunchId}`)}
             className="w-full py-3 rounded-2xl font-bold text-sm transition-all"
             style={{
               background: 'linear-gradient(135deg,#241B3A,#3D2B6B)',

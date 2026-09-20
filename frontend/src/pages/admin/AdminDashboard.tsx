@@ -142,11 +142,12 @@ export default function AdminDashboard() {
                     <th className="text-right px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Wrong</th>
                     <th className="text-right px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Timeout</th>
                     <th className="text-right px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Avg time</th>
+                    <th className="text-right px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {stats.map((s) => (
-                    <tr key={s.questionId} className="hover:bg-gray-50 transition-colors">
+                    <tr key={s.pollLaunchId ?? s.questionId} className="hover:bg-gray-50 transition-colors">
                       <td className="px-4 py-3 text-gray-500 font-mono text-xs">{s.date ?? '—'}</td>
                       <td className="px-4 py-3 text-gray-800 font-medium max-w-xs truncate">{s.questionText}</td>
                       <td className="px-4 py-3">
@@ -158,6 +159,17 @@ export default function AdminDashboard() {
                       <td className="px-4 py-3 text-right text-gray-400 font-semibold">{s.timeoutCount}</td>
                       <td className="px-4 py-3 text-right text-gray-500 text-xs font-mono">
                         {s.avgTimeTakenMs != null ? `${(s.avgTimeTakenMs / 1000).toFixed(1)}s` : '—'}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        {s.status === 'CLOSED' && (
+                          <button
+                            onClick={() => handleLaunch(s.questionId)}
+                            disabled={launching === s.questionId}
+                            className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-colors disabled:opacity-60"
+                          >
+                            {launching === s.questionId ? 'Relaunching…' : 'Relaunch'}
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
