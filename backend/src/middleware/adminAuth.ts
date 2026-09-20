@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 export interface AdminPayload {
   adminId: string;
   email: string;
+  role: 'ADMIN' | 'SUPER_ADMIN';
 }
 
 export function adminAuthMiddleware(req: Request, res: Response, next: NextFunction): void {
@@ -20,4 +21,17 @@ export function adminAuthMiddleware(req: Request, res: Response, next: NextFunct
   } catch {
     res.status(401).json({ error: 'Invalid or expired session' });
   }
+}
+
+export function requireRole(role: 'ADMIN' | 'SUPER_ADMIN') {
+  return (req: Request, res: Response, next: NextFunction) => {
+    adminAuthMiddleware(req, res, () => {
+      const admin = (req as any).admin as AdminPayload | undefined;
+      if (!admin || admin.role !== role) {
+        res.status(403).json({ error: 'Forbidden: Insufficient privileges' });
+        return;
+      }
+      next();
+    });
+  };
 }

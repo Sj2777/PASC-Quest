@@ -7,6 +7,7 @@ import Leaderboard from './pages/Leaderboard';
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminQuestion from './pages/admin/AdminQuestion';
+import AdminManagement from './pages/admin/AdminManagement';
 
 export default function App() {
   return (
@@ -25,6 +26,7 @@ export default function App() {
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/admin/questions/new" element={<AdminQuestion />} />
         <Route path="/admin/questions/:id/edit" element={<AdminQuestion />} />
+        <Route path="/admin/admins" element={<AdminManagement />} />
       </Routes>
     </BrowserRouter>
   );

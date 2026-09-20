@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../../api';
+import { api, getExportCsvUrl } from '../../api';
 import type { Stat, Question } from '../../api';
 
 function statusBadge(status: string) {
   const colors: Record<string, string> = {
     DRAFT: 'bg-gray-100 text-gray-600',
+    SCHEDULED: 'bg-indigo-100 text-indigo-700',
     LIVE: 'bg-green-100 text-green-700',
     CLOSED: 'bg-slate-100 text-slate-500',
   };
@@ -19,9 +20,11 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [launching, setLaunching] = useState<string | null>(null);
 
+  const [role, setRole] = useState<string | null>(null);
+
   useEffect(() => {
-    Promise.all([api.getStats(), api.getQuestions()])
-      .then(([s, q]) => { setStats(s); setQuestions(q); })
+    Promise.all([api.getAdminMe(), api.getStats(), api.getQuestions()])
+      .then(([me, s, q]) => { setRole(me.role); setStats(s); setQuestions(q); })
       .catch(() => navigate('/admin'))
       .finally(() => setLoading(false));
   }, [navigate]);
@@ -45,7 +48,7 @@ export default function AdminDashboard() {
     }
   };
 
-  const draftQuestions = questions.filter((q) => q.status === 'DRAFT');
+  const draftQuestions = questions.filter((q) => q.status === 'DRAFT' || q.status === 'SCHEDULED');
 
   if (loading) {
     return (
@@ -64,6 +67,14 @@ export default function AdminDashboard() {
           <span className="font-semibold text-gray-800">QuizPop Admin</span>
         </div>
         <div className="flex items-center gap-3">
+          {role === 'SUPER_ADMIN' && (
+            <button
+              onClick={() => navigate('/admin/admins')}
+              className="px-4 py-2 rounded-lg bg-indigo-100 hover:bg-indigo-200 text-indigo-700 text-sm font-semibold transition-colors"
+            >
+              Manage Admins
+            </button>
+          )}
           <button
             onClick={() => navigate('/admin/questions/new')}
             className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors"
@@ -87,35 +98,52 @@ export default function AdminDashboard() {
               Draft questions
             </h2>
             <div className="space-y-2">
-              {draftQuestions.map((q) => (
-                <div
-                  key={q.id}
-                  className="bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between gap-4"
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 truncate">{q.text}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      {q.options.length} options • {q.timerSeconds}s timer
-                    </p>
+              {draftQuestions.map((q) => {
+                const hasLaunches = (q._count?.launches ?? q.launches?.length ?? 0) > 0;
+                return (
+                  <div
+                    key={q.id}
+                    className="bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between gap-4"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900 truncate">{q.text}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        {q.options.length} options • {q.timerSeconds}s timer
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className={statusBadge(q.status)}>
+                        {q.status === 'SCHEDULED' && q.scheduledAt
+                          ? `Scheduled for ${new Date(q.scheduledAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}`
+                          : 'Draft'}
+                      </span>
+                      {hasLaunches && (
+                        <a
+                          href={getExportCsvUrl(q.id)}
+                          download
+                          className="px-3 py-1.5 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 text-xs font-semibold transition-colors inline-flex items-center gap-1 shadow-sm"
+                          title="Export all attempts for this question as CSV"
+                        >
+                          Export CSV
+                        </a>
+                      )}
+                      <button
+                        onClick={() => navigate(`/admin/questions/${q.id}/edit`)}
+                        className="px-3 py-1.5 rounded-lg border border-gray-300 text-gray-600 text-xs font-semibold hover:bg-gray-50 transition-colors"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleLaunch(q.id)}
+                        disabled={launching === q.id}
+                        className="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-semibold transition-colors disabled:opacity-60"
+                      >
+                        {launching === q.id ? 'Launching…' : 'Launch'}
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <span className={statusBadge(q.status)}>Draft</span>
-                    <button
-                      onClick={() => navigate(`/admin/questions/${q.id}/edit`)}
-                      className="px-3 py-1.5 rounded-lg border border-gray-300 text-gray-600 text-xs font-semibold hover:bg-gray-50 transition-colors"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleLaunch(q.id)}
-                      disabled={launching === q.id}
-                      className="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-semibold transition-colors disabled:opacity-60"
-                    >
-                      {launching === q.id ? 'Launching…' : 'Launch'}
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </section>
         )}
@@ -161,15 +189,25 @@ export default function AdminDashboard() {
                         {s.avgTimeTakenMs != null ? `${(s.avgTimeTakenMs / 1000).toFixed(1)}s` : '—'}
                       </td>
                       <td className="px-4 py-3 text-right">
-                        {s.status === 'CLOSED' && (
-                          <button
-                            onClick={() => handleLaunch(s.questionId)}
-                            disabled={launching === s.questionId}
-                            className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-colors disabled:opacity-60"
+                        <div className="flex items-center justify-end gap-2">
+                          <a
+                            href={getExportCsvUrl(s.questionId)}
+                            download
+                            className="px-3 py-1.5 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 text-xs font-semibold transition-colors inline-flex items-center gap-1 shadow-sm"
+                            title="Export all attempts for this question as CSV"
                           >
-                            {launching === s.questionId ? 'Relaunching…' : 'Relaunch'}
-                          </button>
-                        )}
+                            Export CSV
+                          </a>
+                          {s.status === 'CLOSED' && (
+                            <button
+                              onClick={() => handleLaunch(s.questionId)}
+                              disabled={launching === s.questionId}
+                              className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-colors disabled:opacity-60"
+                            >
+                              {launching === s.questionId ? 'Relaunching…' : 'Relaunch'}
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}

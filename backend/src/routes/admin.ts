@@ -3,7 +3,11 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
-import { adminAuthMiddleware } from '../middleware/adminAuth';
+import { adminAuthMiddleware, requireRole } from '../middleware/adminAuth';
+import { stringify } from 'csv-stringify/sync';
+import { executeQuestionLaunch } from '../services/launchService';
+
+console.log('>>> admin.ts loaded');
 
 const router = Router();
 
@@ -17,6 +21,7 @@ const QuestionSchema = z.object({
   options: z.array(z.string().min(1)).min(2).max(5),
   correctIndex: z.number().int().min(0).max(4),
   timerSeconds: z.number().int().min(5).max(300),
+  scheduledAt: z.string().datetime().optional().nullable(),
 });
 
 // POST /api/admin/login
@@ -65,6 +70,108 @@ router.post('/logout', adminAuthMiddleware, (_req: Request, res: Response) => {
   res.json({ message: 'Logged out' });
 });
 
+// GET /api/admin/me
+router.get('/me', adminAuthMiddleware, (req: Request, res: Response) => {
+  console.log('>>> /me handler hit');
+  const admin = (req as any).admin;
+  res.json({ id: admin.adminId, email: admin.email, role: admin.role });
+});
+
+// GET /api/admin/admins
+router.get('/admins', requireRole('SUPER_ADMIN'), async (_req: Request, res: Response) => {
+  try {
+    const admins = await prisma.admin.findMany({
+      select: { id: true, email: true, role: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json(admins);
+  } catch {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+const AdminCreateSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+  role: z.enum(['ADMIN', 'SUPER_ADMIN']),
+});
+
+// POST /api/admin/admins
+router.post('/admins', requireRole('SUPER_ADMIN'), async (req: Request, res: Response) => {
+  const parsed = AdminCreateSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: 'Invalid input', details: parsed.error.flatten() });
+    return;
+  }
+
+  try {
+    const existing = await prisma.admin.findUnique({ where: { email: parsed.data.email } });
+    if (existing) {
+      res.status(409).json({ error: 'Email already exists' });
+      return;
+    }
+
+    const passwordHash = await bcrypt.hash(parsed.data.password, 12);
+    const admin = await prisma.admin.create({
+      data: {
+        email: parsed.data.email,
+        passwordHash,
+        role: parsed.data.role,
+      },
+      select: { id: true, email: true, role: true, createdAt: true },
+    });
+    res.json(admin);
+  } catch {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+const AdminRoleSchema = z.object({
+  role: z.enum(['ADMIN', 'SUPER_ADMIN']),
+});
+
+// PATCH /api/admin/admins/:id/role
+router.patch('/admins/:id/role', requireRole('SUPER_ADMIN'), async (req: Request, res: Response) => {
+  const parsed = AdminRoleSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: 'Invalid input', details: parsed.error.flatten() });
+    return;
+  }
+
+  try {
+    const id = req.params.id as string;
+    const updated = await prisma.admin.update({
+      where: { id },
+      data: { role: parsed.data.role },
+      select: { id: true, email: true, role: true, createdAt: true },
+    });
+    res.json(updated);
+  } catch (err: any) {
+    if (err.code === 'P2025') {
+      res.status(404).json({ error: 'Admin not found' });
+      return;
+    }
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// DELETE /api/admin/admins/:id
+router.delete('/admins/:id', requireRole('SUPER_ADMIN'), async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    await prisma.admin.delete({
+      where: { id },
+    });
+    res.json({ message: 'Deleted' });
+  } catch (err: any) {
+    if (err.code === 'P2025') {
+      res.status(404).json({ error: 'Admin not found' });
+      return;
+    }
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // GET /api/admin/questions
 router.get('/questions', adminAuthMiddleware, async (req: Request, res: Response) => {
   const { status, date } = req.query;
@@ -101,7 +208,7 @@ router.post('/questions', adminAuthMiddleware, async (req: Request, res: Respons
     res.status(400).json({ error: 'Invalid input', details: parsed.error.flatten() });
     return;
   }
-  const { text, options, correctIndex, timerSeconds } = parsed.data;
+  const { text, options, correctIndex, timerSeconds, scheduledAt } = parsed.data;
   if (correctIndex >= options.length) {
     res.status(400).json({ error: 'correctIndex out of range' });
     return;
@@ -114,7 +221,8 @@ router.post('/questions', adminAuthMiddleware, async (req: Request, res: Respons
         options,
         correctIndex,
         timerSeconds,
-        status: 'DRAFT',
+        scheduledAt,
+        status: scheduledAt ? 'SCHEDULED' : 'DRAFT',
         createdById: adminId,
       },
     });
@@ -146,7 +254,16 @@ router.put('/questions/:id', adminAuthMiddleware, async (req: Request, res: Resp
       res.status(409).json({ error: 'Question cannot be edited because it has already been launched' });
       return;
     }
-    const updated = await prisma.question.update({ where: { id }, data: parsed.data });
+
+    // Determine new status based on existing or incoming scheduledAt
+    const incomingScheduledAt = parsed.data.scheduledAt;
+    const finalScheduledAt = incomingScheduledAt !== undefined ? incomingScheduledAt : existing.scheduledAt;
+    const newStatus = finalScheduledAt ? 'SCHEDULED' : 'DRAFT';
+
+    const updated = await prisma.question.update({
+      where: { id },
+      data: { ...parsed.data, status: newStatus }
+    });
     res.json(updated);
   } catch {
     res.status(500).json({ error: 'Server error' });
@@ -169,53 +286,7 @@ router.post('/questions/:id/launch', adminAuthMiddleware, async (req: Request, r
       return;
     }
 
-    // Atomic transaction:
-    // (a) Find currently active PollLaunch (closedAt = null), set closedAt = now() & parent Question status to CLOSED
-    // (b) Create new PollLaunch row for target question with launchedById = adminId
-    // (c) Set target Question's status to LIVE
-    const result = await prisma.$transaction(async (tx) => {
-      const now = new Date();
-
-      // Find active PollLaunch if one exists
-      const activeLaunch = await tx.pollLaunch.findFirst({
-        where: { closedAt: null },
-      });
-
-      if (activeLaunch) {
-        await tx.pollLaunch.update({
-          where: { id: activeLaunch.id },
-          data: { closedAt: now },
-        });
-        await tx.question.update({
-          where: { id: activeLaunch.questionId },
-          data: { status: 'CLOSED' },
-        });
-      }
-
-      // Close any other questions marked LIVE
-      await tx.question.updateMany({
-        where: { status: 'LIVE' },
-        data: { status: 'CLOSED' },
-      });
-
-      // Create new PollLaunch row
-      await tx.pollLaunch.create({
-        data: {
-          questionId: id,
-          launchedById: adminId,
-          launchedAt: now,
-        },
-      });
-
-      // Set target Question to LIVE
-      const launchedQuestion = await tx.question.update({
-        where: { id },
-        data: { status: 'LIVE' },
-      });
-
-      return launchedQuestion;
-    });
-
+    const result = await executeQuestionLaunch(id, adminId);
     res.json(result);
   } catch {
     res.status(500).json({ error: 'Server error' });
@@ -311,4 +382,66 @@ router.get('/stats/:pollLaunchId', adminAuthMiddleware, async (req: Request, res
   }
 });
 
+// GET /api/admin/questions/:id/export.csv (also /admin/questions/:id/export.csv)
+router.get('/questions/:id/export.csv', adminAuthMiddleware, async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  try {
+    const question = await prisma.question.findUnique({
+      where: { id },
+    });
+    if (!question) {
+      res.status(404).json({ error: 'Question not found' });
+      return;
+    }
+
+    const launches = await prisma.pollLaunch.findMany({
+      where: { questionId: id },
+      orderBy: { launchedAt: 'asc' },
+      include: {
+        attempts: {
+          orderBy: { submittedAt: 'asc' },
+          include: {
+            student: {
+              select: { nickname: true },
+            },
+          },
+        },
+      },
+    });
+
+    const rows = launches.flatMap((l) =>
+      l.attempts.map((a) => ({
+        'student nickname': a.student.nickname,
+        pollLaunchId: l.id,
+        launchedAt: l.launchedAt.toISOString(),
+        isCorrect: a.result === 'CORRECT',
+        timeTakenMs: a.timeTakenMs ?? '',
+        submittedAt: a.submittedAt.toISOString(),
+      }))
+    );
+
+    const csv = stringify(rows, {
+      header: true,
+      columns: [
+        'student nickname',
+        'pollLaunchId',
+        'launchedAt',
+        'isCorrect',
+        'timeTakenMs',
+        'submittedAt',
+      ],
+      cast: {
+        boolean: (value) => (value ? 'true' : 'false'),
+      },
+    });
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="question-${id}-attempts.csv"`);
+    res.send(csv);
+  } catch {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 export default router;
+

@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import adminRouter from './routes/admin';
 import pollRouter from './routes/poll';
 import studentRouter from './routes/student';
+import { startScheduler } from './jobs/scheduler';
 
 dotenv.config();
 
@@ -27,11 +28,20 @@ app.get('/api/health', (_req, res) => {
 
 // Routes
 app.use('/api/admin', adminRouter);
+app.use('/admin', adminRouter);
 app.use('/api/poll', pollRouter);
 app.use('/api/student', studentRouter);
 
+// Start auto-launch scheduler
+startScheduler();
+
+app.get('/api/ping', (_req, res) => {
+  console.log('>>> ping hit');
+  res.json({ pong: true });
+});
+
 app.listen(PORT, () => {
-  console.log(`QuizPop backend running on http://localhost:${PORT}`);
+  console.log(`Server listening on port ${PORT}`);
 });
 
 export default app;

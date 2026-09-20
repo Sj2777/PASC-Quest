@@ -1,4 +1,9 @@
-const BASE = 'http://localhost:3001';
+export const API_BASE = 'http://localhost:3001';
+const BASE = API_BASE;
+
+export function getExportCsvUrl(questionId: string): string {
+  return `${API_BASE}/api/admin/questions/${questionId}/export.csv`;
+}
 
 async function req<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
@@ -58,9 +63,25 @@ export const api = {
   getStatDetail: (pollLaunchId: string) => req<StatDetail>(`/api/admin/stats/${pollLaunchId}`),
   getLeaderboard: (pollLaunchId: string) =>
     req<LeaderboardResponse>(`/api/poll/${pollLaunchId}/leaderboard`),
+  
+  getAdminMe: () => req<{ id: string; email: string; role: string }>('/api/admin/me'),
+  getAdmins: () => req<Admin[]>('/api/admin/admins'),
+  createAdmin: (body: Omit<Admin, 'id' | 'createdAt'> & { password: string }) => 
+    req<Admin>('/api/admin/admins', { method: 'POST', body: JSON.stringify(body) }),
+  deleteAdmin: (id: string) => 
+    req<{ message: string }>(`/api/admin/admins/${id}`, { method: 'DELETE' }),
+  updateAdminRole: (id: string, role: string) => 
+    req<Admin>(`/api/admin/admins/${id}/role`, { method: 'PATCH', body: JSON.stringify({ role }) }),
 };
 
 // Types
+export interface Admin {
+  id: string;
+  email: string;
+  role: 'ADMIN' | 'SUPER_ADMIN';
+  createdAt: string;
+}
+
 export interface Student {
   id: string;
   nickname: string;
@@ -96,6 +117,7 @@ export interface QuestionInput {
   options: string[];
   correctIndex: number;
   timerSeconds: number;
+  scheduledAt?: string | null;
 }
 
 export interface Stat {

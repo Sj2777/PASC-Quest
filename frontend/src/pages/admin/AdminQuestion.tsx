@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { api } from '../../api';
+import { api, getExportCsvUrl } from '../../api';
 import type { QuestionInput } from '../../api';
 
 export default function AdminQuestion() {
@@ -12,6 +12,8 @@ export default function AdminQuestion() {
   const [options, setOptions] = useState(['', '']);
   const [correctIndex, setCorrectIndex] = useState(0);
   const [timerSeconds, setTimerSeconds] = useState(30);
+  const [scheduledAt, setScheduledAt] = useState('');
+  const [hasLaunches, setHasLaunches] = useState(false);
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [launching, setLaunching] = useState(false);
@@ -27,6 +29,14 @@ export default function AdminQuestion() {
         setOptions(q.options as string[]);
         setCorrectIndex(q.correctIndex);
         setTimerSeconds(q.timerSeconds);
+        const launchCount = q._count?.launches ?? q.launches?.length ?? 0;
+        setHasLaunches(launchCount > 0);
+        if (q.scheduledAt) {
+          const d = new Date(q.scheduledAt);
+          // format as YYYY-MM-DDTHH:mm for local time
+          const pad = (n: number) => n.toString().padStart(2, '0');
+          setScheduledAt(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`);
+        }
       })
       .catch(() => navigate('/admin'))
       .finally(() => setLoading(false));
@@ -46,6 +56,7 @@ export default function AdminQuestion() {
     options: options.map((o) => o.trim()),
     correctIndex,
     timerSeconds,
+    scheduledAt: scheduledAt ? new Date(scheduledAt).toISOString() : null,
   });
 
   const handleSave = async () => {
@@ -126,10 +137,32 @@ export default function AdminQuestion() {
             {isEdit ? 'Edit question' : 'New question'}
           </h1>
         </div>
+        {isEdit && id && hasLaunches && (
+          <a
+            href={getExportCsvUrl(id)}
+            download
+            className="px-3 py-1.5 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 text-xs font-semibold transition-colors inline-flex items-center gap-1 shadow-sm"
+            title="Export all attempts for this question as CSV"
+          >
+            Export CSV
+          </a>
+        )}
       </header>
 
       <main className="max-w-xl mx-auto px-6 py-8">
         <div className="bg-white border border-gray-200 rounded-2xl p-6 space-y-6">
+          {isEdit && id && hasLaunches && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800 flex items-center justify-between">
+              <span>This question has already been launched. Historical attempts can be downloaded.</span>
+              <a
+                href={getExportCsvUrl(id)}
+                download
+                className="px-2.5 py-1 rounded bg-amber-100 hover:bg-amber-200 text-amber-900 font-semibold transition-colors ml-2 flex-shrink-0"
+              >
+                Export CSV
+              </a>
+            </div>
+          )}
           {/* Question text */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -208,6 +241,22 @@ export default function AdminQuestion() {
             <p className="text-xs text-gray-400 mt-1.5">Between 5 and 300 seconds.</p>
           </div>
 
+          {/* Scheduled At */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Schedule launch (optional)
+            </label>
+            <input
+              type="datetime-local"
+              value={scheduledAt}
+              onChange={(e) => setScheduledAt(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm outline-none focus:border-indigo-400 transition-colors"
+            />
+            <p className="text-xs text-gray-400 mt-1.5">
+              Set a future time for this question to automatically launch.
+            </p>
+          </div>
+
           {/* Error */}
           {error && (
             <p className="text-sm text-red-600 font-medium">{error}</p>
@@ -220,7 +269,7 @@ export default function AdminQuestion() {
               disabled={saving || launching}
               className="flex-1 py-2.5 rounded-lg border border-gray-300 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-colors disabled:opacity-60"
             >
-              {saving ? 'Saving…' : 'Save as draft'}
+              {saving ? 'Saving…' : scheduledAt ? 'Save schedule' : 'Save as draft'}
             </button>
             <button
               onClick={handleLaunch}
