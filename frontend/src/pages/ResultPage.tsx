@@ -1,8 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import confetti from 'canvas-confetti';
-import type { PollCurrent } from '../api';
+import { api, type PollCurrent, type SpeedKing, type GhostMode } from '../api';
 
 const CARD_COLORS = [
   'var(--card-lilac)',
@@ -28,6 +28,11 @@ export default function ResultPage() {
   const navigate = useNavigate();
   const state = location.state as ResultState | null;
   const confettiFired = useRef(false);
+  const shouldReduceMotion = useReducedMotion();
+
+  const [speedKing, setSpeedKing] = useState<SpeedKing | null>(null);
+  const [ghostMode, setGhostMode] = useState<GhostMode | null>(null);
+  const [me, setMe] = useState<{ nickname: string } | null>(null);
 
   useEffect(() => {
     if (!state) { navigate('/auth'); return; }
@@ -40,6 +45,18 @@ export default function ResultPage() {
         colors: ['#FF4D8D', '#00D2A0', '#FFB020', '#C4AFFF', '#CDEFFF'],
         scalar: 1.1,
       });
+    }
+
+    // Fetch data
+    api.getMe().then(setMe).catch(() => {});
+    api.getSpeedKing().then(res => setSpeedKing(res.speedKing)).catch(() => {});
+    
+    if (state) {
+      const { poll, pollLaunchId, questionId } = state;
+      const targetId = pollLaunchId || poll.pollLaunchId || questionId;
+      if (targetId) {
+        api.getGhostMode(targetId).then(setGhostMode).catch(() => {});
+      }
     }
   }, [state, navigate]);
 
@@ -75,6 +92,13 @@ export default function ResultPage() {
 
   const options = poll.options ?? [];
 
+  const formatTime = (ms: number) => {
+    if (ms < 1000) return `${ms}ms`;
+    return `${(ms / 1000).toFixed(2)}s`;
+  };
+
+  const isSpeedKingWinner = me?.nickname === speedKing?.nickname;
+
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center px-4 py-10 overflow-hidden">
       <div className="blob blob-1" style={{ opacity: 0.18 }} />
@@ -83,8 +107,12 @@ export default function ResultPage() {
       <div className="relative z-10 w-full max-w-md">
         {/* Result hero */}
         <motion.div
-          initial={{ scale: 0.7, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
+          initial={{ scale: shouldReduceMotion ? 1 : 0.8, opacity: 0 }}
+          animate={
+            outcome === 'wrong'
+              ? { scale: 1, opacity: 1, x: shouldReduceMotion ? 0 : [0, -8, 8, -4, 4, 0] }
+              : { scale: 1, opacity: 1 }
+          }
           transition={{ type: 'spring', stiffness: 300, damping: 20 }}
           className="text-center mb-8"
         >
@@ -106,13 +134,9 @@ export default function ResultPage() {
           )}
 
           {outcome !== 'timeout' && (
-            <motion.div
-              animate={outcome === 'wrong' ? { x: [0, -12, 12, -8, 8, -4, 4, 0] } : {}}
-              transition={{ duration: 0.5 }}
-              className="text-7xl mb-4"
-            >
+            <div className="text-7xl mb-4">
               {config.emoji}
-            </motion.div>
+            </div>
           )}
 
           <h1 className="font-display text-4xl font-extrabold" style={{ color: 'var(--ink)' }}>
@@ -175,6 +199,140 @@ export default function ResultPage() {
             })}
           </div>
         </motion.div>
+
+        {/* Speed King Display */}
+        {speedKing && (
+          <motion.div
+            initial={{ opacity: 0, scale: isSpeedKingWinner && !shouldReduceMotion ? 0.9 : 1, y: shouldReduceMotion ? 0 : 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ delay: 0.5, type: 'spring', stiffness: 300, damping: 25 }}
+            className="mt-4 rounded-[24px] p-4 flex items-center justify-between"
+            style={{ 
+              background: isSpeedKingWinner ? 'linear-gradient(135deg, #FFF9C4, #FFF176)' : 'rgba(255,255,255,0.7)', 
+              backdropFilter: 'blur(16px)', 
+              boxShadow: '0 4px 24px rgba(36,27,58,0.1)',
+              border: isSpeedKingWinner ? '2px solid #FBC02D' : '2px solid transparent'
+            }}
+          >
+            <div className="flex items-center gap-3">
+              <motion.span 
+                initial={isSpeedKingWinner && !shouldReduceMotion ? { scale: 0, rotate: -45 } : false}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ delay: 0.8, type: 'spring', stiffness: 400, damping: 15 }}
+                className="text-3xl"
+              >
+                ⚡
+              </motion.span>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest" style={{ color: isSpeedKingWinner ? '#F57F17' : '#A89BC4' }}>
+                  {isSpeedKingWinner ? 'SPEED KING' : "Speed King"}
+                </p>
+                <p className="font-display font-bold text-lg" style={{ color: 'var(--ink)' }}>
+                  {isSpeedKingWinner ? 'Fastest correct answer today' : `${speedKing.nickname} · ${formatTime(speedKing.timeTakenMs)}`}
+                </p>
+              </div>
+            </div>
+            {isSpeedKingWinner && (
+              <div className="text-right">
+                <motion.p 
+                  initial={{ opacity: 0, x: shouldReduceMotion ? 0 : 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 1.1, duration: 0.4, ease: "easeOut" }}
+                  className="font-display font-extrabold text-xl" 
+                  style={{ color: '#F57F17' }}
+                >
+                  {formatTime(speedKing.timeTakenMs)}
+                </motion.p>
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* Ghost Mode Display */}
+        {ghostMode && ghostMode.total > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="mt-4 rounded-[24px] p-5"
+            style={{ 
+              background: 'rgba(255,255,255,0.8)', 
+              backdropFilter: 'blur(16px)', 
+              boxShadow: '0 4px 24px rgba(36,27,58,0.1)'
+            }}
+          >
+            <div className="flex items-center justify-between mb-4 border-b border-gray-200/50 pb-3">
+              <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                <span className="text-xl">👻</span> Ghost Mode
+              </h3>
+              <span className="text-xs font-semibold text-gray-500 bg-white shadow-sm px-2 py-1 rounded-full border border-gray-100">
+                {ghostMode.total} attempt{ghostMode.total !== 1 ? 's' : ''}
+              </span>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-semibold text-green-600">Correct</span>
+                <motion.span 
+                  initial={{ opacity: 0 }} 
+                  animate={{ opacity: 1 }} 
+                  transition={{ delay: 1 }}
+                  className="font-bold text-gray-800"
+                >
+                  {ghostMode.correctPercent.toFixed(1)}%
+                </motion.span>
+              </div>
+              <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                <motion.div 
+                  className="bg-green-500 h-1.5 rounded-full" 
+                  initial={{ width: 0 }}
+                  animate={{ width: `${ghostMode.correctPercent}%` }}
+                  transition={{ duration: 1, ease: 'easeOut', delay: 0.7 }}
+                />
+              </div>
+
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-semibold text-orange-500">Wrong</span>
+                <motion.span 
+                  initial={{ opacity: 0 }} 
+                  animate={{ opacity: 1 }} 
+                  transition={{ delay: 1 }}
+                  className="font-bold text-gray-800"
+                >
+                  {ghostMode.wrongPercent.toFixed(1)}%
+                </motion.span>
+              </div>
+              <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                <motion.div 
+                  className="bg-orange-400 h-1.5 rounded-full" 
+                  initial={{ width: 0 }}
+                  animate={{ width: `${ghostMode.wrongPercent}%` }}
+                  transition={{ duration: 1, ease: 'easeOut', delay: 0.7 }}
+                />
+              </div>
+
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-semibold text-yellow-600">Timeout</span>
+                <motion.span 
+                  initial={{ opacity: 0 }} 
+                  animate={{ opacity: 1 }} 
+                  transition={{ delay: 1 }}
+                  className="font-bold text-gray-800"
+                >
+                  {ghostMode.timeoutPercent.toFixed(1)}%
+                </motion.span>
+              </div>
+              <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                <motion.div 
+                  className="bg-yellow-400 h-1.5 rounded-full" 
+                  initial={{ width: 0 }}
+                  animate={{ width: `${ghostMode.timeoutPercent}%` }}
+                  transition={{ duration: 1, ease: 'easeOut', delay: 0.7 }}
+                />
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         <motion.div
           initial={{ opacity: 0, y: 10 }}

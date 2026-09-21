@@ -99,10 +99,9 @@ enum AdminRole {
 enum Branch {
   COMP
   IT
+  AIDS
   ENTC
-  MECH
-  CIVIL
-  OTHER
+  EXTC
 }
 
 // ------------------------------------------------------------
@@ -125,8 +124,10 @@ model Student {
   // every time.
   currentStreak     Int       @default(0)
   bestStreak        Int       @default(0)
-  lastAnsweredDate  DateTime? // used to detect streak breaks/continuations
-  streakFreezeUsed  Boolean   @default(false) // "Steal the Streak" — one comeback per break, reset logic TBD
+  lastCorrectDate   DateTime? // the calendar date (no time component) of the student's most recent correct attempt
+  comebackActive    Boolean   @default(false) // true while a comeback attempt is in progress
+  comebackProgress  Int       @default(0) // consecutive correct days completed since the streak broke (0-3)
+  preBreakStreak    Int       @default(0) // the streak value to restore if the comeback succeeds
 
   attempts        Attempt[]
 

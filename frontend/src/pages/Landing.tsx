@@ -1,21 +1,61 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { api } from '../api';
-import type { PollCurrent, Student } from '../api';
+import type { PollCurrent, Student, StreakStatus } from '../api';
 
 export default function Landing() {
   const navigate = useNavigate();
   const [student, setStudent] = useState<Student | null>(null);
   const [poll, setPoll] = useState<PollCurrent | null>(null);
+  const [streakStatus, setStreakStatus] = useState<StreakStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState('');
+
+  const shouldReduceMotion = useReducedMotion();
+
+  // Animation states
+  const [animationState, setAnimationState] = useState<'none' | 'milestone' | 'comeback_reveal' | 'comeback_progress' | 'restored'>('none');
+  const [milestone, setMilestone] = useState<number | null>(null);
+  const [restoredStreak, setRestoredStreak] = useState<number | null>(null);
+
+  const MILESTONES = [3, 7, 14, 30];
 
   useEffect(() => {
     api.getMe()
       .then((me) => {
         setStudent(me);
+        api.getStreakStatus().then((newStatus) => {
+          setStreakStatus(newStatus);
+          
+          try {
+            const stored = localStorage.getItem('lastStreakStatus');
+            if (stored) {
+              const last = JSON.parse(stored);
+              
+              if (last && typeof last === 'object') {
+                if (last.comebackActive && !newStatus.comebackActive && newStatus.currentStreak > (last.currentStreak || 0)) {
+                  setRestoredStreak(newStatus.currentStreak);
+                  setAnimationState('restored');
+                } else if (!last.comebackActive && newStatus.comebackActive) {
+                  setAnimationState('comeback_reveal');
+                } else if (last.comebackActive && newStatus.comebackActive && (last.comebackProgress || 0) < newStatus.comebackProgress) {
+                  setAnimationState('comeback_progress');
+                } else {
+                  const crossed = MILESTONES.find(m => (last.currentStreak || 0) < m && newStatus.currentStreak >= m);
+                  if (crossed) {
+                    setMilestone(crossed);
+                    setAnimationState('milestone');
+                  }
+                }
+              }
+            }
+          } catch (e) {
+            console.error('Failed to parse lastStreakStatus:', e);
+          }
+          localStorage.setItem('lastStreakStatus', JSON.stringify(newStatus));
+        }).catch(() => {});
         return api.getCurrent();
       })
       .then((currentPoll) => {
@@ -30,6 +70,15 @@ export default function Landing() {
       })
       .finally(() => setLoading(false));
   }, [navigate]);
+
+  useEffect(() => {
+    if (animationState === 'milestone' || animationState === 'restored') {
+      const t = setTimeout(() => {
+        setAnimationState('none');
+      }, 4000);
+      return () => clearTimeout(t);
+    }
+  }, [animationState]);
 
   const handleLogout = async () => {
     await api.logoutStudent().catch(() => {});
@@ -80,13 +129,38 @@ export default function Landing() {
                 {student.nickname}
               </span>
             </div>
-            <button
-              onClick={handleLogout}
-              className="text-xs font-semibold px-3 py-1 rounded-xl border transition-all hover:bg-white text-gray-500 hover:text-gray-800"
-              style={{ borderColor: '#E4D9FF' }}
-            >
-              Logout
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => navigate('/social')}
+                className="text-xs font-semibold px-3 py-1 rounded-xl border transition-all bg-white/50 hover:bg-white text-gray-700"
+                style={{ borderColor: '#E4D9FF' }}
+              >
+                Social
+              </button>
+              <button
+                onClick={() => navigate('/stats')}
+                className="text-xs font-semibold px-3 py-1 rounded-xl border transition-all bg-white/50 hover:bg-white text-gray-700"
+                style={{ borderColor: '#E4D9FF' }}
+              >
+                Stats
+              </button>
+              {poll?.pollLaunchId && (
+                <button
+                  onClick={() => navigate(`/leaderboard/${poll.pollLaunchId}`)}
+                  className="text-xs font-semibold px-3 py-1 rounded-xl border transition-all bg-white/50 hover:bg-white text-gray-700"
+                  style={{ borderColor: '#E4D9FF' }}
+                >
+                  Leaderboard
+                </button>
+              )}
+              <button
+                onClick={handleLogout}
+                className="text-xs font-semibold px-3 py-1 rounded-xl border transition-all hover:bg-white text-gray-500 hover:text-gray-800"
+                style={{ borderColor: '#E4D9FF' }}
+              >
+                Logout
+              </button>
+            </div>
           </div>
         )}
 
@@ -137,6 +211,102 @@ export default function Landing() {
                 Answer today's live question before time runs out.
               </p>
 
+              {/* Streak & Comeback UI */}
+              {streakStatus && streakStatus.comebackActive && (
+                <motion.div 
+                  initial={animationState === 'comeback_reveal' ? { opacity: 0, scale: shouldReduceMotion ? 1 : 0.9, y: shouldReduceMotion ? 0 : 10 } : false}
+                  animate={
+                    animationState === 'comeback_reveal' 
+                      ? { opacity: 1, scale: 1, y: 0, x: shouldReduceMotion ? 0 : [0, -6, 6, -4, 4, 0] } 
+                      : { opacity: 1, scale: 1, y: 0, x: 0 }
+                  }
+                  transition={{ duration: 0.5 }}
+                  className="mb-6 p-4 rounded-2xl bg-orange-50 border border-orange-200"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xl">💔</span>
+                    <h3 className="font-bold text-orange-800">Streak Broken!</h3>
+                  </div>
+                  <p className="text-sm text-orange-700 mb-3">
+                    Your previous streak: <strong>{streakStatus.preBreakStreak} days</strong><br/>
+                    Complete the next 3 days to restore it.
+                  </p>
+                  
+                  <p className="text-xs font-bold text-orange-800 uppercase tracking-wider mb-1.5">
+                    Recovery: {streakStatus.comebackProgress} / 3
+                  </p>
+                  <div className="flex gap-1.5 mb-2">
+                    {[1, 2, 3].map(step => {
+                      const isCompleted = step <= streakStatus.comebackProgress;
+                      const isJustCompleted = animationState === 'comeback_progress' && step === streakStatus.comebackProgress;
+                      return (
+                        <div key={step} className="relative w-5 h-5">
+                          <div className="absolute inset-0 rounded-full border-2 border-orange-300" />
+                          {isCompleted && (
+                             <motion.div 
+                               initial={isJustCompleted ? { scale: shouldReduceMotion ? 1 : 0, opacity: shouldReduceMotion ? 0 : 1 } : false}
+                               animate={{ scale: 1, opacity: 1 }}
+                               transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                               className="absolute inset-0 rounded-full bg-orange-500 flex items-center justify-center text-white text-[10px] font-bold" 
+                             >
+                               ✓
+                             </motion.div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              )}
+
+              {streakStatus && !streakStatus.comebackActive && streakStatus.currentStreak > 0 && (
+                <AnimatePresence mode="wait">
+                  {animationState === 'milestone' ? (
+                    <motion.div 
+                      key="milestone"
+                      initial={{ scale: shouldReduceMotion ? 1 : 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: shouldReduceMotion ? 1 : 0.9, opacity: 0 }}
+                      className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200 text-center shadow-sm"
+                    >
+                      <motion.div animate={shouldReduceMotion ? {} : { scale: [1, 1.15, 1] }} transition={{ repeat: Infinity, duration: 1.5 }} className="text-3xl mb-1">🔥</motion.div>
+                      <h3 className="font-bold text-orange-900 text-lg">{milestone} Day Streak!</h3>
+                      <p className="text-sm text-orange-800 font-medium">
+                        {milestone === 3 ? "Keep it going." : milestone === 7 ? "One week strong." : milestone === 14 ? "Two weeks strong." : "30 days!"}
+                      </p>
+                    </motion.div>
+                  ) : animationState === 'restored' ? (
+                    <motion.div
+                      key="restored"
+                      initial={{ scale: shouldReduceMotion ? 1 : 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: shouldReduceMotion ? 1 : 0.9, opacity: 0 }}
+                      className="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-300 flex flex-col items-center text-center shadow-[0_0_20px_rgba(16,185,129,0.15)]"
+                    >
+                      <motion.div animate={shouldReduceMotion ? {} : { scale: [1, 1.15, 1] }} transition={{ repeat: Infinity, duration: 1.5 }} className="text-3xl mb-1">🔥</motion.div>
+                      <h3 className="font-bold text-emerald-800 text-lg">Streak Restored!</h3>
+                      <p className="text-sm text-emerald-700 mt-1 font-medium">
+                        Your streak is back: <strong>{restoredStreak} days</strong>
+                      </p>
+                    </motion.div>
+                  ) : (
+                    <motion.div 
+                      key="normal"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-between"
+                    >
+                      <div>
+                        <h3 className="font-bold text-emerald-800">You're on fire! 🔥</h3>
+                        <p className="text-xs font-medium text-emerald-700 mt-1">
+                          {streakStatus.currentStreak} day streak
+                        </p>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              )}
+
               <div
                 className="rounded-2xl p-4 mb-5 flex items-center justify-between"
                 style={{ background: '#F5F0FF', border: '1.5px solid #E4D9FF' }}
@@ -174,7 +344,7 @@ export default function Landing() {
               </motion.button>
 
               <p className="mt-5 text-xs text-center" style={{ color: '#A89BC4' }}>
-                One attempt per student. Timer is {poll?.timerSeconds}s — answer fast!
+                One attempt per student.
               </p>
             </>
           )}

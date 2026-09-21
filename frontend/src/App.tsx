@@ -4,6 +4,8 @@ import StudentAuth from './pages/StudentAuth';
 import QuestionPage from './pages/QuestionPage';
 import ResultPage from './pages/ResultPage';
 import Leaderboard from './pages/Leaderboard';
+import PersonalStats from './pages/PersonalStats';
+import SocialHub from './pages/SocialHub';
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminQuestion from './pages/admin/AdminQuestion';
@@ -18,6 +20,8 @@ export default function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/play" element={<QuestionPage />} />
         <Route path="/result" element={<ResultPage />} />
+        <Route path="/stats" element={<PersonalStats />} />
+        <Route path="/social" element={<SocialHub />} />
         <Route path="/leaderboard/:pollLaunchId" element={<Leaderboard />} />
         <Route path="/leaderboard/q/:questionId" element={<Leaderboard />} />
 

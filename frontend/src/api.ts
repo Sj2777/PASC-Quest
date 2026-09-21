@@ -18,10 +18,10 @@ async function req<T>(path: string, options?: RequestInit): Promise<T> {
 
 export const api = {
   // Student Auth
-  registerStudent: (nickname: string, password: string) =>
+  registerStudent: (nickname: string, password: string, branch: string) =>
     req<{ id: string; nickname: string }>('/api/student/register', {
       method: 'POST',
-      body: JSON.stringify({ nickname, password }),
+      body: JSON.stringify({ nickname, password, branch }),
     }),
   loginStudent: (nickname: string, password: string) =>
     req<{ id: string; nickname: string }>('/api/student/login', {
@@ -30,6 +30,16 @@ export const api = {
     }),
   logoutStudent: () => req<{ message: string }>('/api/student/logout', { method: 'POST' }),
   getMe: () => req<Student>('/api/student/me'),
+  getStreakStatus: () => req<StreakStatus>('/api/student/streak-status'),
+  getStudentStats: () => req<StudentStats>('/api/student/stats'),
+
+  // Social & Competitive
+  follow: (nickname: string) => req<{ message: string }>(`/api/social/follow/${nickname}`, { method: 'POST' }),
+  unfollow: (nickname: string) => req<{ message: string }>(`/api/social/unfollow/${nickname}`, { method: 'POST' }),
+  getFriends: () => req<{ friends: Friend[] }>('/api/social/friends'),
+  getBranchBattle: () => req<{ leaderboard: BranchBattleEntry[] }>('/api/leaderboards/branch-battle'),
+  getHallOfFame: () => req<{ hallOfFame: HallOfFameEntry[] }>('/api/leaderboards/hall-of-fame'),
+  getSpeedKing: () => req<{ speedKing: SpeedKing | null }>('/api/leaderboards/speed-king'),
 
   // Poll (student)
   getCurrent: () => req<PollCurrent>('/api/poll/current'),
@@ -38,11 +48,12 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ nickname }),
     }),
-  submitAttempt: (token: string, nickname: string, selectedOption: number | null) =>
-    req<{ result: 'correct' | 'wrong' | 'timeout'; correctIndex: number }>('/api/poll/attempts', {
+  submitAttempt: (token: string, selectedOption: number | null) =>
+    req<{ result: string; correctIndex: number }>('/api/poll/attempts', {
       method: 'POST',
-      body: JSON.stringify({ token, nickname, selectedOption }),
+      body: JSON.stringify({ token, selectedOption }),
     }),
+  getGhostMode: (pollLaunchId: string) => req<GhostMode>(`/api/poll/${pollLaunchId}/ghost`),
 
   // Admin
   adminLogin: (email: string, password: string) =>
@@ -88,6 +99,65 @@ export interface Student {
   branch: string | null;
   currentStreak: number;
   bestStreak: number;
+}
+
+export interface StreakStatus {
+  currentStreak: number;
+  bestStreak: number;
+  comebackActive: boolean;
+  comebackProgress: number;
+  preBreakStreak: number;
+  daysRemainingToRecover: number | null;
+}
+
+export interface StudentStats {
+  accuracy: number;
+  avgTimeMs: number | null;
+  currentStreak: number;
+  bestStreak: number;
+  rankHistory: Array<{
+    date: string;
+    rank: number;
+    totalStudents: number;
+  }>;
+}
+
+export interface Friend {
+  id: string;
+  nickname: string;
+  currentStreak: number;
+  bestStreak: number;
+  branch: string | null;
+}
+
+export interface BranchBattleEntry {
+  branch: string;
+  accuracy: number;
+  totalAttempts: number;
+}
+
+export interface HallOfFameEntry {
+  id: string;
+  nickname: string;
+  currentStreak: number;
+  bestStreak: number;
+  branch: string | null;
+}
+
+export interface SpeedKing {
+  nickname: string;
+  timeTakenMs: number;
+  submittedAt: string;
+}
+
+export interface GhostMode {
+  total: number;
+  correct: number;
+  wrong: number;
+  timeout: number;
+  correctPercent: number;
+  wrongPercent: number;
+  timeoutPercent: number;
 }
 
 export interface PollCurrent {

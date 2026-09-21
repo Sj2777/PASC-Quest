@@ -4,12 +4,15 @@ import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
 import { studentAuthMiddleware } from '../middleware/studentAuth';
+import { getStreakStatus } from '../services/streakService';
+import { getStudentStats } from '../services/statsService';
 
 const router = Router();
 
 const RegisterSchema = z.object({
   nickname: z.string().min(3).max(20),
   password: z.string().min(6),
+  branch: z.enum(['COMP', 'IT', 'AIDS', 'ENTC', 'EXTC']),
 });
 
 const LoginSchema = z.object({
@@ -34,7 +37,7 @@ router.post('/register', async (req: Request, res: Response) => {
     res.status(400).json({ error: 'Invalid input', details: parsed.error.flatten() });
     return;
   }
-  const { nickname, password } = parsed.data;
+  const { nickname, password, branch } = parsed.data;
 
   try {
     // Check nickname uniqueness up front
@@ -49,7 +52,7 @@ router.post('/register', async (req: Request, res: Response) => {
       data: {
         nickname,
         passwordHash,
-        branch: null,
+        branch,
       },
     });
 
@@ -136,6 +139,29 @@ router.get('/me', studentAuthMiddleware, async (req: Request, res: Response) => 
 
     res.json(student);
   } catch {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// GET /api/student/streak-status
+router.get('/streak-status', studentAuthMiddleware, async (req: Request, res: Response) => {
+  const studentId = (req as any).studentId as string;
+  try {
+    const status = await getStreakStatus(studentId);
+    res.json(status);
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// GET /api/student/stats
+router.get('/stats', studentAuthMiddleware, async (req: Request, res: Response) => {
+  const studentId = (req as any).studentId as string;
+  try {
+    const stats = await getStudentStats(studentId);
+    res.json(stats);
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
 });

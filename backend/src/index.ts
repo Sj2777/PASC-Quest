@@ -5,6 +5,8 @@ import dotenv from 'dotenv';
 import adminRouter from './routes/admin';
 import pollRouter from './routes/poll';
 import studentRouter from './routes/student';
+import socialRouter from './routes/social';
+import leaderboardsRouter from './routes/leaderboards';
 import { startScheduler } from './jobs/scheduler';
 
 dotenv.config();
@@ -31,6 +33,8 @@ app.use('/api/admin', adminRouter);
 app.use('/admin', adminRouter);
 app.use('/api/poll', pollRouter);
 app.use('/api/student', studentRouter);
+app.use('/api/social', socialRouter);
+app.use('/api/leaderboards', leaderboardsRouter);
 
 // Start auto-launch scheduler
 startScheduler();

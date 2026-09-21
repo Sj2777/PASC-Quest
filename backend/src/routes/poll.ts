@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import prisma from '../lib/prisma';
 import { studentAuthMiddleware, optionalStudentAuth } from '../middleware/studentAuth';
+import { updateStreakOnCorrectAttempt } from '../services/streakService';
 
 const router = Router();
 
@@ -163,6 +164,10 @@ router.post('/attempts', studentAuthMiddleware, async (req: Request, res: Respon
       },
     });
 
+    if (result === 'CORRECT') {
+      await updateStreakOnCorrectAttempt(studentId);
+    }
+
     res.json({ result: result.toLowerCase(), correctIndex: q.correctIndex });
   } catch (err: any) {
     // Prisma unique constraint violation [studentId, pollLaunchId]
@@ -240,6 +245,56 @@ router.get('/:pollLaunchId/leaderboard', optionalStudentAuth, async (req: Reques
       myEntry,
     });
   } catch {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// GET /api/poll/:pollLaunchId/ghost — requires student authentication
+// Returns aggregate statistics for a specific poll launch
+router.get('/:pollLaunchId/ghost', studentAuthMiddleware, async (req: Request, res: Response) => {
+  const pollLaunchId = req.params.pollLaunchId as string;
+
+  try {
+    const attempts = await prisma.attempt.findMany({
+      where: { pollLaunchId },
+      select: { result: true }
+    });
+
+    const total = attempts.length;
+    
+    if (total === 0) {
+      return res.json({
+        total: 0,
+        correct: 0,
+        wrong: 0,
+        timeout: 0,
+        correctPercent: 0,
+        wrongPercent: 0,
+        timeoutPercent: 0
+      });
+    }
+
+    let correct = 0;
+    let wrong = 0;
+    let timeout = 0;
+
+    for (const a of attempts) {
+      if (a.result === 'CORRECT') correct++;
+      else if (a.result === 'WRONG') wrong++;
+      else if (a.result === 'TIMEOUT') timeout++;
+    }
+
+    res.json({
+      total,
+      correct,
+      wrong,
+      timeout,
+      correctPercent: (correct / total) * 100,
+      wrongPercent: (wrong / total) * 100,
+      timeoutPercent: (timeout / total) * 100
+    });
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
 });

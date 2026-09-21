@@ -1,4 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+
+const BRANCH_OPTIONS = [
+  { value: 'COMP', label: 'Computer Engineering' },
+  { value: 'IT', label: 'Information Technology' },
+  { value: 'AIDS', label: 'Artificial Intelligence and Data Science' },
+  { value: 'ENTC', label: 'Electronics and Computer Engineering' },
+  { value: 'EXTC', label: 'Electronics and Telecommunication' },
+];
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { api } from '../api';
@@ -7,10 +15,69 @@ export default function StudentAuth() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<'register' | 'login'>('register');
   const [nickname, setNickname] = useState('');
+  const [branch, setBranch] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [focusedIndex, setFocusedIndex] = useState(-1);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    if (isDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isDropdownOpen]);
+
+  useEffect(() => {
+    if (isDropdownOpen) {
+      const idx = BRANCH_OPTIONS.findIndex(o => o.value === branch);
+      setFocusedIndex(idx >= 0 ? idx : 0);
+    }
+  }, [isDropdownOpen, branch]);
+
+  const handleDropdownKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      setIsDropdownOpen(false);
+      return;
+    }
+    
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (!isDropdownOpen) {
+        setIsDropdownOpen(true);
+        return;
+      }
+      const dir = e.key === 'ArrowDown' ? 1 : -1;
+      setFocusedIndex((prev) => {
+        let next = prev + dir;
+        if (next < 0) next = BRANCH_OPTIONS.length - 1;
+        if (next >= BRANCH_OPTIONS.length) next = 0;
+        return next;
+      });
+      return;
+    }
+
+    if (e.key === 'Enter' || e.key === ' ') {
+      if (isDropdownOpen) {
+        e.preventDefault(); // prevent form submit
+        if (focusedIndex >= 0) {
+          setBranch(BRANCH_OPTIONS[focusedIndex].value);
+        }
+        setIsDropdownOpen(false);
+      }
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,6 +94,10 @@ export default function StudentAuth() {
         setError('Nickname must be between 3 and 20 characters');
         return;
       }
+      if (!branch) {
+        setError('Please select your branch');
+        return;
+      }
       if (password.length < 6) {
         setError('Password must be at least 6 characters');
         return;
@@ -38,7 +109,7 @@ export default function StudentAuth() {
 
       setSubmitting(true);
       try {
-        await api.registerStudent(trimmedNick, password);
+        await api.registerStudent(trimmedNick, password, branch);
         navigate('/');
       } catch (err: any) {
         // Exact message from backend: reason or error
@@ -70,6 +141,7 @@ export default function StudentAuth() {
     setError('');
     setPassword('');
     setConfirmPassword('');
+    setBranch('');
   };
 
   return (
@@ -170,6 +242,77 @@ export default function StudentAuth() {
                 }}
               />
             </div>
+
+            {mode === 'register' && (
+              <div className="relative" ref={dropdownRef}>
+                <label className="block text-sm font-semibold mb-1.5" style={{ color: 'var(--ink)' }}>
+                  Branch
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setIsDropdownOpen((prev) => !prev)}
+                  onKeyDown={handleDropdownKeyDown}
+                  aria-haspopup="listbox"
+                  aria-expanded={isDropdownOpen}
+                  aria-controls={isDropdownOpen ? "branch-listbox" : undefined}
+                  aria-activedescendant={isDropdownOpen && focusedIndex >= 0 ? `branch-option-${focusedIndex}` : undefined}
+                  className="w-full pl-4 pr-10 py-3 rounded-2xl text-base font-medium outline-none border-2 transition-colors text-left relative flex items-center"
+                  style={{
+                    background: '#F5F0FF',
+                    borderColor: isDropdownOpen || branch ? 'var(--primary)' : '#E4D9FF',
+                    color: branch ? 'var(--ink)' : '#8A7BA8',
+                  }}
+                >
+                  <span className="truncate flex-1">
+                    {branch ? BRANCH_OPTIONS.find((o) => o.value === branch)?.label : 'Select your branch'}
+                  </span>
+                  <svg width="12" height="8" viewBox="0 0 12 8" fill="none" className="absolute right-4 shrink-0 transition-transform duration-200" style={{ transform: isDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                    <path d="M1.5 1.5L6 6L10.5 1.5" stroke="#8A7BA8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+
+                {isDropdownOpen && (
+                  <ul
+                    id="branch-listbox"
+                    role="listbox"
+                    className="absolute z-50 w-full mt-2 rounded-2xl border-2 py-2 shadow-lg"
+                    style={{
+                      background: '#FFFFFF',
+                      borderColor: '#E4D9FF',
+                      boxShadow: '0 10px 25px rgba(36,27,58,0.08)',
+                      maxHeight: '280px',
+                      overflowY: 'auto',
+                    }}
+                  >
+                    {BRANCH_OPTIONS.map((option, index) => {
+                      const isSelected = branch === option.value;
+                      const isFocused = focusedIndex === index;
+                      return (
+                        <li
+                          key={option.value}
+                          id={`branch-option-${index}`}
+                          role="option"
+                          aria-selected={isSelected}
+                          onClick={() => {
+                            setBranch(option.value);
+                            setIsDropdownOpen(false);
+                          }}
+                          onMouseEnter={() => setFocusedIndex(index)}
+                          className="px-4 py-3 cursor-pointer transition-colors break-words"
+                          style={{
+                            background: isFocused ? '#F5F0FF' : 'transparent',
+                            color: isSelected ? 'var(--primary)' : 'var(--ink)',
+                            fontWeight: isSelected ? '600' : '500',
+                          }}
+                        >
+                          {option.label}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-semibold mb-1.5" style={{ color: 'var(--ink)' }}>

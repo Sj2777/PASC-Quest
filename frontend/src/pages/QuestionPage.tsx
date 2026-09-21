@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { api } from '../api';
 import type { PollCurrent } from '../api';
 
@@ -11,7 +11,7 @@ const CARD_COLORS = [
   'var(--card-mint)',
 ];
 
-function TimerRing({ seconds, total }: { seconds: number; total: number }) {
+function TimerRing({ seconds, total, shouldReduceMotion }: { seconds: number; total: number; shouldReduceMotion: boolean }) {
   const radius = 64;
   const circumference = 2 * Math.PI * radius;
   const progress = seconds / total;
@@ -23,8 +23,15 @@ function TimerRing({ seconds, total }: { seconds: number; total: number }) {
       ? 'var(--warning)'
       : '#FF4D4D';
 
+  const isVeryLow = seconds <= 3 && seconds > 0;
+
   return (
-    <div className="relative flex items-center justify-center" style={{ width: 160, height: 160 }}>
+    <motion.div 
+      className="relative flex items-center justify-center" 
+      style={{ width: 160, height: 160 }}
+      animate={!shouldReduceMotion && isVeryLow ? { scale: [1, 1.05, 1] } : {}}
+      transition={isVeryLow ? { repeat: Infinity, duration: 0.8, ease: "easeInOut" } : {}}
+    >
       <svg width="160" height="160" viewBox="0 0 160 160">
         <circle
           className="timer-ring-track"
@@ -38,6 +45,7 @@ function TimerRing({ seconds, total }: { seconds: number; total: number }) {
           stroke={strokeColor}
           strokeDasharray={circumference}
           strokeDashoffset={offset}
+          style={{ transition: 'stroke-dashoffset 1s linear, stroke 0.3s ease' }}
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -49,7 +57,7 @@ function TimerRing({ seconds, total }: { seconds: number; total: number }) {
         </span>
         <span className="text-xs font-medium mt-0.5" style={{ color: '#A89BC4' }}>sec</span>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -66,7 +74,9 @@ export default function QuestionPage() {
   const [secondsLeft, setSecondsLeft] = useState(state?.timerSeconds ?? 30);
   const [selected, setSelected] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
   const timedOut = useRef(false);
+  const shouldReduceMotion = useReducedMotion();
 
   // Redirect if navigated directly without state or if unauthenticated
   useEffect(() => {
@@ -82,15 +92,25 @@ export default function QuestionPage() {
   const submit = useCallback(async (optionIndex: number | null) => {
     if (submitting || !state) return;
     setSubmitting(true);
+    setErrorMsg('');
     try {
-      const result = await api.submitAttempt(state.token, state.nickname, optionIndex);
+      const result = await api.submitAttempt(state.token, optionIndex);
       navigate('/result', { state: { result, poll: state.poll, pollLaunchId: state.poll.pollLaunchId, questionId: state.poll.questionId } });
     } catch (err: any) {
       if (err?.status === 401 || err?.error === 'not_authenticated') {
         navigate('/auth');
         return;
       }
-      navigate('/result', { state: { result: { result: 'timeout', correctIndex: 0 }, poll: state.poll, pollLaunchId: state.poll.pollLaunchId, questionId: state.poll.questionId } });
+      
+      // Attempt to retain actual error message instead of blind timeout fallback
+      const message = err?.message || err?.error || 'Failed to submit answer';
+      if (message.toLowerCase().includes('timeout') || timedOut.current) {
+        navigate('/result', { state: { result: { result: 'timeout', correctIndex: 0 }, poll: state.poll, pollLaunchId: state.poll.pollLaunchId, questionId: state.poll.questionId } });
+      } else {
+        setErrorMsg(message);
+        setSubmitting(false);
+        setSelected(null); // Unlock UI for retry
+      }
     }
   }, [submitting, state, navigate]);
 
@@ -128,14 +148,37 @@ export default function QuestionPage() {
       <div className="blob blob-1" style={{ opacity: 0.2 }} />
       <div className="blob blob-2" style={{ opacity: 0.15 }} />
 
-      <div className="relative z-10 w-full max-w-lg">
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+        className="relative z-10 w-full max-w-lg"
+      >
         {/* Timer */}
         <div className="flex justify-center mb-6">
-          <TimerRing seconds={secondsLeft} total={state.timerSeconds} />
+          <TimerRing seconds={secondsLeft} total={state.timerSeconds} shouldReduceMotion={shouldReduceMotion ?? false} />
         </div>
 
+        <AnimatePresence>
+          {errorMsg && (
+            <motion.div
+              initial={{ opacity: 0, y: -10, height: 0 }}
+              animate={{ opacity: 1, y: 0, height: 'auto' }}
+              exit={{ opacity: 0, y: -10, height: 0 }}
+              className="mb-4 overflow-hidden"
+            >
+              <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm text-center font-medium">
+                {errorMsg}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Question */}
-        <div
+        <motion.div
+          initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
           className="rounded-[24px] p-6 mb-6"
           style={{ background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(16px)', boxShadow: '0 4px 24px rgba(36,27,58,0.1)' }}
         >
@@ -145,21 +188,35 @@ export default function QuestionPage() {
           <h2 className="font-display text-2xl font-bold leading-snug" style={{ color: 'var(--ink)' }}>
             {poll.text}
           </h2>
-        </div>
+        </motion.div>
 
         {/* Options */}
         <div className="grid gap-3">
           {(poll.options ?? []).map((opt, idx) => (
             <motion.button
               key={idx}
-              whileTap={{ scale: 0.97 }}
+              initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 10 }}
+              animate={
+                selected !== null 
+                  ? {
+                      scale: selected === idx ? 0.98 : 1,
+                      opacity: selected !== idx ? 0.5 : 1,
+                      y: 0
+                    }
+                  : { scale: 1, opacity: 1, y: 0 }
+              }
+              whileHover={selected === null && !submitting && !shouldReduceMotion ? { scale: 1.02, y: -2 } : {}}
+              whileTap={{ scale: shouldReduceMotion ? 1 : 0.95 }}
+              transition={{ 
+                type: 'spring', stiffness: 400, damping: 25,
+                delay: selected === null ? 0.15 + idx * 0.05 : 0 
+              }}
               onClick={() => handleSelect(idx)}
               disabled={selected !== null || submitting}
-              className="option-card text-left w-full flex items-center gap-3"
+              className={`option-card text-left w-full flex items-center gap-3 ${selected !== null || submitting ? 'cursor-default' : 'cursor-pointer'}`}
               style={{
                 background: selected === null ? CARD_COLORS[idx % CARD_COLORS.length] : '#F5F0FF',
                 border: selected === idx ? '2px solid var(--primary)' : '2px solid transparent',
-                opacity: selected !== null && selected !== idx ? 0.6 : 1,
               }}
             >
               <span
@@ -178,10 +235,16 @@ export default function QuestionPage() {
           ))}
         </div>
 
-        <p className="mt-6 text-xs text-center" style={{ color: '#A89BC4' }}>
+        <motion.p 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4 }}
+          className="mt-6 text-xs text-center" 
+          style={{ color: '#A89BC4' }}
+        >
           Playing as <strong style={{ color: '#6B5B8E' }}>{state.nickname}</strong>
-        </p>
-      </div>
+        </motion.p>
+      </motion.div>
     </div>
   );
 }
