@@ -386,7 +386,7 @@ export default function Leaderboard() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6 }}
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/student')}
           className="w-full py-3 rounded-2xl font-bold text-sm transition-all"
           style={{
             background: 'rgba(255,255,255,0.06)',

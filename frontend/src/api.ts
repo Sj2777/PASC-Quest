@@ -39,10 +39,11 @@ export const api = {
   getFriends: () => req<{ friends: Friend[] }>('/api/social/friends'),
   getBranchBattle: () => req<{ leaderboard: BranchBattleEntry[] }>('/api/leaderboards/branch-battle'),
   getHallOfFame: () => req<{ hallOfFame: HallOfFameEntry[] }>('/api/leaderboards/hall-of-fame'),
-  getSpeedKing: () => req<{ speedKing: SpeedKing | null }>('/api/leaderboards/speed-king'),
+  getSpeedKing: (pollLaunchId: string) => req<{ speedKing: SpeedKing | null }>(`/api/leaderboards/${pollLaunchId}/speed-king`),
 
   // Poll (student)
-  getCurrent: () => req<PollCurrent>('/api/poll/current'),
+  // Phase 7C-A: returns ALL available launches as an array (empty = none available).
+  getCurrent: () => req<PollLaunchItem[]>('/api/poll/current'),
   startPoll: (pollLaunchId: string, nickname: string) =>
     req<{ token: string; timerSeconds: number }>(`/api/poll/${pollLaunchId}/start`, {
       method: 'POST',
@@ -62,6 +63,13 @@ export const api = {
       body: JSON.stringify({ email, password }),
     }),
   adminLogout: () => req('/api/admin/logout', { method: 'POST' }),
+  // Phase 7B: close a specific PollLaunch by its launch ID.
+  // Only closes the specified launch; all other launches are unaffected.
+  closeLaunch: (launchId: string) =>
+    req<{ message: string; launch: { id: string; questionId: string; launchedAt: string; closedAt: string | null } }>(
+      `/api/admin/launches/${launchId}/close`,
+      { method: 'POST' }
+    ),
   getQuestions: (status?: string) =>
     req<Question[]>(`/api/admin/questions${status ? `?status=${status}` : ''}`),
   createQuestion: (body: QuestionInput) =>
@@ -160,6 +168,24 @@ export interface GhostMode {
   timeoutPercent: number;
 }
 
+// Phase 7C-A: Item in the array returned by GET /api/poll/current.
+// Each element is a single available PollLaunch + its parent Question fields.
+// Also used as the poll object passed to QuestionPage via navigation state
+// (it is a superset of the fields QuestionPage reads: text, options, pollLaunchId, questionId).
+export interface PollLaunchItem {
+  pollLaunchId: string;
+  questionId: string;
+  text: string;
+  options: string[];
+  timerSeconds: number;
+  launchedAt: string;    // ISO-8601
+  expiresAt: string;     // ISO-8601 = launchedAt + 24h
+  completed: boolean;    // Phase 7C-B
+}
+
+// PollCurrent — kept for QuestionPage navigation state compatibility.
+// QuestionPage reads: poll.text, poll.options, poll.pollLaunchId, poll.questionId.
+// A PollLaunchItem satisfies all of these fields.
 export interface PollCurrent {
   status: 'live' | 'none';
   pollLaunchId?: string;

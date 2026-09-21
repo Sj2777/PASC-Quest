@@ -49,15 +49,16 @@ export default function ResultPage() {
 
     // Fetch data
     api.getMe().then(setMe).catch(() => {});
-    api.getSpeedKing().then(res => setSpeedKing(res.speedKing)).catch(() => {});
     
     if (state) {
       const { poll, pollLaunchId, questionId } = state;
       const targetId = pollLaunchId || poll.pollLaunchId || questionId;
       if (targetId) {
         api.getGhostMode(targetId).then(setGhostMode).catch(() => {});
+        api.getSpeedKing(targetId).then(res => setSpeedKing(res.speedKing)).catch(() => {});
       }
     }
+
   }, [state, navigate]);
 
   if (!state) return null;
@@ -84,7 +85,7 @@ export default function ResultPage() {
     timeout: {
       emoji: '⏰',
       title: "Time's up",
-      subtitle: "Don't worry, there's always tomorrow.",
+      subtitle: "Don't worry, keep trying!",
       accent: 'var(--warning)',
       bg: '#FFF8EC',
     },
@@ -228,7 +229,7 @@ export default function ResultPage() {
                   {isSpeedKingWinner ? 'SPEED KING' : "Speed King"}
                 </p>
                 <p className="font-display font-bold text-lg" style={{ color: 'var(--ink)' }}>
-                  {isSpeedKingWinner ? 'Fastest correct answer today' : `${speedKing.nickname} · ${formatTime(speedKing.timeTakenMs)}`}
+                  {isSpeedKingWinner ? 'Fastest correct answer' : `${speedKing.nickname} · ${formatTime(speedKing.timeTakenMs)}`}
                 </p>
               </div>
             </div>
@@ -341,8 +342,7 @@ export default function ResultPage() {
           className="mt-4 flex flex-col gap-3"
         >
           <button
-            id="see-leaderboard-btn"
-            onClick={() => navigate(`/leaderboard/${targetLaunchId}`)}
+            onClick={() => navigate('/student')}
             className="w-full py-3 rounded-2xl font-bold text-sm transition-all"
             style={{
               background: 'linear-gradient(135deg,#241B3A,#3D2B6B)',
@@ -354,12 +354,24 @@ export default function ResultPage() {
             onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.02)')}
             onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
           >
+            ← Back to Questions
+          </button>
+          <button
+            onClick={() => navigate(`/leaderboard/${targetLaunchId}`)}
+            className="w-full py-3 rounded-2xl font-bold text-sm transition-all"
+            style={{
+              background: 'white',
+              color: 'var(--ink)',
+              border: '1.5px solid #E4D9FF',
+              cursor: 'pointer',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.02)')}
+            onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+          >
             🏆 See Leaderboard
           </button>
-          <p className="text-xs text-center" style={{ color: '#A89BC4' }}>
-            Come back tomorrow for the next question.
-          </p>
         </motion.div>
+
       </div>
     </div>
   );

@@ -5,7 +5,7 @@ import { z } from 'zod';
 import prisma from '../lib/prisma';
 import { adminAuthMiddleware, requireRole } from '../middleware/adminAuth';
 import { stringify } from 'csv-stringify/sync';
-import { executeQuestionLaunch } from '../services/launchService';
+import { executeQuestionLaunch, closePollLaunch } from '../services/launchService';
 
 console.log('>>> admin.ts loaded');
 
@@ -292,6 +292,33 @@ router.post('/questions/:id/launch', adminAuthMiddleware, async (req: Request, r
     res.status(500).json({ error: 'Server error' });
   }
 });
+
+// POST /api/admin/launches/:launchId/close — Phase 7A: manually close a specific launch
+// Idempotent: closing an already-closed launch is safe.
+// Isolated: only the specified launch is closed; other launches are unaffected.
+router.post('/launches/:launchId/close', adminAuthMiddleware, async (req: Request, res: Response) => {
+  const launchId = req.params.launchId as string;
+
+  try {
+    const result = await closePollLaunch(launchId);
+    if (result === null) {
+      res.status(404).json({ error: 'Launch not found' });
+      return;
+    }
+    res.json({
+      message: result.closedAt ? 'Launch closed' : 'Launch was already closed',
+      launch: {
+        id: result.id,
+        questionId: result.questionId,
+        launchedAt: result.launchedAt,
+        closedAt: result.closedAt,
+      },
+    });
+  } catch {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 
 // GET /api/admin/stats — aggregate per PollLaunch
 router.get('/stats', adminAuthMiddleware, async (_req: Request, res: Response) => {

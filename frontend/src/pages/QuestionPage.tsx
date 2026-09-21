@@ -183,7 +183,7 @@ export default function QuestionPage() {
           style={{ background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(16px)', boxShadow: '0 4px 24px rgba(36,27,58,0.1)' }}
         >
           <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#A89BC4' }}>
-            Today's question
+            Live question
           </p>
           <h2 className="font-display text-2xl font-bold leading-snug" style={{ color: 'var(--ink)' }}>
             {poll.text}

@@ -74,7 +74,7 @@ export default function SocialHub() {
         className="relative z-10 w-full max-w-lg"
       >
         <button
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/student')}
           className="mb-6 flex items-center text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors"
         >
           ← Back to Home

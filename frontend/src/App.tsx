@@ -11,13 +11,17 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminQuestion from './pages/admin/AdminQuestion';
 import AdminManagement from './pages/admin/AdminManagement';
 
+import EntryPage from './pages/EntryPage';
+
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<EntryPage />} />
+        
         {/* Student flow */}
         <Route path="/auth" element={<StudentAuth />} />
-        <Route path="/" element={<Landing />} />
+        <Route path="/student" element={<Landing />} />
         <Route path="/play" element={<QuestionPage />} />
         <Route path="/result" element={<ResultPage />} />
         <Route path="/stats" element={<PersonalStats />} />

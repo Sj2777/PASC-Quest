@@ -4,6 +4,7 @@ import { z } from 'zod';
 import prisma from '../lib/prisma';
 import { studentAuthMiddleware, optionalStudentAuth } from '../middleware/studentAuth';
 import { updateStreakOnCorrectAttempt } from '../services/streakService';
+import { LAUNCH_LIFETIME_MS } from '../services/launchService';
 
 const router = Router();
 
@@ -14,41 +15,63 @@ interface StartTokenPayload {
 }
 
 // GET /api/poll/current — public/unauthenticated
-router.get('/current', async (_req: Request, res: Response) => {
+// Phase 7C-A: Returns ALL currently available PollLaunches as an array.
+// An empty array means no questions are currently available.
+// Each launch is included only when ALL of:
+//   1. PollLaunch.closedAt is null (not manually closed)
+//   2. PollLaunch.launchedAt <= now  (launch has actually started)
+//   3. PollLaunch.launchedAt >  now - 24h  (within its lifetime window)
+//   4. parent Question.status === LIVE
+// Ordered: newest launchedAt first.
+router.get('/current', optionalStudentAuth, async (req: Request, res: Response) => {
   try {
-    const q = await prisma.question.findFirst({ where: { status: 'LIVE' } });
-    if (!q) {
-      res.json({ status: 'none' });
-      return;
-    }
+    const now = new Date();
+    const windowStart = new Date(now.getTime() - LAUNCH_LIFETIME_MS);
 
-    // Find active PollLaunch for the LIVE question
-    const launch = await prisma.pollLaunch.findFirst({
+    const launches = await prisma.pollLaunch.findMany({
       where: {
-        questionId: q.id,
         closedAt: null,
+        launchedAt: { gt: windowStart, lte: now }, // within [now-24h, now]
+        question: { status: 'LIVE' },              // parent Question must be LIVE
       },
       orderBy: { launchedAt: 'desc' },
+      include: { question: true },
     });
 
-    if (!launch) {
-      res.json({ status: 'none' });
-      return;
+    const studentId = (req as any).studentId as string | undefined;
+    const completedSet = new Set<string>();
+
+    if (studentId && launches.length > 0) {
+      const attempts = await prisma.attempt.findMany({
+        where: {
+          studentId,
+          pollLaunchId: { in: launches.map((l) => l.id) },
+        },
+        select: { pollLaunchId: true },
+      });
+      for (const a of attempts) {
+        completedSet.add(a.pollLaunchId);
+      }
     }
 
-    res.json({
-      status: 'live',
-      pollLaunchId: launch.id,
-      questionId: q.id,
-      text: q.text,
-      options: q.options,
-      timerSeconds: q.timerSeconds,
+    const items = launches.map((l) => ({
+      pollLaunchId: l.id,
+      questionId: l.question.id,
+      text: l.question.text,
+      options: l.question.options,
+      timerSeconds: l.question.timerSeconds,
+      launchedAt: l.launchedAt.toISOString(),
+      expiresAt: new Date(l.launchedAt.getTime() + LAUNCH_LIFETIME_MS).toISOString(),
+      completed: completedSet.has(l.id),
       // correctIndex is intentionally omitted
-    });
+    }));
+
+    res.json(items);
   } catch {
     res.status(500).json({ error: 'Server error' });
   }
 });
+
 
 // POST /api/poll/:pollLaunchId/start — requires student authentication
 router.post('/:pollLaunchId/start', studentAuthMiddleware, async (req: Request, res: Response) => {
@@ -62,7 +85,20 @@ router.post('/:pollLaunchId/start', studentAuthMiddleware, async (req: Request, 
       include: { question: true },
     });
 
-    if (!launch || launch.closedAt !== null || launch.question.status !== 'LIVE') {
+    // Phase 7A (corrected): reject if the launch is inactive for ANY of these reasons:
+    //   - does not exist
+    //   - manually closed (closedAt is set)
+    //   - has not yet started (launchedAt > now)  — structurally impossible via production
+    //     API but guarded here for defence-in-depth
+    //   - 24-hour window has elapsed (now >= launchedAt + 24h)
+    //   - parent Question is not LIVE  — defence-in-depth; also guards against a launch
+    //     whose question was force-closed outside normal flow
+    const now = Date.now();
+    const hasStarted   = launch ? launch.launchedAt.getTime() <= now : false;
+    const withinWindow = launch ? now < launch.launchedAt.getTime() + LAUNCH_LIFETIME_MS : false;
+    const questionLive = launch?.question.status === 'LIVE';
+
+    if (!launch || launch.closedAt !== null || !hasStarted || !withinWindow || !questionLive) {
       res.status(404).json({ error: 'No active poll launch found' });
       return;
     }

@@ -36,8 +36,8 @@ function RankChart({ data }: { data: StudentStats['rankHistory'] }) {
     <div className="rounded-2xl p-6 bg-white/70 backdrop-blur-md border border-white/60 shadow-sm mt-6">
       <div className="mb-4">
         <h3 className="font-display font-bold text-xl" style={{ color: 'var(--ink)' }}>Rank History</h3>
-        <p className="text-sm font-medium mt-1" style={{ color: '#6B5B8E' }}>
-          Rank {recent.rank} of {recent.totalStudents} students today
+        <p className="text-sm font-medium mt-1 opacity-90">
+          Rank {recent.rank} of {recent.totalStudents} students
         </p>
       </div>
       
@@ -94,7 +94,7 @@ export default function PersonalStats() {
         className="relative z-10 w-full max-w-md"
       >
         <button
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/student')}
           className="mb-6 flex items-center text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors"
         >
           ← Back to Home

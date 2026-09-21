@@ -98,32 +98,14 @@ router.get('/hall-of-fame', async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/leaderboards/speed-king
-// Returns the student with the fastest correct attempt submitted today (IST)
-router.get('/speed-king', async (req: Request, res: Response) => {
+// GET /api/leaderboards/:pollLaunchId/speed-king
+// Returns the student with the fastest correct attempt for this specific poll launch
+router.get('/:pollLaunchId/speed-king', async (req: Request, res: Response) => {
   try {
-    const now = new Date();
-    // Shift by +5:30 to get current IST time
-    const currentIst = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
-    
-    // Start of today in IST
-    const todayStartIst = new Date(currentIst);
-    todayStartIst.setUTCHours(0, 0, 0, 0);
-
-    // Tomorrow start in IST
-    const tomorrowStartIst = new Date(todayStartIst);
-    tomorrowStartIst.setUTCDate(tomorrowStartIst.getUTCDate() + 1);
-
-    // Convert back to UTC for database queries
-    const todayStartUtc = new Date(todayStartIst.getTime() - 5.5 * 60 * 60 * 1000);
-    const tomorrowStartUtc = new Date(tomorrowStartIst.getTime() - 5.5 * 60 * 60 * 1000);
-
+    const pollLaunchId = req.params.pollLaunchId as string;
     const speedKingAttempt = await prisma.attempt.findFirst({
       where: {
-        submittedAt: {
-          gte: todayStartUtc,
-          lt: tomorrowStartUtc
-        },
+        pollLaunchId,
         result: 'CORRECT',
         timeTakenMs: { not: null }
       },

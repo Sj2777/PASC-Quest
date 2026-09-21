@@ -2,16 +2,28 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { api } from '../api';
-import type { PollCurrent, Student, StreakStatus } from '../api';
+import type { PollLaunchItem, Student, StreakStatus } from '../api';
+
+
+/** Format expiry as a countdown, e.g. "Expires in 3h 42m" */
+function formatExpiryCountdown(expiresAt: string, nowMs: number): string {
+  const diffMs = new Date(expiresAt).getTime() - nowMs;
+  if (diffMs <= 0) return 'Expired';
+  const hours = Math.floor(diffMs / (1000 * 60 * 60));
+  const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+  if (hours > 0) return `Expires in ${hours}h ${mins}m`;
+  return `Expires in ${mins}m`;
+}
 
 export default function Landing() {
   const navigate = useNavigate();
   const [student, setStudent] = useState<Student | null>(null);
-  const [poll, setPoll] = useState<PollCurrent | null>(null);
+  const [polls, setPolls] = useState<PollLaunchItem[]>([]);
   const [streakStatus, setStreakStatus] = useState<StreakStatus | null>(null);
   const [loading, setLoading] = useState(true);
-  const [starting, setStarting] = useState(false);
-  const [error, setError] = useState('');
+  // Per-launch starting state (keyed by pollLaunchId)
+  const [starting, setStarting] = useState<Record<string, boolean>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const shouldReduceMotion = useReducedMotion();
 
@@ -21,6 +33,32 @@ export default function Landing() {
   const [restoredStreak, setRestoredStreak] = useState<number | null>(null);
 
   const MILESTONES = [3, 7, 14, 30];
+
+  // Tick every minute to update countdown UI
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 60000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Automatic refetch when a launch expires
+  useEffect(() => {
+    if (polls.length === 0) return;
+    let minDelay = Infinity;
+    const currentNow = Date.now();
+    polls.forEach(p => {
+      const ms = new Date(p.expiresAt).getTime() - currentNow;
+      if (ms > 0 && ms < minDelay) minDelay = ms;
+    });
+
+    if (minDelay === Infinity) return;
+    const delay = minDelay + 1000; // wait 1s past exact expiry to avoid race conditions
+    // Max timeout is ~24 days, safe for browser setTimeout
+    const timer = setTimeout(() => {
+      api.getCurrent().then(setPolls).catch(console.error);
+    }, delay);
+    return () => clearTimeout(timer);
+  }, [polls]);
 
   useEffect(() => {
     api.getMe()
@@ -58,14 +96,14 @@ export default function Landing() {
         }).catch(() => {});
         return api.getCurrent();
       })
-      .then((currentPoll) => {
-        setPoll(currentPoll);
+      .then((currentPolls) => {
+        setPolls(currentPolls);
       })
       .catch((err) => {
         if (err?.status === 401 || err?.error === 'not_authenticated') {
           navigate('/auth');
         } else {
-          setPoll({ status: 'none' });
+          setPolls([]);
         }
       })
       .finally(() => setLoading(false));
@@ -85,27 +123,36 @@ export default function Landing() {
     navigate('/auth');
   };
 
-  const handleStart = async () => {
-    if (!poll?.pollLaunchId || !student) return;
-    setStarting(true);
-    setError('');
+  // Phase 7C-A: Each Play button is per-launch. We start THAT specific launch
+  // and navigate to QuestionPage with its pollLaunchId.
+  const handleStart = async (pollItem: PollLaunchItem) => {
+    if (!student) return;
+    const id = pollItem.pollLaunchId;
+    setStarting((prev) => ({ ...prev, [id]: true }));
+    setErrors((prev) => ({ ...prev, [id]: '' }));
     try {
-      const { token, timerSeconds } = await api.startPoll(poll.pollLaunchId, student.nickname);
-      navigate('/play', { state: { poll, token, timerSeconds, nickname: student.nickname } });
+      const { token, timerSeconds } = await api.startPoll(id, student.nickname);
+      // Pass the PollLaunchItem as the poll object. QuestionPage reads:
+      //   poll.text, poll.options, poll.pollLaunchId, poll.questionId — all present.
+      navigate('/play', { state: { poll: pollItem, token, timerSeconds, nickname: student.nickname } });
     } catch (err: any) {
       if (err?.status === 401 || err?.error === 'not_authenticated') {
         navigate('/auth');
         return;
       }
       if (err?.reason === 'already_played') {
-        setError("You've already answered today's question! Come back tomorrow.");
+        setErrors((prev) => ({ ...prev, [id]: "You've already answered this question." }));
       } else {
-        setError('Something went wrong. Please try again.');
+        setErrors((prev) => ({ ...prev, [id]: 'Something went wrong. Please try again.' }));
       }
     } finally {
-      setStarting(false);
+      setStarting((prev) => ({ ...prev, [id]: false }));
     }
   };
+
+  // For the leaderboard button in the nav: if exactly one poll is live use it,
+  // otherwise hide the button (multi-question leaderboard navigation is Phase 7C-B).
+  const singlePollId = polls.length === 1 ? polls[0].pollLaunchId : null;
 
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center px-4 overflow-hidden">
@@ -144,9 +191,10 @@ export default function Landing() {
               >
                 Stats
               </button>
-              {poll?.pollLaunchId && (
+              {/* Leaderboard button: only shown when exactly one poll is live */}
+              {singlePollId && (
                 <button
-                  onClick={() => navigate(`/leaderboard/${poll.pollLaunchId}`)}
+                  onClick={() => navigate(`/leaderboard/${singlePollId}`)}
                   className="text-xs font-semibold px-3 py-1 rounded-xl border transition-all bg-white/50 hover:bg-white text-gray-700"
                   style={{ borderColor: '#E4D9FF' }}
                 >
@@ -179,7 +227,7 @@ export default function Landing() {
             QuizPop
           </h1>
           <p className="mt-2 text-base font-medium" style={{ color: '#6B5B8E' }}>
-            One question. One shot. Every day.
+            Available questions. One shot each.
           </p>
         </div>
 
@@ -192,14 +240,14 @@ export default function Landing() {
             <div className="flex justify-center py-8">
               <div className="w-10 h-10 rounded-full border-4 border-pink-200 border-t-pink-500 animate-spin" />
             </div>
-          ) : poll?.status === 'none' ? (
+          ) : polls.length === 0 ? (
             <div className="text-center py-6">
               <div className="text-5xl mb-4">☕</div>
               <h2 className="font-display text-2xl font-bold" style={{ color: 'var(--ink)' }}>
                 Nothing live yet
               </h2>
               <p className="mt-2 text-sm" style={{ color: '#6B5B8E' }}>
-                No poll is active right now. Check back soon!
+                No questions are available right now. Check back soon!
               </p>
             </div>
           ) : (
@@ -208,10 +256,12 @@ export default function Landing() {
                 Ready to play?
               </h2>
               <p className="text-sm mb-6" style={{ color: '#6B5B8E' }}>
-                Answer today's live question before time runs out.
+                {polls.length === 1
+                  ? 'Answer the live question before time runs out.'
+                  : `${polls.length} questions are live. Answer any or all of them.`}
               </p>
 
-              {/* Streak & Comeback UI */}
+              {/* Streak & Comeback UI — unchanged */}
               {streakStatus && streakStatus.comebackActive && (
                 <motion.div 
                   initial={animationState === 'comeback_reveal' ? { opacity: 0, scale: shouldReduceMotion ? 1 : 0.9, y: shouldReduceMotion ? 0 : 10 } : false}
@@ -307,6 +357,7 @@ export default function Landing() {
                 </AnimatePresence>
               )}
 
+              {/* "Playing as" chip */}
               <div
                 className="rounded-2xl p-4 mb-5 flex items-center justify-between"
                 style={{ background: '#F5F0FF', border: '1.5px solid #E4D9FF' }}
@@ -322,29 +373,72 @@ export default function Landing() {
                 <span className="text-2xl">⚡</span>
               </div>
 
-              {error && (
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="mb-4 text-sm font-medium"
-                  style={{ color: 'var(--error)' }}
-                >
-                  {error}
-                </motion.p>
-              )}
+              {/* Phase 7C-A: Per-launch question cards */}
+              <div className="space-y-3">
+                {polls.map((pollItem, idx) => {
+                  const id = pollItem.pollLaunchId;
+                  const isStarting = starting[id] ?? false;
+                  const err = errors[id] ?? '';
+                  const isCompleted = pollItem.completed;
+                  const isExpiredLocal = new Date(pollItem.expiresAt).getTime() - now <= 0;
 
-              <motion.button
-                whileTap={{ scale: 0.97 }}
-                onClick={handleStart}
-                disabled={starting}
-                className="w-full py-4 rounded-2xl text-white font-bold text-lg font-display transition-opacity disabled:opacity-60"
-                style={{ background: 'var(--primary)', boxShadow: '0 6px 24px rgba(255,77,141,0.4)' }}
-              >
-                {starting ? 'Starting…' : 'Start'}
-              </motion.button>
+                  return (
+                    <motion.div
+                      key={id}
+                      initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.05 * idx, duration: 0.3 }}
+                      className="rounded-2xl p-4"
+                      style={{
+                        background: isCompleted ? '#F0FDF4' : '#F5F0FF',
+                        border: isCompleted ? '1.5px solid #BBF7D0' : '1.5px solid #E4D9FF',
+                      }}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs uppercase tracking-wider font-bold mb-1" style={{ color: isCompleted ? '#22C55E' : '#8A7BA8' }}>
+                            Question {polls.length > 1 ? idx + 1 : ''} {isCompleted && '— COMPLETED'}
+                          </p>
+                          <p className="font-medium text-sm leading-snug line-clamp-2" style={{ color: 'var(--ink)' }}>
+                            {pollItem.text}
+                          </p>
+                          <p className="text-xs mt-1.5" style={{ color: isCompleted ? '#4ADE80' : '#A89BC4' }}>
+                            {formatExpiryCountdown(pollItem.expiresAt, now)}
+                          </p>
+                          {err && (
+                            <motion.p
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              className="mt-1.5 text-xs font-medium"
+                              style={{ color: 'var(--error)' }}
+                            >
+                              {err}
+                            </motion.p>
+                          )}
+                        </div>
+                        {isCompleted ? (
+                          <div className="flex-shrink-0 px-4 py-2.5 flex items-center justify-center">
+                            <span className="text-2xl">✅</span>
+                          </div>
+                        ) : (
+                          <motion.button
+                            whileTap={{ scale: 0.97 }}
+                            onClick={() => handleStart(pollItem)}
+                            disabled={isStarting || isExpiredLocal}
+                            className="flex-shrink-0 px-5 py-2.5 rounded-xl text-white font-bold text-sm font-display transition-opacity disabled:opacity-60"
+                            style={{ background: isExpiredLocal ? 'var(--gray-300)' : 'var(--primary)', boxShadow: isExpiredLocal ? 'none' : '0 4px 16px rgba(255,77,141,0.35)' }}
+                          >
+                            {isStarting ? 'Starting…' : isExpiredLocal ? 'Wait...' : 'Play'}
+                          </motion.button>
+                        )}
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
 
               <p className="mt-5 text-xs text-center" style={{ color: '#A89BC4' }}>
-                One attempt per student.
+                One attempt per question.
               </p>
             </>
           )}

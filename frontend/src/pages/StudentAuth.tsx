@@ -110,7 +110,7 @@ export default function StudentAuth() {
       setSubmitting(true);
       try {
         await api.registerStudent(trimmedNick, password, branch);
-        navigate('/');
+        navigate('/student');
       } catch (err: any) {
         // Exact message from backend: reason or error
         setError(err?.reason ?? err?.error ?? 'Registration failed');
@@ -126,7 +126,7 @@ export default function StudentAuth() {
       setSubmitting(true);
       try {
         await api.loginStudent(trimmedNick, password);
-        navigate('/');
+        navigate('/student');
       } catch (err: any) {
         // Exact message from backend: error or reason
         setError(err?.error ?? err?.reason ?? 'Login failed');
@@ -172,7 +172,7 @@ export default function StudentAuth() {
             QuizPop
           </h1>
           <p className="mt-2 text-base font-medium" style={{ color: '#6B5B8E' }}>
-            One question. One shot. Every day.
+            Available questions. One shot each.
           </p>
         </div>
 
@@ -402,6 +402,18 @@ export default function StudentAuth() {
                 </button>
               </>
             )}
+          </p>
+
+          <p className="mt-3 text-xs text-center" style={{ color: '#A89BC4' }}>
+            Are you an administrator?{' '}
+            <button
+              type="button"
+              onClick={() => navigate('/admin')}
+              className="font-bold underline hover:opacity-80 transition-opacity"
+              style={{ color: '#8A7BA8' }}
+            >
+              Login as Admin
+            </button>
           </p>
         </div>
       </motion.div>
