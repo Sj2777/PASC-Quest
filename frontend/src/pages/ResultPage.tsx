@@ -4,14 +4,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { api, type PollCurrent, type SpeedKing, type GhostMode } from '../api';
 
-const CARD_COLORS = [
-  'var(--card-lilac)',
-  'var(--card-sky)',
-  'var(--card-peach)',
-  'var(--card-mint)',
-];
-
-const TIMEOUT_EMOJIS = ['⏰', '💨', '🌬️', '😅', '⚡', '🕐', '💫', '🏃'];
+const TIMEOUT_EMOJIS = ['⏰', '💨', '⚡', '🕐'];
 
 interface ResultState {
   result: {
@@ -35,30 +28,31 @@ export default function ResultPage() {
   const [me, setMe] = useState<{ nickname: string } | null>(null);
 
   useEffect(() => {
-    if (!state) { navigate('/auth'); return; }
+    if (!state) {
+      navigate('/auth');
+      return;
+    }
+
     if (state.result.result === 'correct' && !confettiFired.current) {
       confettiFired.current = true;
       confetti({
-        particleCount: 180,
-        spread: 90,
-        origin: { y: 0.5 },
-        colors: ['#FF4D8D', '#00D2A0', '#FFB020', '#C4AFFF', '#CDEFFF'],
-        scalar: 1.1,
+        particleCount: 160,
+        spread: 85,
+        origin: { y: 0.45 },
+        colors: ['#DB3320', '#F59E0B', '#006C49', '#855300', '#FFDAD4'],
+        scalar: 1.05,
       });
     }
 
-    // Fetch data
+    // Secondary fetch calls - non-blocking with graceful catch
     api.getMe().then(setMe).catch(() => {});
-    
-    if (state) {
-      const { poll, pollLaunchId, questionId } = state;
-      const targetId = pollLaunchId || poll.pollLaunchId || questionId;
-      if (targetId) {
-        api.getGhostMode(targetId).then(setGhostMode).catch(() => {});
-        api.getSpeedKing(targetId).then(res => setSpeedKing(res.speedKing)).catch(() => {});
-      }
-    }
 
+    const { poll, pollLaunchId, questionId } = state;
+    const targetId = pollLaunchId || poll.pollLaunchId || questionId;
+    if (targetId) {
+      api.getGhostMode(targetId).then(setGhostMode).catch(() => {});
+      api.getSpeedKing(targetId).then(res => setSpeedKing(res.speedKing)).catch(() => {});
+    }
   }, [state, navigate]);
 
   if (!state) return null;
@@ -69,25 +63,31 @@ export default function ResultPage() {
 
   const config = {
     correct: {
-      emoji: '🎉',
+      badge: 'CORRECT ANSWER',
+      badgeBg: 'bg-[#ECFDF5]',
+      badgeBorder: 'border-[#10B981]/40',
+      badgeShadow: 'shadow-[0_2px_0_#A7F3D0]',
+      badgeText: 'text-[#006C49]',
       title: "That's right!",
       subtitle: 'Great job, you nailed it.',
-      accent: 'var(--success)',
-      bg: '#E6FBF5',
     },
     wrong: {
-      emoji: '💡',
+      badge: 'INCORRECT',
+      badgeBg: 'bg-[#FFF0EE]',
+      badgeBorder: 'border-[#DB3320]/30',
+      badgeShadow: 'shadow-[0_2px_0_#FFDAD4]',
+      badgeText: 'text-[#B71607]',
       title: 'Not quite',
       subtitle: "That wasn't the one — the correct answer is shown below.",
-      accent: '#FF7043',
-      bg: '#FFF3EE',
     },
     timeout: {
-      emoji: '⏰',
+      badge: 'TIME EXPIRED',
+      badgeBg: 'bg-[#FFEDD5]',
+      badgeBorder: 'border-[#F59E0B]/40',
+      badgeShadow: 'shadow-[0_2px_0_#FED7AA]',
+      badgeText: 'text-[#855300]',
       title: "Time's up",
       subtitle: "Don't worry, keep trying!",
-      accent: 'var(--warning)',
-      bg: '#FFF8EC',
     },
   }[outcome];
 
@@ -101,31 +101,44 @@ export default function ResultPage() {
   const isSpeedKingWinner = me?.nickname === speedKing?.nickname;
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center px-4 py-10 overflow-hidden">
-      <div className="blob blob-1" style={{ opacity: 0.18 }} />
-      <div className="blob blob-2" style={{ opacity: 0.12 }} />
-
-      <div className="relative z-10 w-full max-w-md">
-        {/* Result hero */}
+    <div className="paper-texture min-h-screen text-[#18181B] selection:bg-[#FFDAD4] selection:text-[#400100] flex flex-col justify-between py-6 sm:py-10 px-4">
+      {/* Centered tactical mobile envelope (max 430px, tablet/desktop responsive) */}
+      <div className="w-full max-w-[430px] sm:max-w-lg mx-auto flex flex-col gap-4 sm:gap-5 relative shadow-[0_0_50px_rgba(39,34,26,0.06)] bg-[#FAF8F5]">
+        
+        {/* Result Hero Section */}
         <motion.div
-          initial={{ scale: shouldReduceMotion ? 1 : 0.8, opacity: 0 }}
+          initial={{ scale: shouldReduceMotion ? 1 : 0.9, opacity: 0 }}
           animate={
             outcome === 'wrong'
               ? { scale: 1, opacity: 1, x: shouldReduceMotion ? 0 : [0, -8, 8, -4, 4, 0] }
               : { scale: 1, opacity: 1 }
           }
           transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-          className="text-center mb-8"
+          className="text-center pt-2 pb-1"
         >
-          {/* Timeout emoji burst */}
+          {/* Status Badge */}
+          <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border mb-3 text-xs font-sans font-extrabold tracking-wider uppercase transition-all shadow-sm ${config.badgeBg} ${config.badgeBorder} ${config.badgeShadow}`}>
+            <span
+              className={`w-2 h-2 rounded-full ${
+                outcome === 'correct'
+                  ? 'bg-[#10B981]'
+                  : outcome === 'wrong'
+                  ? 'bg-[#DB3320]'
+                  : 'bg-[#F59E0B]'
+              }`}
+            />
+            <span className={config.badgeText}>{config.badge}</span>
+          </div>
+
+          {/* Timeout emoji accent (staggered) */}
           {outcome === 'timeout' && (
-            <div className="flex justify-center gap-2 mb-4 flex-wrap">
+            <div className="flex justify-center gap-2 mb-2">
               {TIMEOUT_EMOJIS.map((e, i) => (
                 <motion.span
                   key={i}
-                  initial={{ opacity: 0, y: 20, scale: 0.5 }}
+                  initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 12, scale: 0.7 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={{ delay: i * 0.06, type: 'spring', stiffness: 260 }}
+                  transition={{ delay: i * 0.08, type: 'spring', stiffness: 260 }}
                   className="text-2xl"
                 >
                   {e}
@@ -134,66 +147,90 @@ export default function ResultPage() {
             </div>
           )}
 
-          {outcome !== 'timeout' && (
-            <div className="text-7xl mb-4">
-              {config.emoji}
-            </div>
-          )}
-
-          <h1 className="font-display text-4xl font-extrabold" style={{ color: 'var(--ink)' }}>
+          {/* Editorial Headline */}
+          <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-[#18181B] leading-tight">
             {config.title}
           </h1>
-          <p className="mt-2 text-sm font-medium" style={{ color: '#6B5B8E' }}>
+
+          {/* Subtitle */}
+          <p className="mt-1.5 text-xs sm:text-sm font-sans font-medium text-[#534434] max-w-sm mx-auto">
             {config.subtitle}
           </p>
         </motion.div>
 
-        {/* Question + options reveal */}
+        {/* Question & Answer Review Plaque */}
         <motion.div
-          initial={{ y: 20, opacity: 0 }}
+          initial={{ y: shouldReduceMotion ? 0 : 16, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.25, duration: 0.4 }}
-          className="rounded-[24px] p-6"
-          style={{ background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(16px)', boxShadow: '0 4px 24px rgba(36,27,58,0.1)' }}
+          transition={{ delay: 0.2, duration: 0.35 }}
+          className="relative bg-white border border-[#E5E1D8] rounded-xl p-5 sm:p-6 shadow-[0_3px_0_#E2DDD2,0_6px_16px_rgba(39,34,26,0.04)]"
         >
-          <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#A89BC4' }}>
-            The question was
-          </p>
-          <p className="font-display text-xl font-bold mb-5" style={{ color: 'var(--ink)' }}>
-            {poll.text}
-          </p>
+          {/* Raised Category Tab */}
+          <div className="absolute -top-3 left-4 bg-[#18181B] text-[#FAF8F5] text-[10px] font-sans font-bold tracking-widest px-2.5 py-0.5 rounded uppercase">
+            ANSWER REVIEW
+          </div>
 
-          <div className="grid gap-2.5">
+          {/* Question Text */}
+          <h2 className="font-serif text-xl sm:text-2xl font-semibold text-[#18181B] leading-snug pt-1 mb-5 break-words">
+            {poll.text}
+          </h2>
+
+          {/* Options Stack */}
+          <div aria-label="Reviewed Answers" className="space-y-2.5">
             {options.map((opt, idx) => {
               const isCorrect = idx === correctIndex;
-              let cardStyle: React.CSSProperties = {
-                background: CARD_COLORS[idx % CARD_COLORS.length],
-                border: '2px solid transparent',
-                opacity: 0.55,
-              };
-              if (isCorrect) {
-                cardStyle = {
-                  background: '#E6FBF5',
-                  border: '2px solid var(--success)',
-                  opacity: 1,
-                };
-              }
 
               return (
                 <div
                   key={idx}
-                  className="option-card flex items-center gap-3"
-                  style={cardStyle}
+                  className={`w-full text-left rounded-xl p-3.5 sm:p-4 flex items-center justify-between transition-all ${
+                    isCorrect
+                      ? 'bg-[#ECFDF5] border-2 border-[#10B981] shadow-[0_3px_0_#059669]'
+                      : 'bg-white border border-[#E5E1D8] shadow-[0_2px_0_#DDD8CE] opacity-60'
+                  }`}
                 >
-                  <span
-                    className="font-display font-bold text-lg flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
-                    style={{ background: 'rgba(36,27,58,0.1)', color: 'var(--ink)' }}
-                  >
-                    {String.fromCharCode(65 + idx)}
-                  </span>
-                  <span style={{ color: 'var(--ink)' }}>{opt}</span>
+                  <div className="flex items-center gap-3 min-w-0 pr-2">
+                    {/* Alphabet Badge */}
+                    <span
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center font-sans text-sm font-bold flex-shrink-0 transition-colors ${
+                        isCorrect
+                          ? 'bg-[#10B981] text-white shadow-sm'
+                          : 'bg-[#F0EDF1] border border-[#E5E1D8] text-[#534434]'
+                      }`}
+                    >
+                      {String.fromCharCode(65 + idx)}
+                    </span>
+
+                    {/* Option Text */}
+                    <span
+                      className={`font-sans text-sm sm:text-base leading-snug break-words ${
+                        isCorrect
+                          ? 'text-[#18181B] font-bold'
+                          : 'text-[#534434] font-medium'
+                      }`}
+                    >
+                      {opt}
+                    </span>
+                  </div>
+
+                  {/* Confirmation Badge for Correct Answer */}
                   {isCorrect && (
-                    <span className="ml-auto text-lg">✅</span>
+                    <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#10B981]/15 text-[#006C49] text-xs font-sans font-extrabold flex-shrink-0">
+                      <svg
+                        className="w-3.5 h-3.5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="3"
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                      <span className="hidden sm:inline">CORRECT</span>
+                    </div>
                   )}
                 </div>
               );
@@ -201,176 +238,184 @@ export default function ResultPage() {
           </div>
         </motion.div>
 
-        {/* Speed King Display */}
+        {/* Speed King Plaque */}
         {speedKing && (
           <motion.div
-            initial={{ opacity: 0, scale: isSpeedKingWinner && !shouldReduceMotion ? 0.9 : 1, y: shouldReduceMotion ? 0 : 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ delay: 0.5, type: 'spring', stiffness: 300, damping: 25 }}
-            className="mt-4 rounded-[24px] p-4 flex items-center justify-between"
-            style={{ 
-              background: isSpeedKingWinner ? 'linear-gradient(135deg, #FFF9C4, #FFF176)' : 'rgba(255,255,255,0.7)', 
-              backdropFilter: 'blur(16px)', 
-              boxShadow: '0 4px 24px rgba(36,27,58,0.1)',
-              border: isSpeedKingWinner ? '2px solid #FBC02D' : '2px solid transparent'
-            }}
+            initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, type: 'spring', stiffness: 300, damping: 25 }}
+            className={`rounded-xl p-4 sm:p-5 flex items-center justify-between ${
+              isSpeedKingWinner
+                ? 'bg-[#FFFBEB] border-2 border-[#F59E0B] shadow-[0_4px_0_#D97706]'
+                : 'bg-white border border-[#E5E1D8] shadow-[0_3px_0_#E2DDD2]'
+            }`}
           >
             <div className="flex items-center gap-3">
-              <motion.span 
-                initial={isSpeedKingWinner && !shouldReduceMotion ? { scale: 0, rotate: -45 } : false}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ delay: 0.8, type: 'spring', stiffness: 400, damping: 15 }}
-                className="text-3xl"
+              <div
+                className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xl flex-shrink-0 shadow-sm ${
+                  isSpeedKingWinner
+                    ? 'bg-[#F59E0B] text-white'
+                    : 'bg-[#FFEDD5] text-[#855300] border border-[#F59E0B]/30'
+                }`}
               >
                 ⚡
-              </motion.span>
+              </div>
               <div>
-                <p className="text-xs font-bold uppercase tracking-widest" style={{ color: isSpeedKingWinner ? '#F57F17' : '#A89BC4' }}>
-                  {isSpeedKingWinner ? 'SPEED KING' : "Speed King"}
+                <p
+                  className={`text-[10px] sm:text-[11px] font-sans font-extrabold uppercase tracking-wider ${
+                    isSpeedKingWinner ? 'text-[#B45309]' : 'text-[#867461]'
+                  }`}
+                >
+                  {isSpeedKingWinner ? 'SPEED KING WINNER' : 'SPEED KING'}
                 </p>
-                <p className="font-display font-bold text-lg" style={{ color: 'var(--ink)' }}>
-                  {isSpeedKingWinner ? 'Fastest correct answer' : `${speedKing.nickname} · ${formatTime(speedKing.timeTakenMs)}`}
+                <p className="font-serif text-base sm:text-lg font-bold text-[#18181B] leading-tight">
+                  {isSpeedKingWinner ? 'Fastest correct answer!' : speedKing.nickname}
                 </p>
               </div>
             </div>
-            {isSpeedKingWinner && (
-              <div className="text-right">
-                <motion.p 
-                  initial={{ opacity: 0, x: shouldReduceMotion ? 0 : 10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 1.1, duration: 0.4, ease: "easeOut" }}
-                  className="font-display font-extrabold text-xl" 
-                  style={{ color: '#F57F17' }}
-                >
-                  {formatTime(speedKing.timeTakenMs)}
-                </motion.p>
-              </div>
-            )}
+
+            <div className="text-right pl-3 flex-shrink-0">
+              <span
+                className={`font-sans font-extrabold text-base sm:text-xl tabular-nums px-2.5 py-1 rounded-lg ${
+                  isSpeedKingWinner
+                    ? 'bg-[#F59E0B]/20 text-[#B45309]'
+                    : 'bg-[#F0EDF1] border border-[#E5E1D8] text-[#534434]'
+                }`}
+              >
+                {formatTime(speedKing.timeTakenMs)}
+              </span>
+            </div>
           </motion.div>
         )}
 
-        {/* Ghost Mode Display */}
+        {/* Ghost Mode Analytics Card */}
         {ghostMode && ghostMode.total > 0 && (
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-            className="mt-4 rounded-[24px] p-5"
-            style={{ 
-              background: 'rgba(255,255,255,0.8)', 
-              backdropFilter: 'blur(16px)', 
-              boxShadow: '0 4px 24px rgba(36,27,58,0.1)'
-            }}
+            transition={{ delay: 0.5 }}
+            className="bg-white border border-[#E5E1D8] rounded-xl p-5 shadow-[0_3px_0_#E2DDD2]"
           >
-            <div className="flex items-center justify-between mb-4 border-b border-gray-200/50 pb-3">
-              <h3 className="font-bold text-gray-800 flex items-center gap-2">
-                <span className="text-xl">👻</span> Ghost Mode
+            <div className="flex items-center justify-between mb-4 border-b border-[#E5E1D8]/60 pb-3">
+              <h3 className="font-sans font-bold text-xs sm:text-sm text-[#18181B] uppercase tracking-wider flex items-center gap-1.5">
+                <span>👻</span> Campus Ghost Mode
               </h3>
-              <span className="text-xs font-semibold text-gray-500 bg-white shadow-sm px-2 py-1 rounded-full border border-gray-100">
+              <span className="text-[11px] font-sans font-bold text-[#534434] bg-[#F0EDF1] border border-[#E5E1D8] px-2.5 py-0.5 rounded-full">
                 {ghostMode.total} attempt{ghostMode.total !== 1 ? 's' : ''}
               </span>
             </div>
-            
-            <div className="space-y-3">
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-semibold text-green-600">Correct</span>
-                <motion.span 
-                  initial={{ opacity: 0 }} 
-                  animate={{ opacity: 1 }} 
-                  transition={{ delay: 1 }}
-                  className="font-bold text-gray-800"
-                >
-                  {ghostMode.correctPercent.toFixed(1)}%
-                </motion.span>
-              </div>
-              <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                <motion.div 
-                  className="bg-green-500 h-1.5 rounded-full" 
-                  initial={{ width: 0 }}
-                  animate={{ width: `${ghostMode.correctPercent}%` }}
-                  transition={{ duration: 1, ease: 'easeOut', delay: 0.7 }}
-                />
+
+            <div className="space-y-3.5">
+              {/* Correct row */}
+              <div>
+                <div className="flex items-center justify-between text-xs font-sans mb-1.5">
+                  <span className="font-bold text-[#006C49] flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-[#10B981]" /> Correct
+                  </span>
+                  <span className="font-extrabold text-[#18181B] tabular-nums">
+                    {ghostMode.correctPercent.toFixed(1)}%
+                  </span>
+                </div>
+                <div className="w-full bg-[#E5E1D8]/60 rounded-full h-2 overflow-hidden">
+                  <motion.div
+                    className="bg-[#10B981] h-full rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${ghostMode.correctPercent}%` }}
+                    transition={{ duration: shouldReduceMotion ? 0 : 0.8, ease: 'easeOut', delay: 0.6 }}
+                  />
+                </div>
               </div>
 
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-semibold text-orange-500">Wrong</span>
-                <motion.span 
-                  initial={{ opacity: 0 }} 
-                  animate={{ opacity: 1 }} 
-                  transition={{ delay: 1 }}
-                  className="font-bold text-gray-800"
-                >
-                  {ghostMode.wrongPercent.toFixed(1)}%
-                </motion.span>
-              </div>
-              <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                <motion.div 
-                  className="bg-orange-400 h-1.5 rounded-full" 
-                  initial={{ width: 0 }}
-                  animate={{ width: `${ghostMode.wrongPercent}%` }}
-                  transition={{ duration: 1, ease: 'easeOut', delay: 0.7 }}
-                />
+              {/* Wrong row */}
+              <div>
+                <div className="flex items-center justify-between text-xs font-sans mb-1.5">
+                  <span className="font-bold text-[#B71607] flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-[#DB3320]" /> Wrong
+                  </span>
+                  <span className="font-extrabold text-[#18181B] tabular-nums">
+                    {ghostMode.wrongPercent.toFixed(1)}%
+                  </span>
+                </div>
+                <div className="w-full bg-[#E5E1D8]/60 rounded-full h-2 overflow-hidden">
+                  <motion.div
+                    className="bg-[#DB3320] h-full rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${ghostMode.wrongPercent}%` }}
+                    transition={{ duration: shouldReduceMotion ? 0 : 0.8, ease: 'easeOut', delay: 0.6 }}
+                  />
+                </div>
               </div>
 
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-semibold text-yellow-600">Timeout</span>
-                <motion.span 
-                  initial={{ opacity: 0 }} 
-                  animate={{ opacity: 1 }} 
-                  transition={{ delay: 1 }}
-                  className="font-bold text-gray-800"
-                >
-                  {ghostMode.timeoutPercent.toFixed(1)}%
-                </motion.span>
-              </div>
-              <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                <motion.div 
-                  className="bg-yellow-400 h-1.5 rounded-full" 
-                  initial={{ width: 0 }}
-                  animate={{ width: `${ghostMode.timeoutPercent}%` }}
-                  transition={{ duration: 1, ease: 'easeOut', delay: 0.7 }}
-                />
+              {/* Timeout row */}
+              <div>
+                <div className="flex items-center justify-between text-xs font-sans mb-1.5">
+                  <span className="font-bold text-[#855300] flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-[#F59E0B]" /> Timeout
+                  </span>
+                  <span className="font-extrabold text-[#18181B] tabular-nums">
+                    {ghostMode.timeoutPercent.toFixed(1)}%
+                  </span>
+                </div>
+                <div className="w-full bg-[#E5E1D8]/60 rounded-full h-2 overflow-hidden">
+                  <motion.div
+                    className="bg-[#F59E0B] h-full rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${ghostMode.timeoutPercent}%` }}
+                    transition={{ duration: shouldReduceMotion ? 0 : 0.8, ease: 'easeOut', delay: 0.6 }}
+                  />
+                </div>
               </div>
             </div>
           </motion.div>
         )}
 
+        {/* Action Buttons Stack */}
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7 }}
-          className="mt-4 flex flex-col gap-3"
+          transition={{ delay: 0.6 }}
+          className="flex flex-col gap-3 pt-2"
         >
+          {/* Primary Kinetic Red Button */}
           <button
+            type="button"
             onClick={() => navigate('/student')}
-            className="w-full py-3 rounded-2xl font-bold text-sm transition-all"
-            style={{
-              background: 'linear-gradient(135deg,#241B3A,#3D2B6B)',
-              color: 'white',
-              boxShadow: '0 4px 20px rgba(36,27,58,0.25)',
-              border: 'none',
-              cursor: 'pointer',
-            }}
-            onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.02)')}
-            onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+            className="w-full py-3.5 px-6 rounded-xl font-sans font-extrabold text-sm sm:text-base bg-[#DB3320] text-white shadow-[0_4px_0_#920700] hover:brightness-105 active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-2 cursor-pointer border-0"
           >
-            ← Back to Questions
+            <span>← Back to Questions</span>
           </button>
+
+          {/* Secondary Varsity White Button */}
           <button
+            type="button"
             onClick={() => navigate(`/leaderboard/${targetLaunchId}`)}
-            className="w-full py-3 rounded-2xl font-bold text-sm transition-all"
-            style={{
-              background: 'white',
-              color: 'var(--ink)',
-              border: '1.5px solid #E4D9FF',
-              cursor: 'pointer',
-            }}
-            onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.02)')}
-            onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+            className="w-full py-3 px-6 rounded-xl font-sans font-bold text-sm sm:text-base bg-white text-[#18181B] border border-[#E5E1D8] shadow-[0_3px_0_#DDD8CE] hover:border-[#867461] active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-2 cursor-pointer"
           >
-            🏆 See Leaderboard
+            <span>🏆 See Leaderboard</span>
           </button>
         </motion.div>
+
+        {/* Bottom Trust Footnote */}
+        <footer className="w-full pt-1 pb-4 flex flex-col items-center">
+          <div className="flex items-center justify-center gap-1.5 text-[#534434]/80 text-xs font-sans font-medium">
+            <svg
+              className="w-4 h-4 text-[#006C49]"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+              />
+            </svg>
+            <span>
+              Playing as <strong className="text-[#18181B] font-semibold">{me?.nickname || 'Student'}</strong> • Attempt recorded
+            </span>
+          </div>
+        </footer>
 
       </div>
     </div>

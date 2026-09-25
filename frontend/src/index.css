@@ -1,10 +1,26 @@
-@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Manrope:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Baloo+2:wght@400;600;700;800&family=Manrope:wght@400;500;600;700&display=swap');
 
 @import "tailwindcss";
 
 :root {
-  --bg: #FBF7FF;
-  --ink: #241B3A;
+  /* Campus Literary Tactile Tokens */
+  --bg: #FAF8F5;
+  --bg-surface: #FBF8FC;
+  --surface-card: #FFFFFF;
+  --surface-subtle: #F0EDF1;
+  --ink: #18181B;
+  --ink-muted: #534434;
+  --ink-outline: #867461;
+  --border-hairline: #E5E1D8;
+  --primary-amber: #F59E0B;
+  --primary-deep: #855300;
+  --secondary-red: #DB3320;
+  --secondary-crimson: #B71607;
+  --secondary-bezel: #920700;
+  --tertiary-green: #006C49;
+  --tertiary-wash: #ECFDF5;
+
+  /* Legacy fallback variables for other screens */
   --primary: #FF4D8D;
   --primary-dark: #e03070;
   --success: #00D2A0;
@@ -23,14 +39,65 @@
 body {
   background-color: var(--bg);
   color: var(--ink);
-  font-family: 'Manrope', sans-serif;
+  font-family: 'Plus Jakarta Sans', 'Manrope', sans-serif;
   margin: 0;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
 }
 
+.font-serif {
+  font-family: 'Newsreader', Georgia, serif;
+}
+
+.font-sans {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
 h1, h2, h3, .font-display {
-  font-family: 'Baloo 2', cursive;
+  font-family: 'Newsreader', 'Baloo 2', cursive, serif;
+}
+
+/* Paper tactile background pattern */
+.paper-texture {
+  background-color: #FAF8F5;
+  background-image: radial-gradient(rgba(39, 34, 26, 0.04) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* 3D Tactile Buttons & Cards */
+.tactile-btn-red {
+  background-color: #DB3320;
+  color: #FFFFFF;
+  box-shadow: 0 4px 0 #920700;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.1s ease;
+}
+.tactile-btn-red:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+.tactile-btn-red:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 transparent;
+}
+
+.tactile-btn-white {
+  background-color: #FFFFFF;
+  color: #18181B;
+  border: 1px solid #E5E1D8;
+  box-shadow: 0 3px 0 #DDD8CE;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, border-color 0.1s ease;
+}
+.tactile-btn-white:hover:not(:disabled) {
+  border-color: #867461;
+}
+.tactile-btn-white:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 transparent;
+}
+
+.tactile-card {
+  background-color: #FFFFFF;
+  border: 1px solid rgba(216, 195, 173, 0.4);
+  box-shadow: 0 4px 0 #E2DDD2;
 }
 
 /* Ambient blob animations */
@@ -82,52 +149,3 @@ h1, h2, h3, .font-display {
   * { transition: none !important; animation: none !important; }
 }
 
-/* Timer ring */
-.timer-ring-track {
-  stroke: #F0E8FF;
-  fill: none;
-}
-
-.timer-ring-fill {
-  fill: none;
-  stroke-linecap: round;
-  transform-origin: center;
-  transform: rotate(-90deg);
-  transition: stroke-dashoffset 1s linear, stroke 0.5s ease;
-}
-
-/* Option card base */
-.option-card {
-  cursor: pointer;
-  border-radius: 16px;
-  padding: 16px 20px;
-  font-family: 'Manrope', sans-serif;
-  font-weight: 600;
-  font-size: 15px;
-  line-height: 1.4;
-  border: 2px solid transparent;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
-  position: relative;
-  overflow: hidden;
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.option-card:active {
-  transform: scale(0.97);
-}
-
-.option-card.selected-correct {
-  border-color: var(--success);
-  background: #E6FBF5 !important;
-}
-
-.option-card.selected-wrong {
-  border-color: var(--error);
-  background: #FFE8E8 !important;
-}
-
-.option-card.reveal-correct {
-  border-color: var(--success);
-  background: #E6FBF5 !important;
-}

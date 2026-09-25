@@ -1,22 +1,16 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { api } from '../api';
 import type { LeaderboardEntry, LeaderboardResponse } from '../api';
 
 const MEDAL = ['🥇', '🥈', '🥉'];
 const POLL_INTERVAL_MS = 5000;
 
-const RANK_COLORS: Record<number, { bg: string; border: string; glow: string; text: string }> = {
-  1: { bg: 'linear-gradient(135deg,#FFD700,#FFA500)', border: '#FFD700', glow: 'rgba(255,215,0,0.45)', text: '#7A4800' },
-  2: { bg: 'linear-gradient(135deg,#E0E8FF,#B0C4DE)', border: '#B0BEC5', glow: 'rgba(176,196,222,0.4)', text: '#37474F' },
-  3: { bg: 'linear-gradient(135deg,#FFCBA4,#CD7F32)', border: '#CD7F32', glow: 'rgba(205,127,50,0.4)', text: '#5D2E00' },
-};
-
 const resultBadge = (result: LeaderboardEntry['result']) => {
-  if (result === 'correct') return { label: '✓ Correct', bg: '#D4FAF0', color: '#00875A' };
-  if (result === 'wrong')   return { label: '✗ Wrong',   bg: '#FFE8E8', color: '#C62828' };
-  return                           { label: '⏰ Timeout', bg: '#FFF3CD', color: '#8A5700' };
+  if (result === 'correct') return { label: '✓ Correct', bg: 'bg-[#E6F8F3]', border: 'border-[#10B981]/40', color: 'text-[#006C49]' };
+  if (result === 'wrong')   return { label: '✗ Wrong',   bg: 'bg-[#FFF0EE]', border: 'border-[#FFDAD4]', color: 'text-[#B71607]' };
+  return                           { label: '⏰ Timeout', bg: 'bg-[#FFFBEB]', border: 'border-[#FDBA74]', color: 'text-[#855300]' };
 };
 
 const formatTime = (ms: number | null) => {
@@ -27,81 +21,22 @@ const formatTime = (ms: number | null) => {
 
 function LiveBadge() {
   return (
-    <motion.div
-      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold"
-      style={{ background: 'rgba(255,77,77,0.2)', border: '1px solid rgba(255,77,77,0.5)', color: '#FF7070' }}
-      animate={{ opacity: [1, 0.5, 1] }}
-      transition={{ duration: 1.5, repeat: Infinity }}
-    >
-      <span
-        style={{
-          width: 6, height: 6, borderRadius: '50%', background: '#FF4D4D',
-          boxShadow: '0 0 6px #FF4D4D',
-          display: 'inline-block',
-        }}
-      />
+    <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border border-[#DB3320]/40 bg-[#FFF0EE] text-[10px] font-sans font-bold text-[#B71607] tracking-wider uppercase shadow-sm">
+      <span className="w-1.5 h-1.5 rounded-full bg-[#DB3320] animate-pulse" />
       LIVE
-    </motion.div>
-  );
-}
-
-function PodiumBar({ entry, delay }: { entry: LeaderboardEntry; delay: number }) {
-  const style = RANK_COLORS[entry.rank] ?? RANK_COLORS[3];
-  const heights = [160, 120, 90];
-  const h = heights[entry.rank - 1] ?? 90;
-
-  return (
-    <motion.div
-      layout
-      initial={{ y: 60, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ delay, type: 'spring', stiffness: 260, damping: 22 }}
-      className="flex flex-col items-center gap-2"
-    >
-      <div className="text-center">
-        <div className="text-3xl mb-1">{MEDAL[entry.rank - 1]}</div>
-        <p
-          className="font-bold text-sm max-w-[80px] truncate"
-          style={{ color: entry.isMe ? 'var(--primary)' : 'white' }}
-        >
-          {entry.nickname}{entry.isMe ? ' (you)' : ''}
-        </p>
-        <p className="text-xs mt-0.5" style={{ color: '#8A7BA8' }}>
-          {formatTime(entry.timeTakenMs)}
-        </p>
-      </div>
-      <motion.div
-        initial={{ height: 0 }}
-        animate={{ height: h }}
-        transition={{ delay: delay + 0.15, duration: 0.6, ease: 'easeOut' }}
-        style={{
-          width: 72,
-          background: style.bg,
-          border: `2px solid ${style.border}`,
-          boxShadow: `0 0 18px ${style.glow}`,
-          borderRadius: '12px 12px 0 0',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <span className="font-display font-extrabold text-xl" style={{ color: style.text }}>
-          #{entry.rank}
-        </span>
-      </motion.div>
-    </motion.div>
+    </div>
   );
 }
 
 function SkeletonRow() {
   return (
-    <div className="flex items-center gap-3 px-4 py-3 rounded-2xl" style={{ background: 'rgba(255,255,255,0.05)' }}>
-      <div className="w-8 h-8 rounded-full" style={{ background: 'rgba(255,255,255,0.1)' }} />
-      <div className="flex-1 space-y-1.5">
-        <div className="h-3 rounded w-1/3" style={{ background: 'rgba(255,255,255,0.08)' }} />
-        <div className="h-2 rounded w-1/4" style={{ background: 'rgba(255,255,255,0.05)' }} />
+    <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white border border-[#E5E1D8] shadow-[0_2px_0_#E2DDD2]">
+      <div className="w-8 h-8 rounded-full bg-[#F0EDF1]" />
+      <div className="flex-1 space-y-2">
+        <div className="h-3 rounded w-1/3 bg-[#F0EDF1]" />
+        <div className="h-2 rounded w-1/4 bg-[#FAF8F5]" />
       </div>
-      <div className="h-5 w-16 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }} />
+      <div className="h-5 w-16 rounded-full bg-[#F0EDF1]" />
     </div>
   );
 }
@@ -117,6 +52,7 @@ export default function Leaderboard() {
   const [secondsAgo, setSecondsAgo] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const shouldReduceMotion = useReducedMotion();
 
   const fetchData = useCallback(async (silent = false) => {
     if (!targetId) return;
@@ -141,9 +77,7 @@ export default function Leaderboard() {
 
   // Start/stop polling based on question status
   useEffect(() => {
-    // Clear old interval
     if (intervalRef.current) clearInterval(intervalRef.current);
-
     if (data?.questionStatus === 'live') {
       intervalRef.current = setInterval(() => fetchData(true), POLL_INTERVAL_MS);
     }
@@ -161,7 +95,7 @@ export default function Leaderboard() {
 
   const isLive = data?.questionStatus === 'live';
 
-  // Podium order: 2nd, 1st, 3rd (classic podium layout)
+  // Podium order: 2nd, 1st, 3rd
   const podiumOrder = data
     ? [data.top10[1], data.top10[0], data.top10[2]].filter(Boolean)
     : [];
@@ -170,234 +104,205 @@ export default function Leaderboard() {
   const showMyRank = myEntry && (data?.myRank ?? 0) > 10;
 
   return (
-    <div
-      className="relative min-h-screen flex flex-col items-center px-4 py-8 overflow-hidden"
-      style={{ background: 'linear-gradient(160deg, #1A0F2E 0%, #2D1B69 50%, #1A0F2E 100%)' }}
-    >
-      {/* Star field */}
-      {Array.from({ length: 30 }).map((_, i) => (
-        <div
-          key={i}
-          style={{
-            position: 'absolute',
-            borderRadius: '50%',
-            background: 'white',
-            opacity: 0.15 + Math.sin(i) * 0.1,
-            width: (i % 3) + 1,
-            height: (i % 3) + 1,
-            top: `${(i * 37) % 100}%`,
-            left: `${(i * 53) % 100}%`,
-          }}
-        />
-      ))}
-
-      <div className="relative z-10 w-full max-w-md">
-        {/* Header */}
-        <motion.div
-          initial={{ y: -30, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="text-center mb-2"
-        >
-          <div className="text-5xl mb-2">🏆</div>
-          <h1 className="font-display text-4xl font-extrabold text-white">Leaderboard</h1>
-
-          {/* Live badge + player count */}
-          <div className="flex items-center justify-center gap-2 mt-2 flex-wrap">
-            {isLive && <LiveBadge />}
-            {data && (
-              <span className="text-sm font-medium" style={{ color: '#C4AFFF' }}>
-                {data.total} player{data.total !== 1 ? 's' : ''}
+    <div className="paper-texture min-h-screen text-[#18181B] selection:bg-[#FFDAD4] selection:text-[#400100] flex flex-col justify-between pb-safe">
+      {/* Centered tactile editorial envelope */}
+      <div className="w-full max-w-[430px] sm:max-w-lg mx-auto min-h-screen flex flex-col bg-[#FAF8F5] relative shadow-[0_0_50px_rgba(39,34,26,0.06)] pb-10">
+        
+        {/* TopAppBar: Sticky editorial brand masthead */}
+        <header className="w-full sticky top-0 z-40 bg-[#FAF8F5]/90 backdrop-blur-md border-b border-[#E5E1D8]/60 shadow-[0_2px_4px_rgba(39,34,26,0.04)]">
+          <div className="flex justify-between items-center w-full px-5 py-2.5">
+            <div className="flex items-center gap-2.5">
+              <span className="font-serif text-2xl font-semibold text-[#855300] tracking-tight">
+                Standings
               </span>
-            )}
-          </div>
-
-          {/* Question text */}
-          {data && (
-            <p className="mt-1 text-xs italic px-4 opacity-60 text-white line-clamp-2">
-              {data.questionText}
-            </p>
-          )}
-
-          {/* Last updated */}
-          {lastUpdated && isLive && (
-            <motion.p
-              key={secondsAgo}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="mt-1.5 text-xs"
-              style={{ color: '#6B5BAA' }}
+            </div>
+            <button
+              onClick={() => navigate('/student')}
+              className="px-2.5 py-1 text-xs font-bold rounded-full border border-[#D8C3AD]/60 text-[#867461] hover:text-[#18181B] bg-white/70 hover:bg-white shadow-[0_1px_0_#E2DDD2] transition-all active:translate-y-0.5 cursor-pointer"
             >
-              {secondsAgo === 0 ? '✓ Just updated' : `Updated ${secondsAgo}s ago · refreshes every ${POLL_INTERVAL_MS / 1000}s`}
-            </motion.p>
-          )}
-        </motion.div>
-
-        {/* Loading skeleton */}
-        {loading && (
-          <div className="space-y-3 mt-6">
-            {Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)}
+              Home ➔
+            </button>
           </div>
-        )}
+        </header>
 
-        {error && (
-          <div className="text-center mt-8" style={{ color: '#FF7070' }}>{error}</div>
-        )}
+        <main className="px-5 pt-5 flex-1 flex flex-col gap-6">
+          {/* Header section */}
+          <motion.div
+            initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col items-center text-center mt-2"
+          >
+            <div className="text-4xl mb-2 opacity-90">🏆</div>
+            <h1 className="font-serif text-4xl font-extrabold text-[#18181B] tracking-tight leading-none mb-3">
+              Leaderboard
+            </h1>
+            
+            <div className="flex items-center gap-2 mb-3">
+              {isLive && <LiveBadge />}
+              {data && (
+                <span className="font-sans text-[11px] font-bold uppercase tracking-wider text-[#867461] bg-[#E5E1D8]/40 px-2 py-0.5 rounded-full">
+                  {data.total} Participant{data.total !== 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
 
-        {data && !loading && (
-          <>
-            {/* Podium — top 3 */}
-            {data.top10.length >= 1 && (
-              <motion.div
-                layout
-                className="flex items-end justify-center gap-4 mt-6 mb-6"
-              >
-                <AnimatePresence mode="popLayout">
-                  {podiumOrder.map((e) => (
-                    <PodiumBar
-                      key={e.nickname + e.rank}
-                      entry={e}
-                      delay={e.rank === 1 ? 0.1 : e.rank === 2 ? 0.2 : 0.3}
-                    />
-                  ))}
-                </AnimatePresence>
-              </motion.div>
+            {data && (
+              <p className="font-serif text-[#534434] text-sm italic border-l-2 border-[#D8C3AD] pl-3 py-1 mb-2 max-w-[280px] line-clamp-2">
+                "{data.questionText}"
+              </p>
             )}
 
-            {/* Ranks 4–10 */}
-            {restList.length > 0 && (
-              <motion.div
-                layout
-                className="rounded-3xl overflow-hidden mb-4"
-                style={{
-                  background: 'rgba(255,255,255,0.07)',
-                  border: '1px solid rgba(255,255,255,0.12)',
-                  backdropFilter: 'blur(16px)',
-                }}
-              >
-                <AnimatePresence mode="popLayout">
+            {lastUpdated && isLive && (
+              <p className="font-sans text-[10px] font-bold text-[#867461] uppercase tracking-wider mt-1">
+                {secondsAgo === 0 ? '✓ Live synced' : `Updated ${secondsAgo}s ago · Refreshes ${POLL_INTERVAL_MS / 1000}s`}
+              </p>
+            )}
+          </motion.div>
+
+          {loading ? (
+            <div className="space-y-3 mt-4">
+              {Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)}
+            </div>
+          ) : error ? (
+            <div className="tactile-card rounded-xl p-5 text-center bg-[#FFF0EE] border-[#FFDAD4] text-[#B71607] font-sans text-sm font-semibold mt-4">
+              {error}
+            </div>
+          ) : data ? (
+            <div className="flex flex-col gap-4 mt-2">
+              
+              {/* Podium (Top 3) */}
+              {data.top10.length > 0 && (
+                <div className="flex items-end justify-center gap-3 sm:gap-4 mb-4 mt-2 h-44">
+                  {podiumOrder.map((e) => {
+                    const isFirst = e.rank === 1;
+                    const h = isFirst ? 'h-24' : e.rank === 2 ? 'h-20' : 'h-16';
+                    const bg = isFirst ? 'bg-[#FDBA74]' : e.rank === 2 ? 'bg-[#E5E1D8]' : 'bg-[#D8C3AD]';
+                    const border = isFirst ? 'border-[#F59E0B]' : e.rank === 2 ? 'border-[#D1CACA]' : 'border-[#C2AA92]';
+                    const text = isFirst ? 'text-[#613B00]' : 'text-[#534434]';
+                    
+                    return (
+                      <motion.div
+                        key={e.nickname + e.rank}
+                        initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: e.rank * 0.1 }}
+                        className="flex flex-col items-center gap-2 w-[85px] sm:w-[95px]"
+                      >
+                        <div className="text-center w-full">
+                          <div className="text-2xl mb-1">{MEDAL[e.rank - 1]}</div>
+                          <p className={`font-sans text-xs font-bold truncate ${e.isMe ? 'text-[#DB3320]' : 'text-[#18181B]'}`}>
+                            {e.nickname}
+                          </p>
+                          <p className="font-sans text-[10px] font-semibold text-[#867461]">
+                            {formatTime(e.timeTakenMs)}
+                          </p>
+                        </div>
+                        <div className={`w-full ${h} ${bg} border-t-2 border-l-2 border-r-2 ${border} rounded-t-xl flex items-center justify-center shadow-[inset_0_4px_10px_rgba(255,255,255,0.4)]`}>
+                          <span className={`font-serif text-2xl font-extrabold ${text}`}>
+                            #{e.rank}
+                          </span>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Top 10 List */}
+              {restList.length > 0 && (
+                <div className="flex flex-col gap-2.5">
+                  <h3 className="font-sans text-[11px] font-bold text-[#867461] uppercase tracking-wider pl-1 mb-1">
+                    The Pack
+                  </h3>
                   {restList.map((entry, i) => {
                     const badge = resultBadge(entry.result);
                     return (
                       <motion.div
                         key={entry.nickname + entry.rank}
-                        layout
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 20 }}
-                        transition={{ duration: 0.3, delay: i * 0.04 }}
-                        className="flex items-center gap-3 px-4 py-3"
-                        style={{
-                          borderBottom: i < restList.length - 1 ? '1px solid rgba(255,255,255,0.07)' : 'none',
-                          background: entry.isMe ? 'rgba(255,77,141,0.12)' : 'transparent',
-                        }}
+                        initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.2, delay: i * 0.05 }}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${
+                          entry.isMe 
+                            ? 'bg-[#FFF0EE] border-[#FFDAD4] shadow-[0_3px_0_#FFCDD2]' 
+                            : 'bg-white border-[#E5E1D8] shadow-[0_3px_0_#E2DDD2]'
+                        }`}
                       >
-                        <div
-                          className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0"
-                          style={{ background: 'rgba(255,255,255,0.1)', color: '#C4AFFF' }}
-                        >
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center font-sans font-bold text-sm bg-[#F0EDF1] text-[#534434] border border-[#E5E1D8] flex-shrink-0">
                           {entry.rank}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p
-                            className="font-bold text-sm truncate"
-                            style={{ color: entry.isMe ? 'var(--primary)' : 'white' }}
-                          >
-                            {entry.nickname}{entry.isMe ? ' 👈 you' : ''}
+                          <p className={`font-sans font-bold text-sm truncate ${entry.isMe ? 'text-[#DB3320]' : 'text-[#18181B]'}`}>
+                            {entry.nickname} {entry.isMe && <span className="text-[10px] ml-1 uppercase">(You)</span>}
                           </p>
-                          <p className="text-xs" style={{ color: '#8A7BA8' }}>
+                          <p className="font-sans text-xs text-[#867461] font-semibold">
                             {formatTime(entry.timeTakenMs)}
                           </p>
                         </div>
-                        <span
-                          className="text-xs font-bold px-2 py-1 rounded-full flex-shrink-0"
-                          style={{ background: badge.bg, color: badge.color }}
-                        >
+                        <span className={`font-sans text-[10px] font-bold px-2 py-0.5 rounded-full border flex-shrink-0 ${badge.bg} ${badge.border} ${badge.color} uppercase tracking-wide shadow-sm`}>
                           {badge.label}
                         </span>
                       </motion.div>
                     );
                   })}
-                </AnimatePresence>
-              </motion.div>
-            )}
-
-            {/* Empty state */}
-            {data.top10.length === 0 && (
-              <div className="text-center py-12" style={{ color: '#8A7BA8' }}>
-                <div className="text-5xl mb-3">🦗</div>
-                <p className="font-bold text-white">No answers yet</p>
-                <p className="text-sm mt-1">Be the first to play!</p>
-              </div>
-            )}
-
-            {/* My rank — only shown when outside top 10 */}
-            {showMyRank && myEntry && (
-              <motion.div
-                layout
-                initial={{ y: 30, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="rounded-2xl p-4 flex items-center gap-3 mb-4"
-                style={{
-                  background: 'linear-gradient(135deg,rgba(255,77,141,0.2),rgba(196,175,255,0.2))',
-                  border: '1.5px solid rgba(255,77,141,0.5)',
-                  backdropFilter: 'blur(12px)',
-                }}
-              >
-                <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center font-bold flex-shrink-0"
-                  style={{ background: 'var(--primary)', color: 'white' }}
-                >
-                  #{myEntry.rank}
                 </div>
-                <div className="flex-1">
-                  <p className="font-bold text-white text-sm">{myEntry.nickname} — your rank</p>
-                  <p className="text-xs" style={{ color: '#C4AFFF' }}>
-                    {formatTime(myEntry.timeTakenMs)} · {resultBadge(myEntry.result).label}
+              )}
+
+              {/* Empty state */}
+              {data.top10.length === 0 && (
+                <div className="tactile-card rounded-xl p-8 text-center bg-white border border-[#D8C3AD]/40 flex flex-col items-center mt-4">
+                  <span className="text-4xl mb-3 block opacity-90">🦗</span>
+                  <h3 className="font-serif text-lg font-bold text-[#18181B] leading-snug">No answers yet</h3>
+                  <p className="font-sans text-xs text-[#867461] mt-1 max-w-[200px]">
+                    Be the first to secure a spot on the leaderboard!
                   </p>
                 </div>
-                <span className="text-2xl">👈</span>
-              </motion.div>
-            )}
-          </>
-        )}
+              )}
 
-        {/* Manual refresh button for LIVE */}
-        {isLive && !loading && (
-          <motion.button
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            onClick={() => fetchData(true)}
-            className="w-full py-2.5 rounded-2xl font-bold text-sm mb-3 transition-all"
-            style={{
-              background: 'rgba(255,77,141,0.15)',
-              border: '1px solid rgba(255,77,141,0.35)',
-              color: '#FF9EC7',
-              cursor: 'pointer',
-            }}
-            whileTap={{ scale: 0.97 }}
-          >
-            ↻ Refresh Now
-          </motion.button>
-        )}
+              {/* My Rank (If outside top 10) */}
+              {showMyRank && myEntry && (
+                <motion.div
+                  initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="mt-4 flex items-center gap-3 px-4 py-3 rounded-xl bg-[#FFFBEB] border border-[#FDBA74] shadow-[0_3px_0_#FED7AA]"
+                >
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center font-sans font-bold text-sm bg-[#F59E0B] text-[#613B00] shadow-sm flex-shrink-0">
+                    {myEntry.rank}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-sans font-bold text-sm text-[#855300] truncate">
+                      {myEntry.nickname} <span className="text-[10px] ml-1 uppercase">(You)</span>
+                    </p>
+                    <p className="font-sans text-xs text-[#B45309] font-semibold">
+                      {formatTime(myEntry.timeTakenMs)} · {resultBadge(myEntry.result).label.replace(/✓ |✗ |⏰ /, '')}
+                    </p>
+                  </div>
+                </motion.div>
+              )}
 
-        {/* Back button */}
-        <motion.button
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          onClick={() => navigate('/student')}
-          className="w-full py-3 rounded-2xl font-bold text-sm transition-all"
-          style={{
-            background: 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(255,255,255,0.12)',
-            color: '#C4AFFF',
-            cursor: 'pointer',
-          }}
-          whileTap={{ scale: 0.97 }}
-        >
-          ← Back to Home
-        </motion.button>
+              {/* Actions Footer */}
+              <div className="flex flex-col gap-3 mt-6 mb-8">
+                {isLive && (
+                  <button
+                    onClick={() => fetchData(true)}
+                    className="tactile-btn-white w-full py-3 rounded-xl font-sans font-bold text-sm text-[#18181B] bg-white border border-[#D8C3AD] shadow-[0_4px_0_#E2DDD2] active:translate-y-1 active:shadow-[0_0px_0_#E2DDD2] flex items-center justify-center gap-2 transition-all cursor-pointer"
+                  >
+                    <span className="text-base text-[#867461]">↻</span> Refresh Standings
+                  </button>
+                )}
+                
+                <button
+                  onClick={() => navigate('/student')}
+                  className="w-full py-3 rounded-xl font-sans font-bold text-sm text-[#867461] hover:text-[#18181B] bg-transparent border-2 border-transparent hover:border-[#E5E1D8] transition-all cursor-pointer"
+                >
+                  ← Back to Home
+                </button>
+              </div>
+
+            </div>
+          ) : null}
+        </main>
       </div>
     </div>
   );

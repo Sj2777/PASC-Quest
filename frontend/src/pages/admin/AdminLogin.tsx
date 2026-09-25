@@ -24,49 +24,66 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#FAF8F5] px-4 font-sans text-[#18181B] selection:bg-[#E5E1D8]">
       <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <span className="text-3xl">🎯</span>
-          <h1 className="font-display text-2xl font-bold mt-2" style={{ color: 'var(--ink)' }}>
-            QuizPop Admin
+        <div className="text-center mb-10">
+          <span className="text-4xl">🎯</span>
+          <h1 className="font-serif text-3xl font-medium mt-4 text-[#18181B]">
+            Admin Console
           </h1>
-          <p className="text-sm text-gray-500 mt-1">Sign in to manage polls</p>
+          <p className="text-sm text-[#534434] mt-2 font-medium">
+            Secure administrative entry point
+          </p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
-          <form onSubmit={handleLogin} className="space-y-5">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email</label>
+        <div className="bg-white rounded-xl border border-[#E5E1D8] shadow-[0_2px_8px_rgba(39,34,26,0.04)] p-8">
+          <form onSubmit={handleLogin} className="space-y-6">
+            <div className="space-y-2.5">
+              <label className="block text-xs font-bold text-[#867461] uppercase tracking-widest">
+                Email
+              </label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm outline-none focus:border-indigo-400 transition-colors"
+                className="w-full px-4 py-3 rounded-lg border border-[#E5E1D8] bg-[#FAF8F5] text-[#18181B] text-sm focus:outline-none focus:border-[#18181B] focus:ring-1 focus:ring-[#18181B] transition-colors"
               />
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Password</label>
+            <div className="space-y-2.5">
+              <label className="block text-xs font-bold text-[#867461] uppercase tracking-widest">
+                Password
+              </label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-sm outline-none focus:border-indigo-400 transition-colors"
+                className="w-full px-4 py-3 rounded-lg border border-[#E5E1D8] bg-[#FAF8F5] text-[#18181B] text-sm focus:outline-none focus:border-[#18181B] focus:ring-1 focus:ring-[#18181B] transition-colors"
               />
             </div>
 
-            {error && <p className="text-sm text-red-600 font-medium">{error}</p>}
+            {error && (
+              <div className="bg-[#FFF5F4] border border-[#FCA5A5] rounded-lg p-3 flex items-start gap-2.5">
+                <span className="text-[#DB3320] text-sm mt-0.5">⚠️</span>
+                <p className="text-xs font-bold text-[#DB3320] leading-snug">{error}</p>
+              </div>
+            )}
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition-colors disabled:opacity-60"
+              className="w-full py-3.5 rounded bg-[#DB3320] hover:bg-[#B91C1C] text-white shadow-sm font-bold text-sm tracking-wide transition-colors disabled:opacity-50"
             >
-              {loading ? 'Signing in…' : 'Sign in'}
+              {loading ? 'Authenticating...' : 'Sign In'}
             </button>
           </form>
+        </div>
+        
+        <div className="text-center mt-8">
+          <p className="text-xs font-medium text-[#867461]">
+            QuizPop Administrative Operations
+          </p>
         </div>
       </div>
     </div>

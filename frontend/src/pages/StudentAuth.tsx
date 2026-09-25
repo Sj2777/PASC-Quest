@@ -1,4 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { api } from '../api';
 
 const BRANCH_OPTIONS = [
   { value: 'COMP', label: 'Computer Engineering' },
@@ -7,9 +10,6 @@ const BRANCH_OPTIONS = [
   { value: 'ENTC', label: 'Electronics and Computer Engineering' },
   { value: 'EXTC', label: 'Electronics and Telecommunication' },
 ];
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { api } from '../api';
 
 export default function StudentAuth() {
   const navigate = useNavigate();
@@ -145,86 +145,63 @@ export default function StudentAuth() {
   };
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center px-4 overflow-hidden">
-      {/* Ambient blobs */}
-      <div className="blob blob-1" />
-      <div className="blob blob-2" />
-      <div className="blob blob-3" />
-
+    <div className="relative min-h-screen flex flex-col items-center justify-center px-4 py-12 bg-[#FAF8F5] font-sans text-[#18181B] selection:bg-[#FFDAD4] selection:text-[#400100]">
       <motion.div
-        initial={{ opacity: 0, y: 32 }}
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
-        className="relative z-10 w-full max-w-md"
+        transition={{ duration: 0.5, ease: 'easeOut' }}
+        className="relative z-10 w-full max-w-[420px]"
       >
         {/* Logo/Brand */}
         <div className="text-center mb-8">
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.1, duration: 0.5 }}
-            className="inline-flex items-center justify-center w-20 h-20 rounded-[24px] mb-4"
-            style={{ background: 'var(--primary)', boxShadow: '0 8px 32px rgba(255,77,141,0.35)' }}
-          >
-            <span className="text-4xl">🎯</span>
-          </motion.div>
-          <h1 className="font-display text-5xl font-extrabold" style={{ color: 'var(--ink)' }}>
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#FFF5F4] border border-[#FCA5A5] mb-5 shadow-sm">
+            <span className="text-3xl">🎯</span>
+          </div>
+          <h1 className="font-serif text-4xl font-medium text-[#18181B]">
             QuizPop
           </h1>
-          <p className="mt-2 text-base font-medium" style={{ color: '#6B5B8E' }}>
+          <p className="mt-2 text-sm text-[#534434] font-medium">
             Available questions. One shot each.
           </p>
         </div>
 
-        {/* Card */}
-        <div
-          className="rounded-[28px] p-8"
-          style={{
-            background: 'rgba(255,255,255,0.85)',
-            backdropFilter: 'blur(16px)',
-            boxShadow: '0 8px 40px rgba(36,27,58,0.12)',
-          }}
-        >
+        {/* Tactical Auth Envelope */}
+        <div className="bg-white rounded-xl border border-[#E5E1D8] shadow-[0_0_50px_rgba(39,34,26,0.06)] p-6 sm:p-8">
+          
           {/* Mode Switcher Tabs */}
-          <div className="flex rounded-2xl p-1 mb-6" style={{ background: '#F5F0FF' }}>
+          <div className="flex rounded-lg p-1 mb-8 bg-[#F0EDF1] border border-[#E5E1D8]">
             <button
               type="button"
               onClick={() => switchMode('register')}
-              className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all ${
-                mode === 'register' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-800'
+              className={`flex-1 py-2 rounded-md font-bold text-xs uppercase tracking-wider transition-all ${
+                mode === 'register' ? 'bg-white shadow-sm border border-[#E5E1D8] text-[#18181B]' : 'text-[#867461] hover:text-[#534434]'
               }`}
-              style={{
-                color: mode === 'register' ? 'var(--ink)' : '#8A7BA8',
-              }}
             >
               Register
             </button>
             <button
               type="button"
               onClick={() => switchMode('login')}
-              className={`flex-1 py-2.5 rounded-xl font-bold text-sm transition-all ${
-                mode === 'login' ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-800'
+              className={`flex-1 py-2 rounded-md font-bold text-xs uppercase tracking-wider transition-all ${
+                mode === 'login' ? 'bg-white shadow-sm border border-[#E5E1D8] text-[#18181B]' : 'text-[#867461] hover:text-[#534434]'
               }`}
-              style={{
-                color: mode === 'login' ? 'var(--ink)' : '#8A7BA8',
-              }}
             >
               Login
             </button>
           </div>
 
-          <h2 className="font-display text-2xl font-bold mb-1" style={{ color: 'var(--ink)' }}>
+          <h2 className="font-serif text-2xl font-medium text-[#18181B] mb-2">
             {mode === 'register' ? 'Create your account' : 'Welcome back'}
           </h2>
-          <p className="text-sm mb-6" style={{ color: '#6B5B8E' }}>
+          <p className="text-sm text-[#534434] mb-8">
             {mode === 'register'
               ? 'Choose a nickname and password to track your streak.'
               : 'Sign in with your nickname and password to play.'}
           </p>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-semibold mb-1.5" style={{ color: 'var(--ink)' }}>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-[#867461] uppercase tracking-widest">
                 Nickname
               </label>
               <input
@@ -234,18 +211,13 @@ export default function StudentAuth() {
                 placeholder="e.g. MathWizard99"
                 maxLength={20}
                 required
-                className="w-full px-4 py-3 rounded-2xl text-base font-medium outline-none border-2 transition-colors"
-                style={{
-                  background: '#F5F0FF',
-                  borderColor: nickname ? 'var(--primary)' : '#E4D9FF',
-                  color: 'var(--ink)',
-                }}
+                className="w-full px-4 py-3 rounded-lg border border-[#E5E1D8] bg-[#FAF8F5] text-[#18181B] text-sm focus:outline-none focus:border-[#DB3320] focus:ring-1 focus:ring-[#DB3320] transition-colors"
               />
             </div>
 
             {mode === 'register' && (
-              <div className="relative" ref={dropdownRef}>
-                <label className="block text-sm font-semibold mb-1.5" style={{ color: 'var(--ink)' }}>
+              <div className="relative space-y-1.5" ref={dropdownRef}>
+                <label className="block text-xs font-bold text-[#867461] uppercase tracking-widest">
                   Branch
                 </label>
                 <button
@@ -256,18 +228,15 @@ export default function StudentAuth() {
                   aria-expanded={isDropdownOpen}
                   aria-controls={isDropdownOpen ? "branch-listbox" : undefined}
                   aria-activedescendant={isDropdownOpen && focusedIndex >= 0 ? `branch-option-${focusedIndex}` : undefined}
-                  className="w-full pl-4 pr-10 py-3 rounded-2xl text-base font-medium outline-none border-2 transition-colors text-left relative flex items-center"
-                  style={{
-                    background: '#F5F0FF',
-                    borderColor: isDropdownOpen || branch ? 'var(--primary)' : '#E4D9FF',
-                    color: branch ? 'var(--ink)' : '#8A7BA8',
-                  }}
+                  className={`w-full pl-4 pr-10 py-3 rounded-lg border bg-[#FAF8F5] text-sm transition-colors text-left flex items-center outline-none ${
+                    isDropdownOpen ? 'border-[#DB3320] ring-1 ring-[#DB3320]' : 'border-[#E5E1D8] hover:border-[#18181B]'
+                  }`}
                 >
-                  <span className="truncate flex-1">
+                  <span className={`truncate flex-1 ${branch ? 'text-[#18181B] font-medium' : 'text-[#867461]'}`}>
                     {branch ? BRANCH_OPTIONS.find((o) => o.value === branch)?.label : 'Select your branch'}
                   </span>
                   <svg width="12" height="8" viewBox="0 0 12 8" fill="none" className="absolute right-4 shrink-0 transition-transform duration-200" style={{ transform: isDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>
-                    <path d="M1.5 1.5L6 6L10.5 1.5" stroke="#8A7BA8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M1.5 1.5L6 6L10.5 1.5" stroke="#867461" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </button>
 
@@ -275,14 +244,8 @@ export default function StudentAuth() {
                   <ul
                     id="branch-listbox"
                     role="listbox"
-                    className="absolute z-50 w-full mt-2 rounded-2xl border-2 py-2 shadow-lg"
-                    style={{
-                      background: '#FFFFFF',
-                      borderColor: '#E4D9FF',
-                      boxShadow: '0 10px 25px rgba(36,27,58,0.08)',
-                      maxHeight: '280px',
-                      overflowY: 'auto',
-                    }}
+                    className="absolute z-50 w-full mt-1.5 rounded-lg border border-[#E5E1D8] bg-white shadow-lg overflow-y-auto"
+                    style={{ maxHeight: '240px' }}
                   >
                     {BRANCH_OPTIONS.map((option, index) => {
                       const isSelected = branch === option.value;
@@ -298,12 +261,11 @@ export default function StudentAuth() {
                             setIsDropdownOpen(false);
                           }}
                           onMouseEnter={() => setFocusedIndex(index)}
-                          className="px-4 py-3 cursor-pointer transition-colors break-words"
-                          style={{
-                            background: isFocused ? '#F5F0FF' : 'transparent',
-                            color: isSelected ? 'var(--primary)' : 'var(--ink)',
-                            fontWeight: isSelected ? '600' : '500',
-                          }}
+                          className={`px-4 py-3 cursor-pointer text-sm transition-colors ${
+                            isFocused ? 'bg-[#F0EDF1]' : 'bg-transparent'
+                          } ${
+                            isSelected ? 'text-[#DB3320] font-bold' : 'text-[#18181B] font-medium'
+                          }`}
                         >
                           {option.label}
                         </li>
@@ -314,8 +276,8 @@ export default function StudentAuth() {
               </div>
             )}
 
-            <div>
-              <label className="block text-sm font-semibold mb-1.5" style={{ color: 'var(--ink)' }}>
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-[#867461] uppercase tracking-widest">
                 Password
               </label>
               <input
@@ -324,18 +286,13 @@ export default function StudentAuth() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                className="w-full px-4 py-3 rounded-2xl text-base font-medium outline-none border-2 transition-colors"
-                style={{
-                  background: '#F5F0FF',
-                  borderColor: password ? 'var(--primary)' : '#E4D9FF',
-                  color: 'var(--ink)',
-                }}
+                className="w-full px-4 py-3 rounded-lg border border-[#E5E1D8] bg-[#FAF8F5] text-[#18181B] text-sm focus:outline-none focus:border-[#DB3320] focus:ring-1 focus:ring-[#DB3320] transition-colors"
               />
             </div>
 
             {mode === 'register' && (
-              <div>
-                <label className="block text-sm font-semibold mb-1.5" style={{ color: 'var(--ink)' }}>
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-[#867461] uppercase tracking-widest">
                   Confirm Password
                 </label>
                 <input
@@ -344,77 +301,69 @@ export default function StudentAuth() {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  className="w-full px-4 py-3 rounded-2xl text-base font-medium outline-none border-2 transition-colors"
-                  style={{
-                    background: '#F5F0FF',
-                    borderColor: confirmPassword ? 'var(--primary)' : '#E4D9FF',
-                    color: 'var(--ink)',
-                  }}
+                  className="w-full px-4 py-3 rounded-lg border border-[#E5E1D8] bg-[#FAF8F5] text-[#18181B] text-sm focus:outline-none focus:border-[#DB3320] focus:ring-1 focus:ring-[#DB3320] transition-colors"
                 />
               </div>
             )}
 
             {error && (
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-sm font-medium pt-1"
-                style={{ color: 'var(--error)' }}
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="bg-[#FFF5F4] border border-[#FCA5A5] rounded-lg p-3 flex items-start gap-2.5 mt-2"
               >
-                {error}
-              </motion.p>
+                <span className="text-[#DB3320] text-sm mt-0.5">⚠️</span>
+                <p className="text-xs font-bold text-[#DB3320] leading-snug">{error}</p>
+              </motion.div>
             )}
 
-            <motion.button
-              whileTap={{ scale: 0.97 }}
+            <button
               type="submit"
               disabled={submitting}
-              className="w-full mt-3 py-4 rounded-2xl text-white font-bold text-lg font-display transition-opacity disabled:opacity-60"
-              style={{ background: 'var(--primary)', boxShadow: '0 6px 24px rgba(255,77,141,0.4)' }}
+              className="w-full mt-4 py-3.5 rounded-lg bg-[#DB3320] hover:bg-[#B91C1C] text-white font-bold text-sm uppercase tracking-wide transition-colors disabled:opacity-50"
             >
               {submitting ? (mode === 'register' ? 'Creating…' : 'Signing in…') : (mode === 'register' ? 'Register' : 'Login')}
-            </motion.button>
+            </button>
           </form>
 
-          <p className="mt-5 text-xs text-center" style={{ color: '#A89BC4' }}>
-            {mode === 'register' ? (
-              <>
-                Already have an account?{' '}
-                <button
-                  type="button"
-                  onClick={() => switchMode('login')}
-                  className="font-bold underline"
-                  style={{ color: 'var(--primary)' }}
-                >
-                  Log in
-                </button>
-              </>
-            ) : (
-              <>
-                Don't have an account yet?{' '}
-                <button
-                  type="button"
-                  onClick={() => switchMode('register')}
-                  className="font-bold underline"
-                  style={{ color: 'var(--primary)' }}
-                >
-                  Register
-                </button>
-              </>
-            )}
-          </p>
-
-          <p className="mt-3 text-xs text-center" style={{ color: '#A89BC4' }}>
-            Are you an administrator?{' '}
-            <button
-              type="button"
-              onClick={() => navigate('/admin')}
-              className="font-bold underline hover:opacity-80 transition-opacity"
-              style={{ color: '#8A7BA8' }}
-            >
-              Login as Admin
-            </button>
-          </p>
+          <div className="mt-8 pt-6 border-t border-[#E5E1D8] space-y-4">
+            <p className="text-xs text-center text-[#867461] font-medium">
+              {mode === 'register' ? (
+                <>
+                  Already have an account?{' '}
+                  <button
+                    type="button"
+                    onClick={() => switchMode('login')}
+                    className="font-bold text-[#DB3320] hover:underline"
+                  >
+                    Log in
+                  </button>
+                </>
+              ) : (
+                <>
+                  Don't have an account yet?{' '}
+                  <button
+                    type="button"
+                    onClick={() => switchMode('register')}
+                    className="font-bold text-[#DB3320] hover:underline"
+                  >
+                    Register
+                  </button>
+                </>
+              )}
+            </p>
+            
+            <p className="text-[10px] text-center text-[#A3978B] uppercase tracking-widest font-bold">
+              Are you an administrator?{' '}
+              <button
+                type="button"
+                onClick={() => navigate('/admin')}
+                className="text-[#867461] hover:text-[#534434] transition-colors underline"
+              >
+                Login as Admin
+              </button>
+            </p>
+          </div>
         </div>
       </motion.div>
     </div>

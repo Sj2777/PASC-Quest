@@ -4,8 +4,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { api } from '../api';
 import type { PollLaunchItem, Student, StreakStatus } from '../api';
 
-
-/** Format expiry as a countdown, e.g. "Expires in 3h 42m" */
+/** Format expiry as an editorial countdown, e.g. "Expires in 3h 42m" */
 function formatExpiryCountdown(expiresAt: string, nowMs: number): string {
   const diffMs = new Date(expiresAt).getTime() - nowMs;
   if (diffMs <= 0) return 'Expired';
@@ -21,6 +20,7 @@ export default function Landing() {
   const [polls, setPolls] = useState<PollLaunchItem[]>([]);
   const [streakStatus, setStreakStatus] = useState<StreakStatus | null>(null);
   const [loading, setLoading] = useState(true);
+  
   // Per-launch starting state (keyed by pollLaunchId)
   const [starting, setStarting] = useState<Record<string, boolean>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -46,14 +46,13 @@ export default function Landing() {
     if (polls.length === 0) return;
     let minDelay = Infinity;
     const currentNow = Date.now();
-    polls.forEach(p => {
+    polls.forEach((p) => {
       const ms = new Date(p.expiresAt).getTime() - currentNow;
       if (ms > 0 && ms < minDelay) minDelay = ms;
     });
 
     if (minDelay === Infinity) return;
-    const delay = minDelay + 1000; // wait 1s past exact expiry to avoid race conditions
-    // Max timeout is ~24 days, safe for browser setTimeout
+    const delay = minDelay + 1000;
     const timer = setTimeout(() => {
       api.getCurrent().then(setPolls).catch(console.error);
     }, delay);
@@ -81,7 +80,7 @@ export default function Landing() {
                 } else if (last.comebackActive && newStatus.comebackActive && (last.comebackProgress || 0) < newStatus.comebackProgress) {
                   setAnimationState('comeback_progress');
                 } else {
-                  const crossed = MILESTONES.find(m => (last.currentStreak || 0) < m && newStatus.currentStreak >= m);
+                  const crossed = MILESTONES.find((m) => (last.currentStreak || 0) < m && newStatus.currentStreak >= m);
                   if (crossed) {
                     setMilestone(crossed);
                     setAnimationState('milestone');
@@ -123,8 +122,6 @@ export default function Landing() {
     navigate('/auth');
   };
 
-  // Phase 7C-A: Each Play button is per-launch. We start THAT specific launch
-  // and navigate to QuestionPage with its pollLaunchId.
   const handleStart = async (pollItem: PollLaunchItem) => {
     if (!student) return;
     const id = pollItem.pollLaunchId;
@@ -132,8 +129,6 @@ export default function Landing() {
     setErrors((prev) => ({ ...prev, [id]: '' }));
     try {
       const { token, timerSeconds } = await api.startPoll(id, student.nickname);
-      // Pass the PollLaunchItem as the poll object. QuestionPage reads:
-      //   poll.text, poll.options, poll.pollLaunchId, poll.questionId — all present.
       navigate('/play', { state: { poll: pollItem, token, timerSeconds, nickname: student.nickname } });
     } catch (err: any) {
       if (err?.status === 401 || err?.error === 'not_authenticated') {
@@ -150,231 +145,175 @@ export default function Landing() {
     }
   };
 
-  // For the leaderboard button in the nav: if exactly one poll is live use it,
-  // otherwise hide the button (multi-question leaderboard navigation is Phase 7C-B).
-  const singlePollId = polls.length === 1 ? polls[0].pollLaunchId : null;
+  const hour = new Date().getHours();
+  const timeGreeting = hour < 12 ? 'GOOD MORNING' : hour < 18 ? 'GOOD AFTERNOON' : 'GOOD EVENING';
+  const activeCount = polls.filter((p) => !p.completed).length;
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center px-4 overflow-hidden">
-      {/* Ambient blobs */}
-      <div className="blob blob-1" />
-      <div className="blob blob-2" />
-      <div className="blob blob-3" />
-
-      <motion.div
-        initial={{ opacity: 0, y: 32 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
-        className="relative z-10 w-full max-w-md"
-      >
-        {/* User bar / Logged in indicator */}
-        {student && (
-          <div className="flex items-center justify-between mb-4 px-3 py-2 rounded-2xl bg-white/70 backdrop-blur-md border border-white/60 shadow-sm">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>
-                {student.nickname}
+    <div className="paper-texture min-h-screen text-[#18181B] selection:bg-[#FFDAD4] selection:text-[#400100] flex flex-col justify-between">
+      {/* Centered tactile editorial envelope */}
+      <div className="w-full max-w-[430px] sm:max-w-lg mx-auto min-h-screen flex flex-col bg-[#FAF8F5] relative shadow-[0_0_50px_rgba(39,34,26,0.06)] pb-28">
+        
+        {/* TopAppBar: Sticky editorial brand masthead */}
+        <header className="w-full sticky top-0 z-40 bg-[#FAF8F5]/90 backdrop-blur-md border-b border-[#E5E1D8]/60 shadow-[0_2px_4px_rgba(39,34,26,0.04)]">
+          <div className="flex justify-between items-center w-full px-5 py-2.5 max-w-[430px] sm:max-w-lg mx-auto">
+            {/* Leading: Student initial badge & Newsreader brand */}
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-full ring-2 ring-[#E5E1D8] bg-[#F0EDF1] flex items-center justify-center font-bold text-[#855300] text-sm shadow-sm select-none">
+                {student?.nickname ? student.nickname.charAt(0).toUpperCase() : 'Q'}
+              </div>
+              <span className="font-serif text-2xl font-semibold text-[#855300] tracking-tight">
+                QuizPop
               </span>
             </div>
+
+            {/* Trailing: Streak pill & logout action */}
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => navigate('/social')}
-                className="text-xs font-semibold px-3 py-1 rounded-xl border transition-all bg-white/50 hover:bg-white text-gray-700"
-                style={{ borderColor: '#E4D9FF' }}
+              <div 
+                className="flex items-center gap-1.5 px-3 py-1 bg-white rounded-full border border-[#D8C3AD]/60 shadow-[0_2px_0_#E2DDD2] active:translate-y-0.5 transition-all text-xs font-bold text-[#18181B] select-none"
+                title="Current active streak"
               >
-                Social
-              </button>
-              <button
-                onClick={() => navigate('/stats')}
-                className="text-xs font-semibold px-3 py-1 rounded-xl border transition-all bg-white/50 hover:bg-white text-gray-700"
-                style={{ borderColor: '#E4D9FF' }}
-              >
-                Stats
-              </button>
-              {/* Leaderboard button: only shown when exactly one poll is live */}
-              {singlePollId && (
-                <button
-                  onClick={() => navigate(`/leaderboard/${singlePollId}`)}
-                  className="text-xs font-semibold px-3 py-1 rounded-xl border transition-all bg-white/50 hover:bg-white text-gray-700"
-                  style={{ borderColor: '#E4D9FF' }}
-                >
-                  Leaderboard
-                </button>
-              )}
+                <span>🔥</span>
+                <span>{streakStatus?.currentStreak ?? student?.currentStreak ?? 0} {((streakStatus?.currentStreak ?? student?.currentStreak ?? 0) === 1) ? 'day' : 'days'}</span>
+              </div>
               <button
                 onClick={handleLogout}
-                className="text-xs font-semibold px-3 py-1 rounded-xl border transition-all hover:bg-white text-gray-500 hover:text-gray-800"
-                style={{ borderColor: '#E4D9FF' }}
+                className="px-2.5 py-1 text-xs font-semibold rounded-full border border-[#D8C3AD]/60 text-[#867461] hover:text-[#18181B] bg-white/70 hover:bg-white transition-all active:translate-y-0.5"
+                title="Sign out"
               >
                 Logout
               </button>
             </div>
           </div>
-        )}
+        </header>
 
-        {/* Logo/Brand */}
-        <div className="text-center mb-8">
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.1, duration: 0.5 }}
-            className="inline-flex items-center justify-center w-20 h-20 rounded-[24px] mb-4"
-            style={{ background: 'var(--primary)', boxShadow: '0 8px 32px rgba(255,77,141,0.35)' }}
-          >
-            <span className="text-4xl">🎯</span>
-          </motion.div>
-          <h1 className="font-display text-5xl font-extrabold" style={{ color: 'var(--ink)' }}>
-            QuizPop
-          </h1>
-          <p className="mt-2 text-base font-medium" style={{ color: '#6B5B8E' }}>
-            Available questions. One shot each.
-          </p>
-        </div>
+        {/* Main Content Canvas */}
+        <main className="px-5 pt-5 flex-1 flex flex-col gap-6">
+          
+          {/* Personalized Editorial Hero Greeting */}
+          <section className="flex flex-col gap-1 min-w-0">
+            <p className="font-sans text-[11px] font-bold tracking-wider text-[#867461] uppercase break-words">
+              {timeGreeting}, {student?.nickname || 'STUDENT'}
+            </p>
+            <h1 className="font-serif text-3xl sm:text-4xl text-[#18181B] font-semibold tracking-tight">
+              What’s live today?
+            </h1>
+          </section>
 
-        {/* Card */}
-        <div
-          className="rounded-[28px] p-8"
-          style={{ background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(16px)', boxShadow: '0 8px 40px rgba(36,27,58,0.12)' }}
-        >
-          {loading ? (
-            <div className="flex justify-center py-8">
-              <div className="w-10 h-10 rounded-full border-4 border-pink-200 border-t-pink-500 animate-spin" />
-            </div>
-          ) : polls.length === 0 ? (
-            <div className="text-center py-6">
-              <div className="text-5xl mb-4">☕</div>
-              <h2 className="font-display text-2xl font-bold" style={{ color: 'var(--ink)' }}>
-                Nothing live yet
-              </h2>
-              <p className="mt-2 text-sm" style={{ color: '#6B5B8E' }}>
-                No questions are available right now. Check back soon!
-              </p>
-            </div>
-          ) : (
-            <>
-              <h2 className="font-display text-2xl font-bold mb-1" style={{ color: 'var(--ink)' }}>
-                Ready to play?
-              </h2>
-              <p className="text-sm mb-6" style={{ color: '#6B5B8E' }}>
-                {polls.length === 1
-                  ? 'Answer the live question before time runs out.'
-                  : `${polls.length} questions are live. Answer any or all of them.`}
-              </p>
-
-              {/* Streak & Comeback UI — unchanged */}
-              {streakStatus && streakStatus.comebackActive && (
-                <motion.div 
-                  initial={animationState === 'comeback_reveal' ? { opacity: 0, scale: shouldReduceMotion ? 1 : 0.9, y: shouldReduceMotion ? 0 : 10 } : false}
-                  animate={
-                    animationState === 'comeback_reveal' 
-                      ? { opacity: 1, scale: 1, y: 0, x: shouldReduceMotion ? 0 : [0, -6, 6, -4, 4, 0] } 
-                      : { opacity: 1, scale: 1, y: 0, x: 0 }
-                  }
-                  transition={{ duration: 0.5 }}
-                  className="mb-6 p-4 rounded-2xl bg-orange-50 border border-orange-200"
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xl">💔</span>
-                    <h3 className="font-bold text-orange-800">Streak Broken!</h3>
-                  </div>
-                  <p className="text-sm text-orange-700 mb-3">
-                    Your previous streak: <strong>{streakStatus.preBreakStreak} days</strong><br/>
-                    Complete the next 3 days to restore it.
-                  </p>
-                  
-                  <p className="text-xs font-bold text-orange-800 uppercase tracking-wider mb-1.5">
-                    Recovery: {streakStatus.comebackProgress} / 3
-                  </p>
-                  <div className="flex gap-1.5 mb-2">
-                    {[1, 2, 3].map(step => {
+          {/* Steal the Streak / Comeback Recovery Card (Preserved Backend State) */}
+          {streakStatus && streakStatus.comebackActive && (
+            <motion.section
+              initial={animationState === 'comeback_reveal' ? { opacity: 0, scale: shouldReduceMotion ? 1 : 0.95 } : false}
+              animate={{ opacity: 1, scale: 1 }}
+              className="tactile-card rounded-xl p-4 sm:p-5 bg-white border border-[#FDBA74] shadow-[0_3px_0_#FED7AA] flex items-center justify-between"
+            >
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="font-sans text-[11px] font-bold text-[#855300] tracking-wider uppercase">
+                    STEAL THE STREAK
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    {[1, 2, 3].map((step) => {
                       const isCompleted = step <= streakStatus.comebackProgress;
-                      const isJustCompleted = animationState === 'comeback_progress' && step === streakStatus.comebackProgress;
                       return (
-                        <div key={step} className="relative w-5 h-5">
-                          <div className="absolute inset-0 rounded-full border-2 border-orange-300" />
-                          {isCompleted && (
-                             <motion.div 
-                               initial={isJustCompleted ? { scale: shouldReduceMotion ? 1 : 0, opacity: shouldReduceMotion ? 0 : 1 } : false}
-                               animate={{ scale: 1, opacity: 1 }}
-                               transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                               className="absolute inset-0 rounded-full bg-orange-500 flex items-center justify-center text-white text-[10px] font-bold" 
-                             >
-                               ✓
-                             </motion.div>
-                          )}
+                        <div
+                          key={step}
+                          className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] font-bold transition-all ${
+                            isCompleted ? 'bg-[#F59E0B] text-white shadow-sm' : 'bg-[#E4E1E6]'
+                          }`}
+                        >
+                          {isCompleted ? '✓' : ''}
                         </div>
                       );
                     })}
                   </div>
-                </motion.div>
-              )}
-
-              {streakStatus && !streakStatus.comebackActive && streakStatus.currentStreak > 0 && (
-                <AnimatePresence mode="wait">
-                  {animationState === 'milestone' ? (
-                    <motion.div 
-                      key="milestone"
-                      initial={{ scale: shouldReduceMotion ? 1 : 0.8, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      exit={{ scale: shouldReduceMotion ? 1 : 0.9, opacity: 0 }}
-                      className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200 text-center shadow-sm"
-                    >
-                      <motion.div animate={shouldReduceMotion ? {} : { scale: [1, 1.15, 1] }} transition={{ repeat: Infinity, duration: 1.5 }} className="text-3xl mb-1">🔥</motion.div>
-                      <h3 className="font-bold text-orange-900 text-lg">{milestone} Day Streak!</h3>
-                      <p className="text-sm text-orange-800 font-medium">
-                        {milestone === 3 ? "Keep it going." : milestone === 7 ? "One week strong." : milestone === 14 ? "Two weeks strong." : "30 days!"}
-                      </p>
-                    </motion.div>
-                  ) : animationState === 'restored' ? (
-                    <motion.div
-                      key="restored"
-                      initial={{ scale: shouldReduceMotion ? 1 : 0.8, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      exit={{ scale: shouldReduceMotion ? 1 : 0.9, opacity: 0 }}
-                      className="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-300 flex flex-col items-center text-center shadow-[0_0_20px_rgba(16,185,129,0.15)]"
-                    >
-                      <motion.div animate={shouldReduceMotion ? {} : { scale: [1, 1.15, 1] }} transition={{ repeat: Infinity, duration: 1.5 }} className="text-3xl mb-1">🔥</motion.div>
-                      <h3 className="font-bold text-emerald-800 text-lg">Streak Restored!</h3>
-                      <p className="text-sm text-emerald-700 mt-1 font-medium">
-                        Your streak is back: <strong>{restoredStreak} days</strong>
-                      </p>
-                    </motion.div>
-                  ) : (
-                    <motion.div 
-                      key="normal"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-between"
-                    >
-                      <div>
-                        <h3 className="font-bold text-emerald-800">You're on fire! 🔥</h3>
-                        <p className="text-xs font-medium text-emerald-700 mt-1">
-                          {streakStatus.currentStreak} day streak
-                        </p>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              )}
-
-              {/* "Playing as" chip */}
-              <div
-                className="rounded-2xl p-4 mb-5 flex items-center justify-between"
-                style={{ background: '#F5F0FF', border: '1.5px solid #E4D9FF' }}
-              >
-                <div>
-                  <p className="text-xs uppercase tracking-wider font-bold" style={{ color: '#8A7BA8' }}>
-                    Playing as
-                  </p>
-                  <p className="font-display font-bold text-lg" style={{ color: 'var(--ink)' }}>
-                    {student?.nickname}
-                  </p>
                 </div>
-                <span className="text-2xl">⚡</span>
+                <p className="font-sans text-xs text-[#534434]">
+                  Recover your <strong>{streakStatus.preBreakStreak}-day streak</strong> — Day {streakStatus.comebackProgress} of 3
+                </p>
               </div>
 
-              {/* Phase 7C-A: Per-launch question cards */}
-              <div className="space-y-3">
+              <div className="w-11 h-11 rounded-full bg-[#FFDDB8]/70 border border-[#F59E0B]/30 flex items-center justify-center text-xl text-[#855300] shadow-sm select-none">
+                🔥
+              </div>
+            </motion.section>
+          )}
+
+          {/* Milestone Celebration or Normal Streak Card */}
+          {streakStatus && !streakStatus.comebackActive && (streakStatus.currentStreak > 0) && (
+            <AnimatePresence mode="wait">
+              {animationState === 'milestone' ? (
+                <motion.section
+                  key="milestone"
+                  initial={{ scale: shouldReduceMotion ? 1 : 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: shouldReduceMotion ? 1 : 0.95, opacity: 0 }}
+                  className="tactile-card rounded-xl p-4 text-center bg-white border border-[#FDBA74] shadow-[0_4px_0_#FED7AA]"
+                >
+                  <span className="text-3xl block mb-1">🔥</span>
+                  <h3 className="font-serif text-lg font-bold text-[#855300]">
+                    {milestone} Day Streak Milestone!
+                  </h3>
+                  <p className="font-sans text-xs text-[#534434] mt-0.5 font-medium">
+                    {milestone === 3 ? "Keep it going!" : milestone === 7 ? "One week strong!" : milestone === 14 ? "Two weeks strong!" : "30 days of excellence!"}
+                  </p>
+                </motion.section>
+              ) : animationState === 'restored' ? (
+                <motion.section
+                  key="restored"
+                  initial={{ scale: shouldReduceMotion ? 1 : 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: shouldReduceMotion ? 1 : 0.95, opacity: 0 }}
+                  className="tactile-card rounded-xl p-4 text-center bg-[#ECFDF5] border border-[#A7F3D0] shadow-[0_4px_0_#BBF7D0]"
+                >
+                  <span className="text-3xl block mb-1">🛡️</span>
+                  <h3 className="font-serif text-lg font-bold text-[#006C49]">Streak Restored!</h3>
+                  <p className="font-sans text-xs text-[#065F46] mt-0.5 font-medium">
+                    Your {restoredStreak}-day streak is officially back.
+                  </p>
+                </motion.section>
+              ) : (
+                <section className="tactile-card rounded-xl p-4 bg-white border border-[#D8C3AD]/40 shadow-[0_2px_4px_rgba(39,34,26,0.04)] flex items-center justify-between">
+                  <div>
+                    <span className="font-sans text-[11px] font-bold text-[#855300] tracking-wider uppercase block">
+                      ACTIVE STREAK
+                    </span>
+                    <p className="font-sans text-xs font-semibold text-[#18181B] mt-0.5">
+                      {streakStatus.currentStreak} day streak — keep the momentum rolling!
+                    </p>
+                  </div>
+                  <span className="text-2xl select-none">🔥</span>
+                </section>
+              )}
+            </AnimatePresence>
+          )}
+
+          {/* Section: Live Questions / Daily Quests (Arbitrary N Support) */}
+          <section className="flex flex-col gap-3.5">
+            <div className="flex items-center justify-between">
+              <h2 className="font-serif text-2xl text-[#18181B] font-medium">Daily Quests</h2>
+              <span className="font-sans text-[11px] font-bold text-[#534434] tracking-wider uppercase px-2.5 py-1 rounded-full bg-[#F0EDF1] border border-[#E5E1D8]">
+                {activeCount} ACTIVE
+              </span>
+            </div>
+
+            {loading ? (
+              <div className="tactile-card rounded-xl p-8 text-center bg-white border border-[#D8C3AD]/40">
+                <div className="w-8 h-8 rounded-full border-3 border-[#D8C3AD] border-t-[#DB3320] animate-spin mx-auto mb-2" />
+                <p className="font-sans text-xs text-[#867461] font-medium">Loading live rounds…</p>
+              </div>
+            ) : polls.length === 0 ? (
+              <div className="tactile-card rounded-xl p-8 text-center bg-white border border-[#D8C3AD]/40 flex flex-col items-center">
+                <div className="w-12 h-12 rounded-full bg-[#F0EDF1] flex items-center justify-center text-2xl mb-3">
+                  ☕
+                </div>
+                <h3 className="font-serif text-xl font-bold text-[#18181B]">Nothing live yet</h3>
+                <p className="font-sans text-xs text-[#867461] mt-1 max-w-xs">
+                  No questions are available right now. Check back soon for the next question round!
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-4">
                 {polls.map((pollItem, idx) => {
                   const id = pollItem.pollLaunchId;
                   const isStarting = starting[id] ?? false;
@@ -382,68 +321,142 @@ export default function Landing() {
                   const isCompleted = pollItem.completed;
                   const isExpiredLocal = new Date(pollItem.expiresAt).getTime() - now <= 0;
 
-                  return (
-                    <motion.div
-                      key={id}
-                      initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.05 * idx, duration: 0.3 }}
-                      className="rounded-2xl p-4"
-                      style={{
-                        background: isCompleted ? '#F0FDF4' : '#F5F0FF',
-                        border: isCompleted ? '1.5px solid #BBF7D0' : '1.5px solid #E4D9FF',
-                      }}
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs uppercase tracking-wider font-bold mb-1" style={{ color: isCompleted ? '#22C55E' : '#8A7BA8' }}>
-                            Question {polls.length > 1 ? idx + 1 : ''} {isCompleted && '— COMPLETED'}
-                          </p>
-                          <p className="font-medium text-sm leading-snug line-clamp-2" style={{ color: 'var(--ink)' }}>
-                            {pollItem.text}
-                          </p>
-                          <p className="text-xs mt-1.5" style={{ color: isCompleted ? '#4ADE80' : '#A89BC4' }}>
-                            {formatExpiryCountdown(pollItem.expiresAt, now)}
-                          </p>
-                          {err && (
-                            <motion.p
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              className="mt-1.5 text-xs font-medium"
-                              style={{ color: 'var(--error)' }}
-                            >
-                              {err}
-                            </motion.p>
-                          )}
+                  if (isCompleted) {
+                    return (
+                      <article
+                        key={id}
+                        className="rounded-xl p-4 sm:p-5 bg-[#F0EDF1]/60 border border-[#D8C3AD]/40 flex flex-col gap-2 opacity-90 transition-all"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="inline-flex items-center gap-1.5 text-[#006C49] font-sans text-[11px] font-bold tracking-wider uppercase">
+                            <span className="w-4 h-4 rounded-full bg-[#006C49] text-white flex items-center justify-center text-[10px]">
+                              ✓
+                            </span>
+                            COMPLETED
+                          </span>
+                          <span className="font-sans text-[11px] font-semibold text-[#867461] uppercase tracking-wider">
+                            QUESTION {polls.length > 1 ? idx + 1 : '1'}
+                          </span>
                         </div>
-                        {isCompleted ? (
-                          <div className="flex-shrink-0 px-4 py-2.5 flex items-center justify-center">
-                            <span className="text-2xl">✅</span>
-                          </div>
-                        ) : (
-                          <motion.button
-                            whileTap={{ scale: 0.97 }}
-                            onClick={() => handleStart(pollItem)}
-                            disabled={isStarting || isExpiredLocal}
-                            className="flex-shrink-0 px-5 py-2.5 rounded-xl text-white font-bold text-sm font-display transition-opacity disabled:opacity-60"
-                            style={{ background: isExpiredLocal ? 'var(--gray-300)' : 'var(--primary)', boxShadow: isExpiredLocal ? 'none' : '0 4px 16px rgba(255,77,141,0.35)' }}
-                          >
-                            {isStarting ? 'Starting…' : isExpiredLocal ? 'Wait...' : 'Play'}
-                          </motion.button>
-                        )}
+                        <h4 className="font-sans text-sm sm:text-base text-[#18181B] font-medium line-through decoration-[#D8C3AD] line-clamp-2">
+                          {pollItem.text}
+                        </h4>
+                        <p className="font-sans text-xs text-[#006C49] font-medium mt-0.5">
+                          ✓ Attempt recorded • Results locked
+                        </p>
+                      </article>
+                    );
+                  }
+
+                  return (
+                    <article
+                      key={id}
+                      className="tactile-card rounded-xl p-5 sm:p-6 bg-white border border-[#D8C3AD]/60 shadow-[0_4px_0_#E2DDD2] flex flex-col gap-3.5 relative transition-all"
+                    >
+                      {/* Card Header: Live Status & Category/Index */}
+                      <div className="flex items-center justify-between">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FFDAD4] text-[#400100] font-sans text-[11px] font-bold">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#B71607] animate-ping" />
+                          ● LIVE
+                        </span>
+                        <span className="font-sans text-[11px] font-bold text-[#867461] tracking-wider uppercase">
+                          QUESTION {polls.length > 1 ? idx + 1 : '1'}
+                        </span>
                       </div>
-                    </motion.div>
+
+                      {/* Question Text */}
+                      <div className="flex flex-col gap-1">
+                        <h3 className="font-serif text-lg sm:text-xl text-[#18181B] leading-snug font-medium line-clamp-3">
+                          {pollItem.text}
+                        </h3>
+                        <div className="flex items-center gap-2 text-[#534434] font-sans text-xs sm:text-sm mt-1">
+                          <span className="flex items-center gap-1 font-medium">
+                            ⏱ {pollItem.timerSeconds}s
+                          </span>
+                          <span>•</span>
+                          <span className="text-[#B71607] font-semibold">
+                            {formatExpiryCountdown(pollItem.expiresAt, now)}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Per-Card Error */}
+                      {err && (
+                        <p className="font-sans text-xs font-semibold text-[#B71607] bg-[#FEF2F2] p-2 rounded-lg border border-[#FCA5A5]">
+                          {err}
+                        </p>
+                      )}
+
+                      {/* Tactile Kinetic Primary Action Button */}
+                      <button
+                        onClick={() => handleStart(pollItem)}
+                        disabled={isStarting || isExpiredLocal}
+                        className="tactile-btn-red w-full mt-1 py-3 px-4 rounded-xl font-sans font-bold text-sm sm:text-base flex items-center justify-center gap-2 disabled:opacity-50 select-none cursor-pointer"
+                      >
+                        <span>{isStarting ? 'Starting…' : isExpiredLocal ? 'Wait...' : 'PLAY CHALLENGE'}</span>
+                        <span className="text-lg leading-none">➔</span>
+                      </button>
+                    </article>
                   );
                 })}
               </div>
+            )}
+          </section>
 
-              <p className="mt-5 text-xs text-center" style={{ color: '#A89BC4' }}>
-                One attempt per question.
+          {/* Campus Division & Profile Telemetry Card */}
+          <section className="tactile-card rounded-xl p-4 sm:p-5 bg-white border border-[#D8C3AD]/60 shadow-[0_3px_0_#E2DDD2] flex items-center justify-between mb-2">
+            <div>
+              <span className="font-sans text-[11px] font-bold text-[#867461] uppercase tracking-wider block">
+                CAMPUS ACADEMIC DIVISION
+              </span>
+              <p className="font-serif text-base sm:text-lg font-bold text-[#18181B] mt-0.5">
+                Branch: {student?.branch || 'General Academic'}
               </p>
-            </>
-          )}
-        </div>
-      </motion.div>
+              <p className="font-sans text-xs text-[#534434] mt-0.5">
+                Personal Best: <strong>{student?.bestStreak || 0} days</strong>
+              </p>
+            </div>
+            <button
+              onClick={() => navigate('/social')}
+              className="tactile-btn-white px-3 py-1.5 rounded-lg text-xs font-bold font-sans text-[#18181B] select-none cursor-pointer"
+            >
+              Standings ➔
+            </button>
+          </section>
+
+        </main>
+
+        {/* Bottom Navigation Bar: Docked to Mobile-Style Content Envelope */}
+        <nav className="fixed bottom-0 left-0 right-0 w-full z-50 flex justify-around items-center px-4 py-2 max-w-[430px] sm:max-w-lg mx-auto pb-safe bg-white rounded-t-xl border-t border-[#E5E1D8] shadow-[0_-4px_16px_rgba(39,34,26,0.06)]">
+          {/* Home Tab (ACTIVE) */}
+          <button
+            onClick={() => navigate('/student')}
+            className="flex flex-col items-center justify-center bg-[#F59E0B] text-[#613B00] rounded-xl px-5 py-1.5 font-bold shadow-[0_2px_0_#613B00] active:scale-95 transition-all select-none cursor-pointer"
+          >
+            <span className="text-base leading-none">🎮</span>
+            <span className="font-sans text-[11px] mt-0.5">Home</span>
+          </button>
+
+          {/* Compete Tab (INACTIVE -> Navigates to Branch Battle & Leaderboards) */}
+          <button
+            onClick={() => navigate('/social')}
+            className="flex flex-col items-center justify-center text-[#534434] hover:text-[#855300] px-4 py-1.5 font-semibold active:scale-95 transition-all select-none cursor-pointer"
+          >
+            <span className="text-base leading-none">🏆</span>
+            <span className="font-sans text-[11px] mt-0.5">Compete</span>
+          </button>
+
+          {/* Profile Tab (INACTIVE -> Navigates to Personal Stats) */}
+          <button
+            onClick={() => navigate('/stats')}
+            className="flex flex-col items-center justify-center text-[#534434] hover:text-[#855300] px-4 py-1.5 font-semibold active:scale-95 transition-all select-none cursor-pointer"
+          >
+            <span className="text-base leading-none">👤</span>
+            <span className="font-sans text-[11px] mt-0.5">Profile</span>
+          </button>
+        </nav>
+
+      </div>
     </div>
   );
 }
