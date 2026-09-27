@@ -128,6 +128,7 @@ model Student {
   comebackActive    Boolean   @default(false) // true while a comeback attempt is in progress
   comebackProgress  Int       @default(0) // consecutive correct days completed since the streak broke (0-3)
   preBreakStreak    Int       @default(0) // the streak value to restore if the comeback succeeds
+  pointsSpent       Int       @default(0) // points spent to renew streaks or unlock perks
 
   attempts        Attempt[]
 

@@ -14,7 +14,7 @@ export default function AdminQuestion() {
   const [options, setOptions] = useState(['', '']);
   const [correctIndex, setCorrectIndex] = useState(0);
   const [timerSeconds, setTimerSeconds] = useState(30);
-  const [points, setPoints] = useState(0);
+  const [points, setPoints] = useState(50);
   const [scheduledAt, setScheduledAt] = useState('');
   const [hasLaunches, setHasLaunches] = useState(false);
   

@@ -6,6 +6,7 @@ import prisma from '../lib/prisma';
 import { studentAuthMiddleware } from '../middleware/studentAuth';
 import { getStreakStatus } from '../services/streakService';
 import { getStudentStats } from '../services/statsService';
+import { getIstMidnight } from '../lib/dateUtils';
 
 const router = Router();
 
@@ -135,6 +136,7 @@ router.get('/me', studentAuthMiddleware, async (req: Request, res: Response) => 
         branch: true,
         currentStreak: true,
         bestStreak: true,
+        pointsSpent: true,
       },
     });
 
@@ -147,10 +149,15 @@ router.get('/me', studentAuthMiddleware, async (req: Request, res: Response) => 
       where: { studentId },
       _sum: { awardedPoints: true },
     });
-    const totalPoints = pointsAgg._sum.awardedPoints ?? 0;
+    const earnedPoints = pointsAgg._sum.awardedPoints ?? 0;
+    const totalPoints = Math.max(0, earnedPoints - (student.pointsSpent ?? 0));
 
     res.json({
-      ...student,
+      id: student.id,
+      nickname: student.nickname,
+      branch: student.branch,
+      currentStreak: student.currentStreak,
+      bestStreak: student.bestStreak,
       totalPoints,
     });
   } catch {
@@ -178,6 +185,84 @@ router.get('/stats', studentAuthMiddleware, async (req: Request, res: Response) 
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// POST /api/student/renew-streak
+// Spend 50 points to renew/repair streak if lost or add 1 day
+const STREAK_RENEWAL_COST = 50;
+
+router.post('/renew-streak', studentAuthMiddleware, async (req: Request, res: Response) => {
+  const studentId = (req as any).studentId as string;
+
+  try {
+    const student = await prisma.student.findUnique({
+      where: { id: studentId },
+    });
+
+    if (!student) {
+      res.status(401).json({ error: 'not_authenticated' });
+      return;
+    }
+
+    const pointsAgg = await prisma.attempt.aggregate({
+      where: { studentId },
+      _sum: { awardedPoints: true },
+    });
+    const earnedPoints = pointsAgg._sum.awardedPoints ?? 0;
+    const availablePoints = Math.max(0, earnedPoints - (student.pointsSpent ?? 0));
+
+    if (availablePoints < STREAK_RENEWAL_COST) {
+      res.status(400).json({
+        error: `Insufficient points. You need at least ${STREAK_RENEWAL_COST} points to renew your streak (you currently have ${availablePoints} pts).`,
+        availablePoints,
+        cost: STREAK_RENEWAL_COST,
+      });
+      return;
+    }
+
+    const now = new Date();
+    const today = getIstMidnight(now)!;
+
+    let newCurrentStreak: number;
+    let newComebackActive = false;
+    let newComebackProgress = 0;
+    let newPreBreakStreak = 0;
+
+    if (student.comebackActive) {
+      // Restore lost streak!
+      newCurrentStreak = student.preBreakStreak > 0 ? student.preBreakStreak + 1 : student.currentStreak + 1;
+    } else {
+      newCurrentStreak = student.currentStreak + 1;
+    }
+
+    const newBestStreak = Math.max(student.bestStreak, newCurrentStreak);
+    const newPointsSpent = (student.pointsSpent ?? 0) + STREAK_RENEWAL_COST;
+    const remainingPoints = availablePoints - STREAK_RENEWAL_COST;
+
+    const updated = await prisma.student.update({
+      where: { id: studentId },
+      data: {
+        pointsSpent: newPointsSpent,
+        currentStreak: newCurrentStreak,
+        bestStreak: newBestStreak,
+        lastCorrectDate: today,
+        comebackActive: newComebackActive,
+        comebackProgress: newComebackProgress,
+        preBreakStreak: newPreBreakStreak,
+      },
+    });
+
+    res.json({
+      message: 'Streak renewed successfully!',
+      currentStreak: updated.currentStreak,
+      bestStreak: updated.bestStreak,
+      totalPoints: remainingPoints,
+      comebackActive: false,
+    });
+  } catch (err) {
+    console.error('Failed to renew streak:', err);
+    res.status(500).json({ error: 'Server error while renewing streak' });
   }
 });
 

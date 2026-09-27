@@ -27,10 +27,11 @@ export default function Landing() {
 
   const shouldReduceMotion = useReducedMotion();
 
-  // Animation states
   const [animationState, setAnimationState] = useState<'none' | 'milestone' | 'comeback_reveal' | 'comeback_progress' | 'restored'>('none');
   const [milestone, setMilestone] = useState<number | null>(null);
   const [restoredStreak, setRestoredStreak] = useState<number | null>(null);
+  const [renewing, setRenewing] = useState(false);
+  const [renewFeedback, setRenewFeedback] = useState<{ text: string; isError?: boolean } | null>(null);
 
   const MILESTONES = [3, 7, 14, 30];
 
@@ -120,6 +121,53 @@ export default function Landing() {
   const handleLogout = async () => {
     await api.logoutStudent().catch(() => {});
     navigate('/');
+  };
+
+  useEffect(() => {
+    if (renewFeedback) {
+      const t = setTimeout(() => setRenewFeedback(null), 5000);
+      return () => clearTimeout(t);
+    }
+  }, [renewFeedback]);
+
+  const handleRenewStreak = async () => {
+    if (renewing) return;
+    setRenewing(true);
+    setRenewFeedback(null);
+    try {
+      const res = await api.renewStreak();
+      setStudent((prev) => prev ? {
+        ...prev,
+        currentStreak: res.currentStreak,
+        bestStreak: res.bestStreak,
+        totalPoints: res.totalPoints,
+      } : null);
+      setStreakStatus({
+        currentStreak: res.currentStreak,
+        bestStreak: res.bestStreak,
+        comebackActive: false,
+        comebackProgress: 0,
+        preBreakStreak: 0,
+        daysRemainingToRecover: null,
+      });
+      setRestoredStreak(res.currentStreak);
+      setAnimationState('restored');
+      setRenewFeedback({ text: `Streak renewed to ${res.currentStreak} day(s)! (-50 pts)` });
+      localStorage.setItem('lastStreakStatus', JSON.stringify({
+        currentStreak: res.currentStreak,
+        bestStreak: res.bestStreak,
+        comebackActive: false,
+        comebackProgress: 0,
+        preBreakStreak: 0,
+      }));
+    } catch (err: any) {
+      setRenewFeedback({
+        text: err?.error || err?.message || 'Failed to renew streak.',
+        isError: true,
+      });
+    } finally {
+      setRenewing(false);
+    }
   };
 
   const handleStart = async (pollItem: PollLaunchItem) => {
@@ -215,43 +263,117 @@ export default function Landing() {
                 </h1>
               </section>
 
+              {/* Streak Renewal Notification */}
+              {renewFeedback && (
+                <div
+                  className={`p-3 rounded-xl text-xs sm:text-sm font-bold border transition-all shadow-sm ${
+                    renewFeedback.isError
+                      ? 'bg-[#FFF0EE] border-[#FFDAD4] text-[#B71607]'
+                      : 'bg-[#ECFDF5] border-[#A7F3D0] text-[#006C49]'
+                  }`}
+                >
+                  {renewFeedback.text}
+                </div>
+              )}
+
               {/* Steal the Streak / Comeback Recovery Card */}
               {streakStatus && streakStatus.comebackActive && (
                 <motion.section
                   initial={animationState === 'comeback_reveal' ? { opacity: 0, scale: shouldReduceMotion ? 1 : 0.95 } : false}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="tactile-card rounded-2xl p-5 sm:p-6 bg-white border border-[#FDBA74] shadow-[0_3px_0_#FED7AA] flex items-center justify-between"
+                  className="tactile-card rounded-2xl p-5 sm:p-6 bg-white border border-[#FDBA74] shadow-[0_3px_0_#FED7AA] flex flex-col gap-4"
                 >
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center gap-2.5">
-                      <span className="font-sans text-xs font-bold text-[#855300] tracking-wider uppercase">
-                        STEAL THE STREAK
-                      </span>
-                      <div className="flex items-center gap-1.5">
-                        {[1, 2, 3].map((step) => {
-                          const isCompleted = step <= streakStatus.comebackProgress;
-                          return (
-                            <div
-                              key={step}
-                              className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold transition-all ${
-                                isCompleted ? 'bg-[#F59E0B] text-white shadow-sm' : 'bg-[#E4E1E6]'
-                              }`}
-                            >
-                              {isCompleted ? '✓' : ''}
-                            </div>
-                          );
-                        })}
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center gap-2.5">
+                        <span className="font-sans text-xs font-bold text-[#855300] tracking-wider uppercase">
+                          STEAL THE STREAK
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          {[1, 2, 3].map((step) => {
+                            const isCompleted = step <= streakStatus.comebackProgress;
+                            return (
+                              <div
+                                key={step}
+                                className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold transition-all ${
+                                  isCompleted ? 'bg-[#F59E0B] text-white shadow-sm' : 'bg-[#E4E1E6]'
+                                }`}
+                              >
+                                {isCompleted ? '✓' : ''}
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
+                      <p className="font-sans text-xs sm:text-sm text-[#534434]">
+                        Recover your <strong>{streakStatus.preBreakStreak}-day streak</strong> — Day {streakStatus.comebackProgress} of 3
+                      </p>
                     </div>
-                    <p className="font-sans text-xs sm:text-sm text-[#534434]">
-                      Recover your <strong>{streakStatus.preBreakStreak}-day streak</strong> — Day {streakStatus.comebackProgress} of 3
-                    </p>
+
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-[#FFDDB8]/70 border border-[#F59E0B]/30 flex items-center justify-center text-2xl text-[#855300] shadow-sm select-none">
+                      🔥
+                    </div>
                   </div>
 
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-[#FFDDB8]/70 border border-[#F59E0B]/30 flex items-center justify-center text-2xl text-[#855300] shadow-sm select-none">
-                    🔥
+                  <div className="pt-3 border-t border-[#FED7AA]/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div className="text-xs text-[#855300]">
+                      <span className="font-medium">Skip the wait: </span>
+                      <strong className="block sm:inline">Use points to restore instantly</strong>
+                    </div>
+                    <button
+                      onClick={handleRenewStreak}
+                      disabled={renewing || (student?.totalPoints ?? 0) < 50}
+                      className={`px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs sm:text-sm font-bold font-sans transition-all flex items-center gap-1.5 cursor-pointer ${
+                        (student?.totalPoints ?? 0) >= 50
+                          ? 'tactile-btn-primary bg-[#DB3320] text-white hover:bg-[#B71607] shadow-[0_2px_0_#8E1A0C] active:translate-y-0.5'
+                          : 'bg-zinc-200 text-zinc-400 border border-zinc-300 cursor-not-allowed shadow-none'
+                      }`}
+                      title={(student?.totalPoints ?? 0) < 50 ? 'Requires 50 points' : 'Renew streak now'}
+                    >
+                      <span>🔥</span>
+                      <span>{renewing ? 'Renewing...' : 'Renew Streak (50 pts)'}</span>
+                    </button>
                   </div>
                 </motion.section>
+              )}
+
+              {/* Inactive Streak Card - Option to kickstart with points */}
+              {streakStatus && !streakStatus.comebackActive && streakStatus.currentStreak === 0 && (
+                <section className="tactile-card rounded-2xl p-5 sm:p-6 bg-white border border-[#D8C3AD]/60 shadow-[0_3px_0_#E2DDD2] flex flex-col gap-3.5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="font-sans text-xs font-bold text-[#867461] tracking-wider uppercase block">
+                        STREAK INACTIVE
+                      </span>
+                      <p className="font-serif text-lg font-bold text-[#18181B] mt-0.5">
+                        0 Day Streak
+                      </p>
+                      <p className="font-sans text-xs sm:text-sm text-[#534434] mt-1">
+                        Lost your streak? Redeem 50 points to buy 1 day and ignite your momentum!
+                      </p>
+                    </div>
+                    <span className="text-3xl select-none opacity-60">⏳</span>
+                  </div>
+
+                  <div className="pt-2.5 border-t border-[#E5E1D8]/60 flex items-center justify-between">
+                    <span className="text-xs font-bold text-[#855300]">
+                      Points: {student?.totalPoints ?? 0} pts
+                    </span>
+                    <button
+                      onClick={handleRenewStreak}
+                      disabled={renewing || (student?.totalPoints ?? 0) < 50}
+                      className={`px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs sm:text-sm font-bold font-sans transition-all flex items-center gap-1.5 cursor-pointer ${
+                        (student?.totalPoints ?? 0) >= 50
+                          ? 'tactile-btn-primary bg-[#DB3320] text-white hover:bg-[#B71607] shadow-[0_2px_0_#8E1A0C] active:translate-y-0.5'
+                          : 'bg-zinc-200 text-zinc-400 border border-zinc-300 cursor-not-allowed shadow-none'
+                      }`}
+                      title={(student?.totalPoints ?? 0) < 50 ? 'Requires 50 points' : 'Buy 1 day streak'}
+                    >
+                      <span>🔥</span>
+                      <span>{renewing ? 'Processing...' : 'Buy 1-Day Streak (50 pts)'}</span>
+                    </button>
+                  </div>
+                </section>
               )}
 
               {/* Milestone Celebration or Normal Streak Card */}
@@ -288,16 +410,36 @@ export default function Landing() {
                       </p>
                     </motion.section>
                   ) : (
-                    <section className="tactile-card rounded-2xl p-5 sm:p-6 bg-white border border-[#D8C3AD]/40 shadow-[0_2px_4px_rgba(39,34,26,0.04)] flex items-center justify-between">
-                      <div>
-                        <span className="font-sans text-xs font-bold text-[#855300] tracking-wider uppercase block">
-                          ACTIVE STREAK
-                        </span>
-                        <p className="font-sans text-sm sm:text-base font-semibold text-[#18181B] mt-1">
-                          {streakStatus.currentStreak} day streak — keep the momentum rolling!
-                        </p>
+                    <section className="tactile-card rounded-2xl p-5 sm:p-6 bg-white border border-[#D8C3AD]/40 shadow-[0_2px_4px_rgba(39,34,26,0.04)] flex flex-col gap-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="font-sans text-xs font-bold text-[#855300] tracking-wider uppercase block">
+                            ACTIVE STREAK
+                          </span>
+                          <p className="font-sans text-sm sm:text-base font-semibold text-[#18181B] mt-1">
+                            {streakStatus.currentStreak} day streak — keep the momentum rolling!
+                          </p>
+                        </div>
+                        <span className="text-3xl select-none">🔥</span>
                       </div>
-                      <span className="text-3xl select-none">🔥</span>
+                      <div className="pt-2 border-t border-[#E5E1D8]/60 flex items-center justify-between">
+                        <span className="text-xs text-[#867461]">
+                          Extend / repair protection:
+                        </span>
+                        <button
+                          onClick={handleRenewStreak}
+                          disabled={renewing || (student?.totalPoints ?? 0) < 50}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold font-sans transition-all flex items-center gap-1 cursor-pointer ${
+                            (student?.totalPoints ?? 0) >= 50
+                              ? 'bg-[#FFF8ED] text-[#855300] border border-[#FDBA74] hover:bg-[#FFEDD5] shadow-[0_1px_0_#FED7AA] active:translate-y-0.5'
+                              : 'bg-zinc-100 text-zinc-400 border border-zinc-200 cursor-not-allowed shadow-none'
+                          }`}
+                          title="Add +1 day streak using 50 points"
+                        >
+                          <span>🛡️</span>
+                          <span>{renewing ? 'Renewing...' : '+1 Day Streak (50 pts)'}</span>
+                        </button>
+                      </div>
                     </section>
                   )}
                 </AnimatePresence>

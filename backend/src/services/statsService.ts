@@ -37,6 +37,12 @@ export async function getStudentStats(studentId: string) {
     totalPoints += a.awardedPoints;
   }
 
+  const targetStudent = await prisma.student.findUnique({
+    where: { id: studentId },
+    select: { pointsSpent: true }
+  });
+  const netPoints = Math.max(0, totalPoints - (targetStudent?.pointsSpent ?? 0));
+
   let accuracy: number | null = null;
   if (totalAttemptsCount > 0) {
     accuracy = Math.round((correctCount / totalAttemptsCount) * 1000) / 10;
@@ -117,7 +123,7 @@ export async function getStudentStats(studentId: string) {
     avgTimeMs,
     currentStreak: streak.currentStreak,
     bestStreak: streak.bestStreak,
-    totalPoints,
+    totalPoints: netPoints,
     rankHistory,
     questionArchive
   };

@@ -82,7 +82,8 @@ export async function getStreakStatus(studentId: string) {
       bestStreak: true,
       comebackActive: true,
       comebackProgress: true,
-      preBreakStreak: true
+      preBreakStreak: true,
+      lastCorrectDate: true,
     }
   });
 
@@ -90,12 +91,41 @@ export async function getStreakStatus(studentId: string) {
     throw new Error('Student not found');
   }
 
+  let { currentStreak, bestStreak, comebackActive, comebackProgress, preBreakStreak, lastCorrectDate } = student;
+
+  const now = new Date();
+  const today = getIstMidnight(now)!;
+  const lastCorrect = getIstMidnight(lastCorrectDate);
+
+  if (lastCorrect) {
+    const msPerDay = 1000 * 60 * 60 * 24;
+    const daysSinceLastCorrect = Math.round((today.getTime() - lastCorrect.getTime()) / msPerDay);
+
+    if (daysSinceLastCorrect > 1) {
+      if (!comebackActive && currentStreak > 0) {
+        preBreakStreak = currentStreak;
+        currentStreak = 0;
+        comebackActive = true;
+        comebackProgress = 0;
+        await prisma.student.update({
+          where: { id: studentId },
+          data: {
+            preBreakStreak,
+            currentStreak,
+            comebackActive,
+            comebackProgress
+          }
+        });
+      }
+    }
+  }
+
   return {
-    currentStreak: student.currentStreak,
-    bestStreak: student.bestStreak,
-    comebackActive: student.comebackActive,
-    comebackProgress: student.comebackProgress,
-    preBreakStreak: student.preBreakStreak,
-    daysRemainingToRecover: student.comebackActive ? 3 - student.comebackProgress : null
+    currentStreak,
+    bestStreak,
+    comebackActive,
+    comebackProgress,
+    preBreakStreak,
+    daysRemainingToRecover: comebackActive ? 3 - comebackProgress : null
   };
 }

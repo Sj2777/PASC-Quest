@@ -32,6 +32,14 @@ export const api = {
   getMe: () => req<Student>('/api/student/me'),
   getStreakStatus: () => req<StreakStatus>('/api/student/streak-status'),
   getStudentStats: () => req<StudentStats>('/api/student/stats'),
+  renewStreak: () =>
+    req<{
+      message: string;
+      currentStreak: number;
+      bestStreak: number;
+      totalPoints: number;
+      comebackActive: boolean;
+    }>('/api/student/renew-streak', { method: 'POST' }),
 
   // Social & Competitive
   follow: (nickname: string) => req<{ message: string }>(`/api/social/follow/${nickname}`, { method: 'POST' }),
