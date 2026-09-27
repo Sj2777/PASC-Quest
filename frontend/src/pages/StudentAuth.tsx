@@ -166,216 +166,248 @@ export default function StudentAuth() {
   }
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center px-4 py-12 bg-[#FAF8F5] font-sans text-[#18181B] selection:bg-[#FFDAD4] selection:text-[#400100]">
+    <div className="paper-texture min-h-screen flex items-center justify-center px-4 sm:px-8 py-10 lg:py-16 bg-[#FAF8F5] font-sans text-[#18181B] selection:bg-[#FFDAD4] selection:text-[#400100]">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
-        className="relative z-10 w-full max-w-[420px]"
+        className="w-full max-w-6xl mx-auto"
       >
-        {/* Logo/Brand */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#FFF5F4] border border-[#FCA5A5] mb-5 shadow-sm">
-            <span className="text-3xl">🎯</span>
-          </div>
-          <h1 className="font-serif text-4xl font-medium text-[#18181B]">
-            QuizPop
-          </h1>
-          <p className="mt-2 text-sm text-[#534434] font-medium">
-            Available questions. One shot each.
-          </p>
-        </div>
-
-        {/* Tactical Auth Envelope */}
-        <div className="bg-white rounded-xl border border-[#E5E1D8] shadow-[0_0_50px_rgba(39,34,26,0.06)] p-6 sm:p-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-center">
           
-          {/* Mode Switcher Tabs */}
-          <div className="flex rounded-lg p-1 mb-8 bg-[#F0EDF1] border border-[#E5E1D8]">
-            <button
-              type="button"
-              onClick={() => switchMode('register')}
-              className={`flex-1 py-2 rounded-md font-bold text-xs uppercase tracking-wider transition-all ${
-                mode === 'register' ? 'bg-white shadow-sm border border-[#E5E1D8] text-[#18181B]' : 'text-[#867461] hover:text-[#534434]'
-              }`}
-            >
-              Register
-            </button>
-            <button
-              type="button"
-              onClick={() => switchMode('login')}
-              className={`flex-1 py-2 rounded-md font-bold text-xs uppercase tracking-wider transition-all ${
-                mode === 'login' ? 'bg-white shadow-sm border border-[#E5E1D8] text-[#18181B]' : 'text-[#867461] hover:text-[#534434]'
-              }`}
-            >
-              Login
-            </button>
+          {/* Left Column: Brand & Literary Campus Showcase (Visible on all, grand on desktop 16:9) */}
+          <div className="lg:col-span-6 text-center lg:text-left flex flex-col items-center lg:items-start">
+            <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-[#FFF5F4] border border-[#FCA5A5] mb-5 shadow-sm">
+              <span className="text-3xl sm:text-4xl">🎯</span>
+            </div>
+            
+            <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-semibold text-[#18181B] tracking-tight">
+              QuizPop
+            </h1>
+            <p className="mt-3 text-base sm:text-lg text-[#534434] font-medium max-w-md">
+              Daily aptitude polls for engineers. One live question per round. One shot to claim glory.
+            </p>
+
+            {/* Feature Highlights on Desktop */}
+            <div className="hidden lg:flex flex-col gap-4 mt-8 w-full max-w-md">
+              <div className="flex items-start gap-3.5 p-3.5 rounded-xl bg-white/70 border border-[#E5E1D8]">
+                <span className="text-2xl">⚡</span>
+                <div>
+                  <h4 className="font-sans font-bold text-sm text-[#18181B]">Server-Timed Sprints</h4>
+                  <p className="font-sans text-xs text-[#534434] mt-0.5">Rapid 30-second MCQs with authoritative anti-cheat timestamps.</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3.5 p-3.5 rounded-xl bg-white/70 border border-[#E5E1D8]">
+                <span className="text-2xl">🔥</span>
+                <div>
+                  <h4 className="font-sans font-bold text-sm text-[#18181B]">Steal the Streak</h4>
+                  <p className="font-sans text-xs text-[#534434] mt-0.5">Missed a day? Complete 3 consecutive challenges to restore your full streak.</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3.5 p-3.5 rounded-xl bg-white/70 border border-[#E5E1D8]">
+                <span className="text-2xl">🏆</span>
+                <div>
+                  <h4 className="font-sans font-bold text-sm text-[#18181B]">Branch Battles & Speed King</h4>
+                  <p className="font-sans text-xs text-[#534434] mt-0.5">Rival campus branches compete for podium dominance.</p>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <h2 className="font-serif text-2xl font-medium text-[#18181B] mb-2">
-            {mode === 'register' ? 'Create your account' : 'Welcome back'}
-          </h2>
-          <p className="text-sm text-[#534434] mb-8">
-            {mode === 'register'
-              ? 'Choose a nickname and password to track your streak.'
-              : 'Sign in with your nickname and password to play.'}
-          </p>
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-[#867461] uppercase tracking-widest">
-                Nickname
-              </label>
-              <input
-                type="text"
-                value={nickname}
-                onChange={(e) => setNickname(e.target.value)}
-                placeholder="e.g. MathWizard99"
-                maxLength={20}
-                required
-                className="w-full px-4 py-3 rounded-lg border border-[#E5E1D8] bg-[#FAF8F5] text-[#18181B] text-sm focus:outline-none focus:border-[#DB3320] focus:ring-1 focus:ring-[#DB3320] transition-colors"
-              />
-            </div>
-
-            {mode === 'register' && (
-              <div className="relative space-y-1.5" ref={dropdownRef}>
-                <label className="block text-xs font-bold text-[#867461] uppercase tracking-widest">
-                  Branch
-                </label>
+          {/* Right Column: Tactical Auth Form Plaque */}
+          <div className="lg:col-span-6 w-full max-w-md mx-auto">
+            <div className="bg-white rounded-2xl border border-[#E5E1D8] shadow-[0_4px_0_#E2DDD2,0_8px_30px_rgba(39,34,26,0.06)] p-6 sm:p-8">
+              
+              {/* Mode Switcher Tabs */}
+              <div className="flex rounded-xl p-1 mb-6 sm:mb-8 bg-[#F0EDF1] border border-[#E5E1D8]">
                 <button
                   type="button"
-                  onClick={() => setIsDropdownOpen((prev) => !prev)}
-                  onKeyDown={handleDropdownKeyDown}
-                  aria-haspopup="listbox"
-                  aria-expanded={isDropdownOpen}
-                  aria-controls={isDropdownOpen ? "branch-listbox" : undefined}
-                  aria-activedescendant={isDropdownOpen && focusedIndex >= 0 ? `branch-option-${focusedIndex}` : undefined}
-                  className={`w-full pl-4 pr-10 py-3 rounded-lg border bg-[#FAF8F5] text-sm transition-colors text-left flex items-center outline-none ${
-                    isDropdownOpen ? 'border-[#DB3320] ring-1 ring-[#DB3320]' : 'border-[#E5E1D8] hover:border-[#18181B]'
+                  onClick={() => switchMode('register')}
+                  className={`flex-1 py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider transition-all cursor-pointer ${
+                    mode === 'register' ? 'bg-white shadow-sm border border-[#E5E1D8] text-[#18181B]' : 'text-[#867461] hover:text-[#534434]'
                   }`}
                 >
-                  <span className={`truncate flex-1 ${branch ? 'text-[#18181B] font-medium' : 'text-[#867461]'}`}>
-                    {branch ? BRANCH_OPTIONS.find((o) => o.value === branch)?.label : 'Select your branch'}
-                  </span>
-                  <svg width="12" height="8" viewBox="0 0 12 8" fill="none" className="absolute right-4 shrink-0 transition-transform duration-200" style={{ transform: isDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>
-                    <path d="M1.5 1.5L6 6L10.5 1.5" stroke="#867461" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
+                  Register
                 </button>
+                <button
+                  type="button"
+                  onClick={() => switchMode('login')}
+                  className={`flex-1 py-2.5 rounded-lg font-bold text-xs uppercase tracking-wider transition-all cursor-pointer ${
+                    mode === 'login' ? 'bg-white shadow-sm border border-[#E5E1D8] text-[#18181B]' : 'text-[#867461] hover:text-[#534434]'
+                  }`}
+                >
+                  Login
+                </button>
+              </div>
 
-                {isDropdownOpen && (
-                  <ul
-                    id="branch-listbox"
-                    role="listbox"
-                    className="absolute z-50 w-full mt-1.5 rounded-lg border border-[#E5E1D8] bg-white shadow-lg overflow-y-auto"
-                    style={{ maxHeight: '240px' }}
-                  >
-                    {BRANCH_OPTIONS.map((option, index) => {
-                      const isSelected = branch === option.value;
-                      const isFocused = focusedIndex === index;
-                      return (
-                        <li
-                          key={option.value}
-                          id={`branch-option-${index}`}
-                          role="option"
-                          aria-selected={isSelected}
-                          onClick={() => {
-                            setBranch(option.value);
-                            setIsDropdownOpen(false);
-                          }}
-                          onMouseEnter={() => setFocusedIndex(index)}
-                          className={`px-4 py-3 cursor-pointer text-sm transition-colors ${
-                            isFocused ? 'bg-[#F0EDF1]' : 'bg-transparent'
-                          } ${
-                            isSelected ? 'text-[#DB3320] font-bold' : 'text-[#18181B] font-medium'
-                          }`}
-                        >
-                          {option.label}
-                        </li>
-                      );
-                    })}
-                  </ul>
+              <h2 className="font-serif text-2xl sm:text-3xl font-medium text-[#18181B] mb-2">
+                {mode === 'register' ? 'Create your account' : 'Welcome back'}
+              </h2>
+              <p className="text-xs sm:text-sm text-[#534434] mb-6">
+                {mode === 'register'
+                  ? 'Choose a nickname, select your branch, and set a password.'
+                  : 'Sign in with your nickname and password to play.'}
+              </p>
+
+              <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-[#867461] uppercase tracking-widest">
+                    Nickname
+                  </label>
+                  <input
+                    type="text"
+                    value={nickname}
+                    onChange={(e) => setNickname(e.target.value)}
+                    placeholder="e.g. MathWizard99"
+                    maxLength={20}
+                    required
+                    className="w-full px-4 py-3 sm:py-3.5 rounded-xl border border-[#E5E1D8] bg-[#FAF8F5] text-[#18181B] text-sm sm:text-base focus:outline-none focus:border-[#DB3320] focus:ring-1 focus:ring-[#DB3320] transition-colors"
+                  />
+                </div>
+
+                {mode === 'register' && (
+                  <div className="relative space-y-1.5" ref={dropdownRef}>
+                    <label className="block text-xs font-bold text-[#867461] uppercase tracking-widest">
+                      Branch
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setIsDropdownOpen((prev) => !prev)}
+                      onKeyDown={handleDropdownKeyDown}
+                      aria-haspopup="listbox"
+                      aria-expanded={isDropdownOpen}
+                      aria-controls={isDropdownOpen ? "branch-listbox" : undefined}
+                      aria-activedescendant={isDropdownOpen && focusedIndex >= 0 ? `branch-option-${focusedIndex}` : undefined}
+                      className={`w-full pl-4 pr-10 py-3 sm:py-3.5 rounded-xl border bg-[#FAF8F5] text-sm sm:text-base transition-colors text-left flex items-center outline-none cursor-pointer ${
+                        isDropdownOpen ? 'border-[#DB3320] ring-1 ring-[#DB3320]' : 'border-[#E5E1D8] hover:border-[#18181B]'
+                      }`}
+                    >
+                      <span className={`truncate flex-1 ${branch ? 'text-[#18181B] font-medium' : 'text-[#867461]'}`}>
+                        {branch ? BRANCH_OPTIONS.find((o) => o.value === branch)?.label : 'Select your branch'}
+                      </span>
+                      <svg width="12" height="8" viewBox="0 0 12 8" fill="none" className="absolute right-4 shrink-0 transition-transform duration-200" style={{ transform: isDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                        <path d="M1.5 1.5L6 6L10.5 1.5" stroke="#867461" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </button>
+
+                    {isDropdownOpen && (
+                      <ul
+                        id="branch-listbox"
+                        role="listbox"
+                        className="absolute z-50 w-full mt-1.5 rounded-xl border border-[#E5E1D8] bg-white shadow-xl overflow-y-auto"
+                        style={{ maxHeight: '240px' }}
+                      >
+                        {BRANCH_OPTIONS.map((option, index) => {
+                          const isSelected = branch === option.value;
+                          const isFocused = focusedIndex === index;
+                          return (
+                            <li
+                              key={option.value}
+                              id={`branch-option-${index}`}
+                              role="option"
+                              aria-selected={isSelected}
+                              onClick={() => {
+                                setBranch(option.value);
+                                setIsDropdownOpen(false);
+                              }}
+                              onMouseEnter={() => setFocusedIndex(index)}
+                              className={`px-4 py-3 cursor-pointer text-sm sm:text-base transition-colors ${
+                                isFocused ? 'bg-[#F0EDF1]' : 'bg-transparent'
+                              } ${
+                                isSelected ? 'text-[#DB3320] font-bold' : 'text-[#18181B] font-medium'
+                              }`}
+                            >
+                              {option.label}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </div>
                 )}
-              </div>
-            )}
 
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-[#867461] uppercase tracking-widest">
-                Password
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                className="w-full px-4 py-3 rounded-lg border border-[#E5E1D8] bg-[#FAF8F5] text-[#18181B] text-sm focus:outline-none focus:border-[#DB3320] focus:ring-1 focus:ring-[#DB3320] transition-colors"
-              />
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-[#867461] uppercase tracking-widest">
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    className="w-full px-4 py-3 sm:py-3.5 rounded-xl border border-[#E5E1D8] bg-[#FAF8F5] text-[#18181B] text-sm sm:text-base focus:outline-none focus:border-[#DB3320] focus:ring-1 focus:ring-[#DB3320] transition-colors"
+                  />
+                </div>
+
+                {mode === 'register' && (
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-[#867461] uppercase tracking-widest">
+                      Confirm Password
+                    </label>
+                    <input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="••••••••"
+                      required
+                      className="w-full px-4 py-3 sm:py-3.5 rounded-xl border border-[#E5E1D8] bg-[#FAF8F5] text-[#18181B] text-sm sm:text-base focus:outline-none focus:border-[#DB3320] focus:ring-1 focus:ring-[#DB3320] transition-colors"
+                    />
+                  </div>
+                )}
+
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    className="bg-[#FFF5F4] border border-[#FCA5A5] rounded-xl p-3.5 flex items-start gap-2.5 mt-2"
+                  >
+                    <span className="text-[#DB3320] text-sm mt-0.5">⚠️</span>
+                    <p className="text-xs sm:text-sm font-bold text-[#DB3320] leading-snug">{error}</p>
+                  </motion.div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="w-full mt-4 py-3.5 sm:py-4 rounded-xl bg-[#DB3320] hover:bg-[#B91C1C] text-white font-bold text-sm sm:text-base uppercase tracking-wider transition-all disabled:opacity-50 shadow-[0_4px_0_#920700] active:translate-y-1 active:shadow-none cursor-pointer"
+                >
+                  {submitting ? (mode === 'register' ? 'Creating…' : 'Signing in…') : (mode === 'register' ? 'Register' : 'Login')}
+                </button>
+              </form>
+
+              <div className="mt-8 pt-6 border-t border-[#E5E1D8] space-y-4">
+                <p className="text-xs sm:text-sm text-center text-[#867461] font-medium">
+                  {mode === 'register' ? (
+                    <>
+                      Already have an account?{' '}
+                      <button
+                        type="button"
+                        onClick={() => switchMode('login')}
+                        className="font-bold text-[#DB3320] hover:underline cursor-pointer"
+                      >
+                        Log in
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      Don't have an account yet?{' '}
+                      <button
+                        type="button"
+                        onClick={() => switchMode('register')}
+                        className="font-bold text-[#DB3320] hover:underline cursor-pointer"
+                      >
+                        Register
+                      </button>
+                    </>
+                  )}
+                </p>
+              </div>
             </div>
-
-            {mode === 'register' && (
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-[#867461] uppercase tracking-widest">
-                  Confirm Password
-                </label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                  className="w-full px-4 py-3 rounded-lg border border-[#E5E1D8] bg-[#FAF8F5] text-[#18181B] text-sm focus:outline-none focus:border-[#DB3320] focus:ring-1 focus:ring-[#DB3320] transition-colors"
-                />
-              </div>
-            )}
-
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                className="bg-[#FFF5F4] border border-[#FCA5A5] rounded-lg p-3 flex items-start gap-2.5 mt-2"
-              >
-                <span className="text-[#DB3320] text-sm mt-0.5">⚠️</span>
-                <p className="text-xs font-bold text-[#DB3320] leading-snug">{error}</p>
-              </motion.div>
-            )}
-
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full mt-4 py-3.5 rounded-lg bg-[#DB3320] hover:bg-[#B91C1C] text-white font-bold text-sm uppercase tracking-wide transition-colors disabled:opacity-50"
-            >
-              {submitting ? (mode === 'register' ? 'Creating…' : 'Signing in…') : (mode === 'register' ? 'Register' : 'Login')}
-            </button>
-          </form>
-
-          <div className="mt-8 pt-6 border-t border-[#E5E1D8] space-y-4">
-            <p className="text-xs text-center text-[#867461] font-medium">
-              {mode === 'register' ? (
-                <>
-                  Already have an account?{' '}
-                  <button
-                    type="button"
-                    onClick={() => switchMode('login')}
-                    className="font-bold text-[#DB3320] hover:underline"
-                  >
-                    Log in
-                  </button>
-                </>
-              ) : (
-                <>
-                  Don't have an account yet?{' '}
-                  <button
-                    type="button"
-                    onClick={() => switchMode('register')}
-                    className="font-bold text-[#DB3320] hover:underline"
-                  >
-                    Register
-                  </button>
-                </>
-              )}
-            </p>
-            
-
           </div>
+
         </div>
       </motion.div>
     </div>
