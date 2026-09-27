@@ -143,7 +143,16 @@ router.get('/me', studentAuthMiddleware, async (req: Request, res: Response) => 
       return;
     }
 
-    res.json(student);
+    const pointsAgg = await prisma.attempt.aggregate({
+      where: { studentId },
+      _sum: { awardedPoints: true },
+    });
+    const totalPoints = pointsAgg._sum.awardedPoints ?? 0;
+
+    res.json({
+      ...student,
+      totalPoints,
+    });
   } catch {
     res.status(500).json({ error: 'Server error' });
   }

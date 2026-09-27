@@ -167,15 +167,27 @@ export default function Landing() {
               </span>
             </div>
 
-            {/* Trailing: Streak pill & logout action */}
-            <div className="flex items-center gap-2 sm:gap-3">
+            {/* Trailing: Streak pill, Points pill & logout action */}
+            <div className="flex items-center gap-1.5 sm:gap-3">
+              {/* Streak Pill */}
               <div 
-                className="flex items-center gap-1.5 px-3.5 py-1.5 sm:px-4 sm:py-2 bg-white rounded-full border border-[#D8C3AD]/60 shadow-[0_2px_0_#E2DDD2] active:translate-y-0.5 transition-all text-xs sm:text-sm font-bold text-[#18181B] select-none"
+                className="flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 bg-white rounded-full border border-[#D8C3AD]/60 shadow-[0_2px_0_#E2DDD2] active:translate-y-0.5 transition-all text-xs sm:text-sm font-bold text-[#18181B] select-none"
                 title="Current active streak"
               >
                 <span className="text-base sm:text-lg">🔥</span>
                 <span>{streakStatus?.currentStreak ?? student?.currentStreak ?? 0} {((streakStatus?.currentStreak ?? student?.currentStreak ?? 0) === 1) ? 'day' : 'days'}</span>
               </div>
+
+              {/* Points Pill */}
+              <div 
+                className="flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 bg-white rounded-full border border-[#FDBA74] shadow-[0_2px_0_#FED7AA] active:translate-y-0.5 transition-all text-xs sm:text-sm font-bold text-[#855300] select-none"
+                title="Total points earned"
+              >
+                <span className="text-base sm:text-lg">⭐</span>
+                <span className="tabular-nums">{student?.totalPoints ?? 0} pts</span>
+              </div>
+
+              {/* Logout Action */}
               <button
                 onClick={handleLogout}
                 className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-bold rounded-full border border-[#D8C3AD]/60 text-[#867461] hover:text-[#18181B] bg-white/70 hover:bg-white shadow-[0_1px_0_#E2DDD2] transition-all active:translate-y-0.5 cursor-pointer"

@@ -108,6 +108,7 @@ export interface Student {
   branch: string | null;
   currentStreak: number;
   bestStreak: number;
+  totalPoints?: number;
 }
 
 export interface StreakStatus {
