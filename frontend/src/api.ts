@@ -40,6 +40,7 @@ export const api = {
   getBranchBattle: () => req<{ leaderboard: BranchBattleEntry[] }>('/api/leaderboards/branch-battle'),
   getHallOfFame: () => req<{ hallOfFame: HallOfFameEntry[] }>('/api/leaderboards/hall-of-fame'),
   getSpeedKing: (pollLaunchId: string) => req<{ speedKing: SpeedKing | null }>(`/api/leaderboards/${pollLaunchId}/speed-king`),
+  getOverallLeaderboard: (period: OverallLeaderboardPeriod) => req<OverallLeaderboardResponse>(`/api/leaderboards/overall?period=${period}`),
 
   // Poll (student)
   // Phase 7C-A: returns ALL available launches as an array (empty = none available).
@@ -50,7 +51,7 @@ export const api = {
       body: JSON.stringify({ nickname }),
     }),
   submitAttempt: (token: string, selectedOption: number | null) =>
-    req<{ result: string; correctIndex: number }>('/api/poll/attempts', {
+    req<{ result: string; correctIndex: number; awardedPoints: number }>('/api/poll/attempts', {
       method: 'POST',
       body: JSON.stringify({ token, selectedOption }),
     }),
@@ -123,11 +124,22 @@ export interface StudentStats {
   avgTimeMs: number | null;
   currentStreak: number;
   bestStreak: number;
+  totalPoints: number;
   rankHistory: Array<{
     date: string;
     rank: number;
     totalStudents: number;
   }>;
+  questionArchive: ArchiveQuestion[];
+}
+
+export interface ArchiveQuestion {
+  questionId: string;
+  pollLaunchId: string;
+  text: string;
+  points: number;
+  correctAnswer: string;
+  launchedAt: string;
 }
 
 export interface Friend {
@@ -178,6 +190,7 @@ export interface PollLaunchItem {
   text: string;
   options: string[];
   timerSeconds: number;
+  points: number;
   launchedAt: string;    // ISO-8601
   expiresAt: string;     // ISO-8601 = launchedAt + 24h
   completed: boolean;    // Phase 7C-B
@@ -201,6 +214,7 @@ export interface Question {
   options: string[];
   correctIndex: number;
   timerSeconds: number;
+  points: number;
   status: 'DRAFT' | 'SCHEDULED' | 'LIVE' | 'CLOSED';
   scheduledAt?: string | null;
   createdAt: string;
@@ -213,6 +227,7 @@ export interface QuestionInput {
   options: string[];
   correctIndex: number;
   timerSeconds: number;
+  points: number;
   scheduledAt?: string | null;
 }
 
@@ -253,4 +268,19 @@ export interface LeaderboardResponse {
   top10: LeaderboardEntry[];
   myRank: number | null;
   myEntry: LeaderboardEntry | null;
+}
+
+export type OverallLeaderboardPeriod = 'daily' | 'weekly' | 'all-time';
+
+export interface OverallLeaderboardEntry {
+  rank: number;
+  nickname: string;
+  score: number;
+  currentStreak: number;
+  averageTimeMs: number;
+}
+
+export interface OverallLeaderboardResponse {
+  period: OverallLeaderboardPeriod;
+  entries: OverallLeaderboardEntry[];
 }

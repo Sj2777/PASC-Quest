@@ -58,7 +58,7 @@ export default function QuestionPage() {
       if (message.toLowerCase().includes('timeout') || timedOut.current) {
         navigate('/result', {
           state: {
-            result: { result: 'timeout', correctIndex: 0 },
+            result: { result: 'timeout', correctIndex: 0, awardedPoints: 0 },
             poll: state.poll,
             pollLaunchId: state.poll.pollLaunchId,
             questionId: state.poll.questionId,

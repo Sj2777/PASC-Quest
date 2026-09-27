@@ -10,6 +10,7 @@ interface ResultState {
   result: {
     result: 'correct' | 'wrong' | 'timeout';
     correctIndex: number;
+    awardedPoints?: number;
   };
   poll: PollCurrent;
   pollLaunchId?: string;
@@ -25,7 +26,7 @@ export default function ResultPage() {
 
   const [speedKing, setSpeedKing] = useState<SpeedKing | null>(null);
   const [ghostMode, setGhostMode] = useState<GhostMode | null>(null);
-  const [me, setMe] = useState<{ nickname: string } | null>(null);
+  const [me, setMe] = useState<{ nickname: string; currentStreak?: number } | null>(null);
 
   useEffect(() => {
     if (!state) {
@@ -156,6 +157,18 @@ export default function ResultPage() {
           <p className="mt-1.5 text-xs sm:text-sm font-sans font-medium text-[#534434] max-w-sm mx-auto">
             {config.subtitle}
           </p>
+
+          {/* Points & Streak Feedback */}
+          <div className="flex flex-col items-center justify-center gap-1 mt-4">
+            <div className={`font-sans font-extrabold text-xl sm:text-2xl ${outcome === 'correct' ? 'text-[#006C49]' : 'text-[#855300]'}`}>
+              {state.result.awardedPoints != null ? (state.result.awardedPoints === 0 ? '0 pts' : `+${state.result.awardedPoints} pts`) : '0 pts'}
+            </div>
+            {me?.currentStreak !== undefined && me.currentStreak > 0 && (
+              <div className="font-sans text-sm font-bold text-[#DB3320]">
+                🔥 {me.currentStreak} day streak{me.currentStreak !== 1 ? 's' : ''}
+              </div>
+            )}
+          </div>
         </motion.div>
 
         {/* Question & Answer Review Plaque */}

@@ -12,6 +12,7 @@ export default function AdminQuestion() {
   const [options, setOptions] = useState(['', '']);
   const [correctIndex, setCorrectIndex] = useState(0);
   const [timerSeconds, setTimerSeconds] = useState(30);
+  const [points, setPoints] = useState(0);
   const [scheduledAt, setScheduledAt] = useState('');
   const [hasLaunches, setHasLaunches] = useState(false);
   
@@ -42,6 +43,7 @@ export default function AdminQuestion() {
         setOptions(q.options as string[]);
         setCorrectIndex(q.correctIndex);
         setTimerSeconds(q.timerSeconds);
+        setPoints(q.points ?? 0);
         const launchCount = q._count?.launches ?? q.launches?.length ?? 0;
         setHasLaunches(launchCount > 0);
         if (q.scheduledAt) {
@@ -65,6 +67,7 @@ export default function AdminQuestion() {
     if (options.some((o) => !o.trim())) { setError('All options must be filled in.'); return false; }
     if (correctIndex >= options.length) { setError('Correct option is out of range.'); return false; }
     if (timerSeconds < 5 || timerSeconds > 300) { setError('Timer must be between 5 and 300 seconds.'); return false; }
+    if (!Number.isInteger(points) || points < 0) { setError('Points must be a positive integer or 0.'); return false; }
     return true;
   };
 
@@ -73,6 +76,7 @@ export default function AdminQuestion() {
     options: options.map((o) => o.trim()),
     correctIndex,
     timerSeconds,
+    points,
     scheduledAt: scheduledAt ? new Date(scheduledAt).toISOString() : null,
   });
 
@@ -372,6 +376,25 @@ export default function AdminQuestion() {
                       className="w-full px-4 py-3 rounded-lg border border-[#E5E1D8] bg-[#FAF8F5] text-[#18181B] font-mono text-sm focus:outline-none focus:border-[#18181B] focus:ring-1 focus:ring-[#18181B] transition-colors"
                     />
                     <p className="text-xs text-[#867461] font-medium">Optional. Automates the launch later.</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-xs font-bold text-[#867461] uppercase tracking-widest">
+                      Question Points
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        value={points}
+                        onChange={(e) => setPoints(Number(e.target.value))}
+                        min={0}
+                        className="w-full px-4 py-3 rounded-lg border border-[#E5E1D8] bg-[#FAF8F5] text-[#18181B] font-mono text-sm focus:outline-none focus:border-[#18181B] focus:ring-1 focus:ring-[#18181B] transition-colors"
+                      />
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[#867461] text-xs font-bold uppercase tracking-wider pointer-events-none">
+                        PTS
+                      </div>
+                    </div>
+                    <p className="text-xs text-[#867461] font-medium">Points awarded for a correct answer.</p>
                   </div>
                 </section>
 

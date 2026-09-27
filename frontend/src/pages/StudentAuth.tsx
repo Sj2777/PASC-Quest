@@ -353,16 +353,7 @@ export default function StudentAuth() {
               )}
             </p>
             
-            <p className="text-[10px] text-center text-[#A3978B] uppercase tracking-widest font-bold">
-              Are you an administrator?{' '}
-              <button
-                type="button"
-                onClick={() => navigate('/admin')}
-                className="text-[#867461] hover:text-[#534434] transition-colors underline"
-              >
-                Login as Admin
-              </button>
-            </p>
+
           </div>
         </div>
       </motion.div>

@@ -6,26 +6,26 @@ import ResultPage from './pages/ResultPage';
 import Leaderboard from './pages/Leaderboard';
 import PersonalStats from './pages/PersonalStats';
 import SocialHub from './pages/SocialHub';
+import OverallLeaderboard from './pages/OverallLeaderboard';
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminQuestion from './pages/admin/AdminQuestion';
 import AdminManagement from './pages/admin/AdminManagement';
 
-import EntryPage from './pages/EntryPage';
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<EntryPage />} />
+        <Route path="/" element={<StudentAuth />} />
         
         {/* Student flow */}
-        <Route path="/auth" element={<StudentAuth />} />
         <Route path="/student" element={<Landing />} />
         <Route path="/play" element={<QuestionPage />} />
         <Route path="/result" element={<ResultPage />} />
         <Route path="/stats" element={<PersonalStats />} />
         <Route path="/social" element={<SocialHub />} />
+        <Route path="/student/leaderboard" element={<OverallLeaderboard />} />
         <Route path="/leaderboard/:pollLaunchId" element={<Leaderboard />} />
         <Route path="/leaderboard/q/:questionId" element={<Leaderboard />} />
 

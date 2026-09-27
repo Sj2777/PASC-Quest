@@ -196,7 +196,7 @@ export default function Landing() {
               {timeGreeting}, {student?.nickname || 'STUDENT'}
             </p>
             <h1 className="font-serif text-3xl sm:text-4xl text-[#18181B] font-semibold tracking-tight">
-              What’s live today?
+              Competition
             </h1>
           </section>
 
@@ -291,7 +291,7 @@ export default function Landing() {
           {/* Section: Live Questions / Daily Quests (Arbitrary N Support) */}
           <section className="flex flex-col gap-3.5">
             <div className="flex items-center justify-between">
-              <h2 className="font-serif text-2xl text-[#18181B] font-medium">Daily Quests</h2>
+              <h2 className="font-serif text-2xl text-[#18181B] font-medium">Available quiz questions</h2>
               <span className="font-sans text-[11px] font-bold text-[#534434] tracking-wider uppercase px-2.5 py-1 rounded-full bg-[#F0EDF1] border border-[#E5E1D8]">
                 {activeCount} ACTIVE
               </span>
@@ -341,9 +341,17 @@ export default function Landing() {
                         <h4 className="font-sans text-sm sm:text-base text-[#18181B] font-medium line-through decoration-[#D8C3AD] line-clamp-2">
                           {pollItem.text}
                         </h4>
-                        <p className="font-sans text-xs text-[#006C49] font-medium mt-0.5">
-                          ✓ Attempt recorded • Results locked
-                        </p>
+                        <div className="flex items-center justify-between mt-0.5">
+                          <p className="font-sans text-xs text-[#006C49] font-medium">
+                            ✓ Attempt recorded
+                          </p>
+                          <button
+                            onClick={() => navigate(`/leaderboard/${pollItem.pollLaunchId}`)}
+                            className="tactile-btn-white px-3 py-1.5 rounded-lg text-xs font-bold font-sans text-[#18181B] select-none cursor-pointer"
+                          >
+                            View Result ➔
+                          </button>
+                        </div>
                       </article>
                     );
                   }
@@ -364,7 +372,6 @@ export default function Landing() {
                         </span>
                       </div>
 
-                      {/* Question Text */}
                       <div className="flex flex-col gap-1">
                         <h3 className="font-serif text-lg sm:text-xl text-[#18181B] leading-snug font-medium line-clamp-3">
                           {pollItem.text}
@@ -376,6 +383,10 @@ export default function Landing() {
                           <span>•</span>
                           <span className="text-[#B71607] font-semibold">
                             {formatExpiryCountdown(pollItem.expiresAt, now)}
+                          </span>
+                          <span>•</span>
+                          <span className="text-[#855300] font-bold">
+                            {pollItem.points === 0 ? '0 pts' : `+${pollItem.points} pts`}
                           </span>
                         </div>
                       </div>
@@ -393,7 +404,7 @@ export default function Landing() {
                         disabled={isStarting || isExpiredLocal}
                         className="tactile-btn-red w-full mt-1 py-3 px-4 rounded-xl font-sans font-bold text-sm sm:text-base flex items-center justify-center gap-2 disabled:opacity-50 select-none cursor-pointer"
                       >
-                        <span>{isStarting ? 'Starting…' : isExpiredLocal ? 'Wait...' : 'PLAY CHALLENGE'}</span>
+                        <span>{isStarting ? 'Starting…' : isExpiredLocal ? 'Wait...' : 'Answer'}</span>
                         <span className="text-lg leading-none">➔</span>
                       </button>
                     </article>
@@ -401,6 +412,15 @@ export default function Landing() {
                 })}
               </div>
             )}
+            
+            <div className="mt-2 mb-4 text-center">
+              <button
+                onClick={() => navigate('/student/leaderboard')}
+                className="text-[#867461] hover:text-[#18181B] text-sm font-bold underline transition-colors cursor-pointer"
+              >
+                View Overall Leaderboard ➔
+              </button>
+            </div>
           </section>
 
           {/* Campus Division & Profile Telemetry Card */}
@@ -427,29 +447,38 @@ export default function Landing() {
         </main>
 
         {/* Bottom Navigation Bar: Docked to Mobile-Style Content Envelope */}
-        <nav className="fixed bottom-0 left-0 right-0 w-full z-50 flex justify-around items-center px-4 py-2 max-w-[430px] sm:max-w-lg mx-auto pb-safe bg-white rounded-t-xl border-t border-[#E5E1D8] shadow-[0_-4px_16px_rgba(39,34,26,0.06)]">
+        <nav className="fixed bottom-0 left-0 right-0 w-full z-50 flex justify-around items-center px-2 py-2 max-w-[430px] sm:max-w-lg mx-auto pb-safe bg-white rounded-t-xl border-t border-[#E5E1D8] shadow-[0_-4px_16px_rgba(39,34,26,0.06)]">
           {/* Home Tab (ACTIVE) */}
           <button
             onClick={() => navigate('/student')}
-            className="flex flex-col items-center justify-center bg-[#F59E0B] text-[#613B00] rounded-xl px-5 py-1.5 font-bold shadow-[0_2px_0_#613B00] active:scale-95 transition-all select-none cursor-pointer"
+            className="flex flex-col items-center justify-center bg-[#F59E0B] text-[#613B00] rounded-xl px-4 py-1.5 font-bold shadow-[0_2px_0_#613B00] active:scale-95 transition-all select-none cursor-pointer"
           >
             <span className="text-base leading-none">🎮</span>
             <span className="font-sans text-[11px] mt-0.5">Home</span>
           </button>
-
-          {/* Compete Tab (INACTIVE -> Navigates to Branch Battle & Leaderboards) */}
+          
+          {/* Compete Tab */}
           <button
             onClick={() => navigate('/social')}
-            className="flex flex-col items-center justify-center text-[#534434] hover:text-[#855300] px-4 py-1.5 font-semibold active:scale-95 transition-all select-none cursor-pointer"
+            className="flex flex-col items-center justify-center text-[#534434] hover:text-[#855300] px-3 py-1.5 font-semibold active:scale-95 transition-all select-none cursor-pointer"
           >
             <span className="text-base leading-none">🏆</span>
             <span className="font-sans text-[11px] mt-0.5">Compete</span>
           </button>
 
-          {/* Profile Tab (INACTIVE -> Navigates to Personal Stats) */}
+          {/* Leaderboard Tab */}
+          <button
+            onClick={() => navigate('/student/leaderboard')}
+            className="flex flex-col items-center justify-center text-[#534434] hover:text-[#855300] px-3 py-1.5 font-semibold active:scale-95 transition-all select-none cursor-pointer"
+          >
+            <span className="text-base leading-none">🏅</span>
+            <span className="font-sans text-[11px] mt-0.5">Leaderboard</span>
+          </button>
+
+          {/* Profile Tab */}
           <button
             onClick={() => navigate('/stats')}
-            className="flex flex-col items-center justify-center text-[#534434] hover:text-[#855300] px-4 py-1.5 font-semibold active:scale-95 transition-all select-none cursor-pointer"
+            className="flex flex-col items-center justify-center text-[#534434] hover:text-[#855300] px-3 py-1.5 font-semibold active:scale-95 transition-all select-none cursor-pointer"
           >
             <span className="text-base leading-none">👤</span>
             <span className="font-sans text-[11px] mt-0.5">Profile</span>
