@@ -25,11 +25,11 @@ export default function QuestionPage() {
   // Redirect if navigated directly without state or if unauthenticated
   useEffect(() => {
     if (!state) {
-      navigate('/auth');
+      navigate('/');
       return;
     }
     api.getMe().catch(() => {
-      navigate('/auth');
+      navigate('/');
     });
   }, [state, navigate]);
 
@@ -49,7 +49,7 @@ export default function QuestionPage() {
       });
     } catch (err: any) {
       if (err?.status === 401 || err?.error === 'not_authenticated') {
-        navigate('/auth');
+        navigate('/');
         return;
       }
 
@@ -108,13 +108,13 @@ export default function QuestionPage() {
 
   return (
     <div className="paper-texture min-h-screen text-[#18181B] selection:bg-[#FFDAD4] selection:text-[#400100] flex flex-col justify-between">
-      {/* Centered tactical mobile envelope (max 430px, tablet/desktop responsive) */}
-      <div className="w-full max-w-[430px] sm:max-w-lg mx-auto min-h-screen flex flex-col justify-between bg-[#FAF8F5] relative shadow-[0_0_50px_rgba(39,34,26,0.06)]">
+      {/* Widescreen 16:9 full-screen responsive container */}
+      <div className="w-full min-h-screen flex flex-col justify-between bg-[#FAF8F5] relative">
         
         {/* Top Container: Progress + Header + Main question body */}
         <div className="flex flex-col flex-1">
           {/* Top Ambient Dynamic Progress Bar */}
-          <div className="w-full h-1.5 bg-[#E5E1D8]/60 overflow-hidden">
+          <div className="w-full h-2 sm:h-2.5 bg-[#E5E1D8]/60 overflow-hidden">
             <div
               className={`h-full transition-all duration-1000 ease-linear rounded-r-full ${
                 isUrgent ? 'bg-[#DB3320]' : 'bg-[#F59E0B]'
@@ -124,54 +124,56 @@ export default function QuestionPage() {
           </div>
 
           {/* Header Bar */}
-          <header className="flex justify-between items-center w-full px-5 py-3.5 border-b border-[#E5E1D8]/60 shadow-[0_2px_4px_rgba(39,34,26,0.04)] bg-[#FAF8F5]/90 backdrop-blur-md sticky top-0 z-40">
-            {/* Subject / Category Pill */}
-            <div className="flex items-center gap-1.5 px-3 py-1 bg-white border border-[#E5E1D8] rounded-full shadow-[0_1px_3px_rgba(39,34,26,0.05)]">
-              <span className={`w-2 h-2 rounded-full ${isUrgent ? 'bg-[#DB3320] animate-ping' : 'bg-[#F59E0B] animate-pulse'}`} />
-              <span className="font-sans text-[11px] tracking-wider text-[#534434] font-bold uppercase">
-                LIVE QUIZ
-              </span>
-            </div>
+          <header className="w-full border-b border-[#E5E1D8]/80 shadow-[0_2px_4px_rgba(39,34,26,0.04)] bg-[#FAF8F5]/90 backdrop-blur-md sticky top-0 z-40">
+            <div className="screen-container-quiz flex justify-between items-center py-3.5 sm:py-4">
+              {/* Subject / Category Pill */}
+              <div className="flex items-center gap-2 px-3.5 py-1.5 sm:px-4 sm:py-2 bg-white border border-[#E5E1D8] rounded-full shadow-[0_1px_3px_rgba(39,34,26,0.05)]">
+                <span className={`w-2.5 h-2.5 rounded-full ${isUrgent ? 'bg-[#DB3320] animate-ping' : 'bg-[#F59E0B] animate-pulse'}`} />
+                <span className="font-sans text-xs sm:text-sm tracking-wider text-[#534434] font-bold uppercase">
+                  LIVE QUIZ ROUND
+                </span>
+              </div>
 
-            {/* Prominent Tension Timer Badge */}
-            <div
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition-colors ${
-                isUrgent
-                  ? 'bg-[#FFDAD4] border-[#DB3320]/40 shadow-[0_2px_0_#FFDAD4]'
-                  : 'bg-[#FFEDD5]/60 border-[#F59E0B]/30 shadow-[0_2px_0_#FED7AA]'
-              }`}
-            >
-              <svg
-                className={`w-4 h-4 ${isUrgent ? 'text-[#B71607] animate-bounce' : 'text-[#855300]'}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              <span
-                className={`font-sans font-extrabold text-base sm:text-lg tabular-nums leading-none tracking-tight ${
-                  isUrgent ? 'text-[#B71607]' : 'text-[#855300]'
+              {/* Prominent Tension Timer Badge */}
+              <div
+                className={`flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 rounded-2xl border transition-colors ${
+                  isUrgent
+                    ? 'bg-[#FFDAD4] border-[#DB3320]/40 shadow-[0_3px_0_#FFDAD4]'
+                    : 'bg-[#FFEDD5]/70 border-[#F59E0B]/30 shadow-[0_3px_0_#FED7AA]'
                 }`}
               >
-                {formattedTime}
-              </span>
+                <svg
+                  className={`w-5 h-5 sm:w-6 sm:h-6 ${isUrgent ? 'text-[#B71607] animate-bounce' : 'text-[#855300]'}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <span
+                  className={`font-sans font-extrabold text-lg sm:text-2xl tabular-nums leading-none tracking-tight ${
+                    isUrgent ? 'text-[#B71607]' : 'text-[#855300]'
+                  }`}
+                >
+                  {formattedTime}
+                </span>
+              </div>
             </div>
           </header>
 
           {/* Main Content Question Flow */}
-          <main className="flex-1 flex flex-col justify-start px-5 py-4 space-y-4">
+          <main className="screen-container-quiz flex-1 flex flex-col justify-center py-6 sm:py-10 md:py-12 space-y-6 sm:space-y-8">
             {/* Question Metadata Strip */}
             <div className="flex items-center justify-between">
-              <span className="font-sans text-[11px] text-[#867461] uppercase tracking-wider font-extrabold flex items-center gap-1.5">
-                <span className="text-[#F59E0B]">⚡</span> LIVE QUESTION
+              <span className="font-sans text-xs sm:text-sm text-[#867461] uppercase tracking-wider font-extrabold flex items-center gap-2">
+                <span className="text-[#F59E0B] text-base">⚡</span> LIVE QUESTION
               </span>
-              <span className="font-sans text-[11px] px-2 py-0.5 rounded bg-[#F0EDF1] border border-[#E5E1D8] text-[#534434] font-bold">
+              <span className="font-sans text-xs sm:text-sm px-3 py-1 rounded-lg bg-[#F0EDF1] border border-[#E5E1D8] text-[#534434] font-bold">
                 {totalSeconds}s TIMER
               </span>
             </div>
@@ -185,12 +187,12 @@ export default function QuestionPage() {
                   exit={{ opacity: 0, y: -10, height: 0 }}
                   className="overflow-hidden"
                 >
-                  <div className="p-3 bg-[#FFF0EE] border border-[#FFCDD2] text-[#B71607] rounded-xl text-xs sm:text-sm font-semibold flex items-center justify-between shadow-[0_2px_0_#FFCDD2]">
+                  <div className="p-4 bg-[#FFF0EE] border border-[#FFCDD2] text-[#B71607] rounded-xl text-sm font-semibold flex items-center justify-between shadow-[0_2px_0_#FFCDD2]">
                     <div className="flex items-center gap-2">
                       <span>⚠️</span>
                       <span>{errorMsg}</span>
                     </div>
-                    <span className="text-[11px] underline uppercase tracking-wide cursor-pointer font-bold">
+                    <span className="text-xs underline uppercase tracking-wide cursor-pointer font-bold">
                       Tap to retry
                     </span>
                   </div>
@@ -203,18 +205,18 @@ export default function QuestionPage() {
               initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.25 }}
-              className="relative bg-white border border-[#E5E1D8] rounded-xl p-5 sm:p-6 shadow-[0_3px_0_#E2DDD2,0_6px_16px_rgba(39,34,26,0.04)]"
+              className="relative bg-white border border-[#E5E1D8] rounded-2xl p-6 sm:p-8 md:p-10 shadow-[0_4px_0_#E2DDD2,0_8px_24px_rgba(39,34,26,0.05)]"
             >
-              <div className="absolute -top-3 left-4 bg-[#18181B] text-[#FAF8F5] text-[10px] font-bold tracking-widest px-2.5 py-0.5 rounded uppercase">
+              <div className="absolute -top-3.5 left-6 bg-[#18181B] text-[#FAF8F5] text-xs font-bold tracking-widest px-3 py-1 rounded uppercase shadow-sm">
                 QUESTION
               </div>
-              <h1 className="font-serif text-2xl sm:text-3xl text-[#18181B] leading-snug tracking-tight pt-1 font-semibold break-words">
+              <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-[#18181B] leading-snug sm:leading-tight tracking-tight pt-2 font-semibold break-words">
                 {poll.text}
               </h1>
             </motion.div>
 
-            {/* Stack of Tactile Answer Choices */}
-            <div aria-label="Answer Choices" className="space-y-3 pt-1" role="radiogroup">
+            {/* Answer Choices: 2x2 Responsive Grid on Laptop/Tablet */}
+            <div aria-label="Answer Choices" className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 md:gap-6 pt-2" role="radiogroup">
               {options.map((opt, idx) => {
                 const isSelected = selected === idx;
                 const isOtherSelected = selected !== null && !isSelected;
@@ -241,16 +243,16 @@ export default function QuestionPage() {
                         : {}
                     }
                     transition={{ duration: 0.15 }}
-                    className={`w-full text-left rounded-xl p-4 flex items-center justify-between transition-all ${
+                    className={`w-full text-left rounded-2xl p-5 sm:p-6 flex items-center justify-between transition-all ${
                       isSelected
                         ? 'bg-[#FFDAD4]/30 border-2 border-[#DB3320] shadow-[0_4px_0_#920700]'
                         : 'bg-white border border-[#E5E1D8] shadow-[0_3px_0_#DDD8CE] hover:border-[#867461] active:translate-y-0.5 active:shadow-[0_1px_0_#DDD8CE]'
                     } ${selected !== null || submitting ? 'cursor-default' : 'cursor-pointer'}`}
                   >
-                    <div className="flex items-center gap-3 min-w-0 pr-2">
+                    <div className="flex items-center gap-3.5 sm:gap-4 min-w-0 pr-2">
                       {/* Left Letter Badge */}
                       <span
-                        className={`w-8 h-8 rounded-lg flex items-center justify-center font-sans text-sm font-bold flex-shrink-0 transition-colors ${
+                        className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center font-sans text-base sm:text-lg font-bold flex-shrink-0 transition-colors ${
                           isSelected
                             ? 'bg-[#DB3320] text-white shadow-sm'
                             : 'bg-[#F0EDF1] border border-[#E5E1D8] text-[#534434]'
@@ -261,7 +263,7 @@ export default function QuestionPage() {
 
                       {/* Option Text */}
                       <span
-                        className={`font-sans text-sm sm:text-base break-words ${
+                        className={`font-sans text-base sm:text-lg break-words ${
                           isSelected
                             ? 'text-[#18181B] font-bold'
                             : 'text-[#18181B] font-semibold'
@@ -274,11 +276,11 @@ export default function QuestionPage() {
                     {/* Right-Hand Radio / Status Indicator */}
                     <div className="flex-shrink-0 ml-3">
                       {submitting && isSelected ? (
-                        <div className="w-5 h-5 rounded-full border-2 border-[#DB3320] border-t-transparent animate-spin" />
+                        <div className="w-6 h-6 rounded-full border-2 border-[#DB3320] border-t-transparent animate-spin" />
                       ) : isSelected ? (
-                        <div className="w-6 h-6 rounded-full bg-[#DB3320] flex items-center justify-center text-white shadow-sm">
+                        <div className="w-7 h-7 rounded-full bg-[#DB3320] flex items-center justify-center text-white shadow-sm">
                           <svg
-                            className="w-3.5 h-3.5"
+                            className="w-4 h-4"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -292,7 +294,7 @@ export default function QuestionPage() {
                           </svg>
                         </div>
                       ) : (
-                        <span className="w-5 h-5 rounded-full border-2 border-[#E5E1D8] block" />
+                        <span className="w-6 h-6 rounded-full border-2 border-[#E5E1D8] block" />
                       )}
                     </div>
                   </motion.button>
@@ -303,10 +305,10 @@ export default function QuestionPage() {
         </div>
 
         {/* Bottom Action & Footnote Strip */}
-        <footer className="w-full px-5 pt-3 pb-6 flex flex-col items-center">
-          <div className="flex items-center justify-center gap-1.5 text-[#534434]/80 text-xs font-medium">
+        <footer className="w-full px-5 pt-4 pb-8 flex flex-col items-center">
+          <div className="flex items-center justify-center gap-2 text-[#534434]/80 text-xs sm:text-sm font-medium">
             <svg
-              className="w-4 h-4 text-[#006C49]"
+              className="w-4 h-4 sm:w-5 sm:h-5 text-[#006C49]"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -319,7 +321,7 @@ export default function QuestionPage() {
               />
             </svg>
             <span>
-              Playing as <strong className="text-[#18181B] font-semibold">{state.nickname}</strong> • One attempt only
+              Playing as <strong className="text-[#18181B] font-semibold">{state.nickname}</strong> • One attempt only per question
             </span>
           </div>
         </footer>

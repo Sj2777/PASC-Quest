@@ -100,7 +100,7 @@ export default function Landing() {
       })
       .catch((err) => {
         if (err?.status === 401 || err?.error === 'not_authenticated') {
-          navigate('/auth');
+          navigate('/');
         } else {
           setPolls([]);
         }
@@ -119,7 +119,7 @@ export default function Landing() {
 
   const handleLogout = async () => {
     await api.logoutStudent().catch(() => {});
-    navigate('/auth');
+    navigate('/');
   };
 
   const handleStart = async (pollItem: PollLaunchItem) => {
@@ -132,7 +132,7 @@ export default function Landing() {
       navigate('/play', { state: { poll: pollItem, token, timerSeconds, nickname: student.nickname } });
     } catch (err: any) {
       if (err?.status === 401 || err?.error === 'not_authenticated') {
-        navigate('/auth');
+        navigate('/');
         return;
       }
       if (err?.reason === 'already_played') {
@@ -151,34 +151,34 @@ export default function Landing() {
 
   return (
     <div className="paper-texture min-h-screen text-[#18181B] selection:bg-[#FFDAD4] selection:text-[#400100] flex flex-col justify-between">
-      {/* Centered tactile editorial envelope */}
-      <div className="w-full max-w-[430px] sm:max-w-lg mx-auto min-h-screen flex flex-col bg-[#FAF8F5] relative shadow-[0_0_50px_rgba(39,34,26,0.06)] pb-28">
+      {/* Widescreen 16:9 full-width responsive envelope */}
+      <div className="w-full min-h-screen flex flex-col bg-[#FAF8F5] relative pb-28">
         
         {/* TopAppBar: Sticky editorial brand masthead */}
-        <header className="w-full sticky top-0 z-40 bg-[#FAF8F5]/90 backdrop-blur-md border-b border-[#E5E1D8]/60 shadow-[0_2px_4px_rgba(39,34,26,0.04)]">
-          <div className="flex justify-between items-center w-full px-5 py-2.5 max-w-[430px] sm:max-w-lg mx-auto">
+        <header className="w-full sticky top-0 z-40 bg-[#FAF8F5]/90 backdrop-blur-md border-b border-[#E5E1D8]/80 shadow-[0_2px_4px_rgba(39,34,26,0.04)]">
+          <div className="screen-container flex justify-between items-center py-3 sm:py-4">
             {/* Leading: Student initial badge & Newsreader brand */}
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-full ring-2 ring-[#E5E1D8] bg-[#F0EDF1] flex items-center justify-center font-bold text-[#855300] text-sm shadow-sm select-none">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full ring-2 ring-[#E5E1D8] bg-[#F0EDF1] flex items-center justify-center font-bold text-[#855300] text-sm sm:text-base shadow-sm select-none">
                 {student?.nickname ? student.nickname.charAt(0).toUpperCase() : 'Q'}
               </div>
-              <span className="font-serif text-2xl font-semibold text-[#855300] tracking-tight">
+              <span className="font-serif text-2xl sm:text-3xl font-semibold text-[#855300] tracking-tight">
                 QuizPop
               </span>
             </div>
 
             {/* Trailing: Streak pill & logout action */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 sm:gap-3">
               <div 
-                className="flex items-center gap-1.5 px-3 py-1 bg-white rounded-full border border-[#D8C3AD]/60 shadow-[0_2px_0_#E2DDD2] active:translate-y-0.5 transition-all text-xs font-bold text-[#18181B] select-none"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 sm:px-4 sm:py-2 bg-white rounded-full border border-[#D8C3AD]/60 shadow-[0_2px_0_#E2DDD2] active:translate-y-0.5 transition-all text-xs sm:text-sm font-bold text-[#18181B] select-none"
                 title="Current active streak"
               >
-                <span>🔥</span>
+                <span className="text-base sm:text-lg">🔥</span>
                 <span>{streakStatus?.currentStreak ?? student?.currentStreak ?? 0} {((streakStatus?.currentStreak ?? student?.currentStreak ?? 0) === 1) ? 'day' : 'days'}</span>
               </div>
               <button
                 onClick={handleLogout}
-                className="px-2.5 py-1 text-xs font-semibold rounded-full border border-[#D8C3AD]/60 text-[#867461] hover:text-[#18181B] bg-white/70 hover:bg-white transition-all active:translate-y-0.5"
+                className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-bold rounded-full border border-[#D8C3AD]/60 text-[#867461] hover:text-[#18181B] bg-white/70 hover:bg-white shadow-[0_1px_0_#E2DDD2] transition-all active:translate-y-0.5 cursor-pointer"
                 title="Sign out"
               >
                 Logout
@@ -187,302 +187,324 @@ export default function Landing() {
           </div>
         </header>
 
-        {/* Main Content Canvas */}
-        <main className="px-5 pt-5 flex-1 flex flex-col gap-6">
-          
-          {/* Personalized Editorial Hero Greeting */}
-          <section className="flex flex-col gap-1 min-w-0">
-            <p className="font-sans text-[11px] font-bold tracking-wider text-[#867461] uppercase break-words">
-              {timeGreeting}, {student?.nickname || 'STUDENT'}
-            </p>
-            <h1 className="font-serif text-3xl sm:text-4xl text-[#18181B] font-semibold tracking-tight">
-              Competition
-            </h1>
-          </section>
-
-          {/* Steal the Streak / Comeback Recovery Card (Preserved Backend State) */}
-          {streakStatus && streakStatus.comebackActive && (
-            <motion.section
-              initial={animationState === 'comeback_reveal' ? { opacity: 0, scale: shouldReduceMotion ? 1 : 0.95 } : false}
-              animate={{ opacity: 1, scale: 1 }}
-              className="tactile-card rounded-xl p-4 sm:p-5 bg-white border border-[#FDBA74] shadow-[0_3px_0_#FED7AA] flex items-center justify-between"
-            >
-              <div className="flex flex-col gap-1.5">
-                <div className="flex items-center gap-2">
-                  <span className="font-sans text-[11px] font-bold text-[#855300] tracking-wider uppercase">
-                    STEAL THE STREAK
-                  </span>
-                  <div className="flex items-center gap-1.5">
-                    {[1, 2, 3].map((step) => {
-                      const isCompleted = step <= streakStatus.comebackProgress;
-                      return (
-                        <div
-                          key={step}
-                          className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] font-bold transition-all ${
-                            isCompleted ? 'bg-[#F59E0B] text-white shadow-sm' : 'bg-[#E4E1E6]'
-                          }`}
-                        >
-                          {isCompleted ? '✓' : ''}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-                <p className="font-sans text-xs text-[#534434]">
-                  Recover your <strong>{streakStatus.preBreakStreak}-day streak</strong> — Day {streakStatus.comebackProgress} of 3
+        {/* Main Content: Laptop 16:9 Multi-Column Responsive Grid */}
+        <main className="screen-container pt-6 sm:pt-8 md:pt-10 flex-1">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-start">
+            
+            {/* Left Column: Greeting, Streak Progression, and Academic Division */}
+            <div className="lg:col-span-5 flex flex-col gap-6">
+              {/* Personalized Editorial Hero Greeting */}
+              <section className="flex flex-col gap-1.5">
+                <p className="font-sans text-xs sm:text-sm font-bold tracking-wider text-[#867461] uppercase break-words">
+                  {timeGreeting}, {student?.nickname || 'STUDENT'}
                 </p>
-              </div>
+                <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl text-[#18181B] font-semibold tracking-tight">
+                  Competition
+                </h1>
+              </section>
 
-              <div className="w-11 h-11 rounded-full bg-[#FFDDB8]/70 border border-[#F59E0B]/30 flex items-center justify-center text-xl text-[#855300] shadow-sm select-none">
-                🔥
-              </div>
-            </motion.section>
-          )}
-
-          {/* Milestone Celebration or Normal Streak Card */}
-          {streakStatus && !streakStatus.comebackActive && (streakStatus.currentStreak > 0) && (
-            <AnimatePresence mode="wait">
-              {animationState === 'milestone' ? (
+              {/* Steal the Streak / Comeback Recovery Card */}
+              {streakStatus && streakStatus.comebackActive && (
                 <motion.section
-                  key="milestone"
-                  initial={{ scale: shouldReduceMotion ? 1 : 0.9, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: shouldReduceMotion ? 1 : 0.95, opacity: 0 }}
-                  className="tactile-card rounded-xl p-4 text-center bg-white border border-[#FDBA74] shadow-[0_4px_0_#FED7AA]"
+                  initial={animationState === 'comeback_reveal' ? { opacity: 0, scale: shouldReduceMotion ? 1 : 0.95 } : false}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="tactile-card rounded-2xl p-5 sm:p-6 bg-white border border-[#FDBA74] shadow-[0_3px_0_#FED7AA] flex items-center justify-between"
                 >
-                  <span className="text-3xl block mb-1">🔥</span>
-                  <h3 className="font-serif text-lg font-bold text-[#855300]">
-                    {milestone} Day Streak Milestone!
-                  </h3>
-                  <p className="font-sans text-xs text-[#534434] mt-0.5 font-medium">
-                    {milestone === 3 ? "Keep it going!" : milestone === 7 ? "One week strong!" : milestone === 14 ? "Two weeks strong!" : "30 days of excellence!"}
-                  </p>
-                </motion.section>
-              ) : animationState === 'restored' ? (
-                <motion.section
-                  key="restored"
-                  initial={{ scale: shouldReduceMotion ? 1 : 0.9, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: shouldReduceMotion ? 1 : 0.95, opacity: 0 }}
-                  className="tactile-card rounded-xl p-4 text-center bg-[#ECFDF5] border border-[#A7F3D0] shadow-[0_4px_0_#BBF7D0]"
-                >
-                  <span className="text-3xl block mb-1">🛡️</span>
-                  <h3 className="font-serif text-lg font-bold text-[#006C49]">Streak Restored!</h3>
-                  <p className="font-sans text-xs text-[#065F46] mt-0.5 font-medium">
-                    Your {restoredStreak}-day streak is officially back.
-                  </p>
-                </motion.section>
-              ) : (
-                <section className="tactile-card rounded-xl p-4 bg-white border border-[#D8C3AD]/40 shadow-[0_2px_4px_rgba(39,34,26,0.04)] flex items-center justify-between">
-                  <div>
-                    <span className="font-sans text-[11px] font-bold text-[#855300] tracking-wider uppercase block">
-                      ACTIVE STREAK
-                    </span>
-                    <p className="font-sans text-xs font-semibold text-[#18181B] mt-0.5">
-                      {streakStatus.currentStreak} day streak — keep the momentum rolling!
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2.5">
+                      <span className="font-sans text-xs font-bold text-[#855300] tracking-wider uppercase">
+                        STEAL THE STREAK
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        {[1, 2, 3].map((step) => {
+                          const isCompleted = step <= streakStatus.comebackProgress;
+                          return (
+                            <div
+                              key={step}
+                              className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold transition-all ${
+                                isCompleted ? 'bg-[#F59E0B] text-white shadow-sm' : 'bg-[#E4E1E6]'
+                              }`}
+                            >
+                              {isCompleted ? '✓' : ''}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <p className="font-sans text-xs sm:text-sm text-[#534434]">
+                      Recover your <strong>{streakStatus.preBreakStreak}-day streak</strong> — Day {streakStatus.comebackProgress} of 3
                     </p>
                   </div>
-                  <span className="text-2xl select-none">🔥</span>
-                </section>
-              )}
-            </AnimatePresence>
-          )}
 
-          {/* Section: Live Questions / Daily Quests (Arbitrary N Support) */}
-          <section className="flex flex-col gap-3.5">
-            <div className="flex items-center justify-between">
-              <h2 className="font-serif text-2xl text-[#18181B] font-medium">Available quiz questions</h2>
-              <span className="font-sans text-[11px] font-bold text-[#534434] tracking-wider uppercase px-2.5 py-1 rounded-full bg-[#F0EDF1] border border-[#E5E1D8]">
-                {activeCount} ACTIVE
-              </span>
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-[#FFDDB8]/70 border border-[#F59E0B]/30 flex items-center justify-center text-2xl text-[#855300] shadow-sm select-none">
+                    🔥
+                  </div>
+                </motion.section>
+              )}
+
+              {/* Milestone Celebration or Normal Streak Card */}
+              {streakStatus && !streakStatus.comebackActive && (streakStatus.currentStreak > 0) && (
+                <AnimatePresence mode="wait">
+                  {animationState === 'milestone' ? (
+                    <motion.section
+                      key="milestone"
+                      initial={{ scale: shouldReduceMotion ? 1 : 0.9, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: shouldReduceMotion ? 1 : 0.95, opacity: 0 }}
+                      className="tactile-card rounded-2xl p-5 sm:p-6 text-center bg-white border border-[#FDBA74] shadow-[0_4px_0_#FED7AA]"
+                    >
+                      <span className="text-4xl block mb-2">🔥</span>
+                      <h3 className="font-serif text-xl sm:text-2xl font-bold text-[#855300]">
+                        {milestone} Day Streak Milestone!
+                      </h3>
+                      <p className="font-sans text-xs sm:text-sm text-[#534434] mt-1 font-medium">
+                        {milestone === 3 ? "Keep it going!" : milestone === 7 ? "One week strong!" : milestone === 14 ? "Two weeks strong!" : "30 days of excellence!"}
+                      </p>
+                    </motion.section>
+                  ) : animationState === 'restored' ? (
+                    <motion.section
+                      key="restored"
+                      initial={{ scale: shouldReduceMotion ? 1 : 0.9, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: shouldReduceMotion ? 1 : 0.95, opacity: 0 }}
+                      className="tactile-card rounded-2xl p-5 sm:p-6 text-center bg-[#ECFDF5] border border-[#A7F3D0] shadow-[0_4px_0_#BBF7D0]"
+                    >
+                      <span className="text-4xl block mb-2">🛡️</span>
+                      <h3 className="font-serif text-xl sm:text-2xl font-bold text-[#006C49]">Streak Restored!</h3>
+                      <p className="font-sans text-xs sm:text-sm text-[#065F46] mt-1 font-medium">
+                        Your {restoredStreak}-day streak is officially back.
+                      </p>
+                    </motion.section>
+                  ) : (
+                    <section className="tactile-card rounded-2xl p-5 sm:p-6 bg-white border border-[#D8C3AD]/40 shadow-[0_2px_4px_rgba(39,34,26,0.04)] flex items-center justify-between">
+                      <div>
+                        <span className="font-sans text-xs font-bold text-[#855300] tracking-wider uppercase block">
+                          ACTIVE STREAK
+                        </span>
+                        <p className="font-sans text-sm sm:text-base font-semibold text-[#18181B] mt-1">
+                          {streakStatus.currentStreak} day streak — keep the momentum rolling!
+                        </p>
+                      </div>
+                      <span className="text-3xl select-none">🔥</span>
+                    </section>
+                  )}
+                </AnimatePresence>
+              )}
+
+              {/* Campus Division & Profile Telemetry Card */}
+              <section className="tactile-card rounded-2xl p-5 sm:p-6 bg-white border border-[#D8C3AD]/60 shadow-[0_3px_0_#E2DDD2] flex items-center justify-between">
+                <div>
+                  <span className="font-sans text-xs font-bold text-[#867461] uppercase tracking-wider block">
+                    CAMPUS ACADEMIC DIVISION
+                  </span>
+                  <p className="font-serif text-lg sm:text-xl font-bold text-[#18181B] mt-1">
+                    Branch: {student?.branch || 'General Academic'}
+                  </p>
+                  <p className="font-sans text-xs sm:text-sm text-[#534434] mt-1">
+                    Personal Best: <strong>{student?.bestStreak || 0} days</strong>
+                  </p>
+                </div>
+                <button
+                  onClick={() => navigate('/social')}
+                  className="tactile-btn-white px-4 py-2 rounded-xl text-xs sm:text-sm font-bold font-sans text-[#18181B] select-none cursor-pointer"
+                >
+                  Standings ➔
+                </button>
+              </section>
+
+              {/* Quick Overall Leaderboard Link */}
+              <div className="hidden lg:block pt-2">
+                <button
+                  onClick={() => navigate('/student/leaderboard')}
+                  className="inline-flex items-center gap-2 text-[#867461] hover:text-[#18181B] text-sm font-bold underline transition-colors cursor-pointer"
+                >
+                  <span>View All-Campus Overall Leaderboard</span>
+                  <span>➔</span>
+                </button>
+              </div>
             </div>
 
-            {loading ? (
-              <div className="tactile-card rounded-xl p-8 text-center bg-white border border-[#D8C3AD]/40">
-                <div className="w-8 h-8 rounded-full border-3 border-[#D8C3AD] border-t-[#DB3320] animate-spin mx-auto mb-2" />
-                <p className="font-sans text-xs text-[#867461] font-medium">Loading live rounds…</p>
+            {/* Right Column: Daily Quests / Active Questions Grid */}
+            <div className="lg:col-span-7 flex flex-col gap-5">
+              <div className="flex items-center justify-between pb-1">
+                <h2 className="font-serif text-2xl sm:text-3xl text-[#18181B] font-medium">Available quiz questions</h2>
+                <span className="font-sans text-xs sm:text-sm font-bold text-[#534434] tracking-wider uppercase px-3 py-1.5 rounded-full bg-[#F0EDF1] border border-[#E5E1D8]">
+                  {activeCount} ACTIVE
+                </span>
               </div>
-            ) : polls.length === 0 ? (
-              <div className="tactile-card rounded-xl p-8 text-center bg-white border border-[#D8C3AD]/40 flex flex-col items-center">
-                <div className="w-12 h-12 rounded-full bg-[#F0EDF1] flex items-center justify-center text-2xl mb-3">
-                  ☕
-                </div>
-                <h3 className="font-serif text-xl font-bold text-[#18181B]">Nothing live yet</h3>
-                <p className="font-sans text-xs text-[#867461] mt-1 max-w-xs">
-                  No questions are available right now. Check back soon for the next question round!
-                </p>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-4">
-                {polls.map((pollItem, idx) => {
-                  const id = pollItem.pollLaunchId;
-                  const isStarting = starting[id] ?? false;
-                  const err = errors[id] ?? '';
-                  const isCompleted = pollItem.completed;
-                  const isExpiredLocal = new Date(pollItem.expiresAt).getTime() - now <= 0;
 
-                  if (isCompleted) {
+              {loading ? (
+                <div className="tactile-card rounded-2xl p-12 text-center bg-white border border-[#D8C3AD]/40">
+                  <div className="w-10 h-10 rounded-full border-3 border-[#D8C3AD] border-t-[#DB3320] animate-spin mx-auto mb-3" />
+                  <p className="font-sans text-sm text-[#867461] font-medium">Loading live rounds…</p>
+                </div>
+              ) : polls.length === 0 ? (
+                <div className="tactile-card rounded-2xl p-10 sm:p-14 text-center bg-white border border-[#D8C3AD]/40 flex flex-col items-center">
+                  <div className="w-16 h-16 rounded-full bg-[#F0EDF1] flex items-center justify-center text-3xl mb-4">
+                    ☕
+                  </div>
+                  <h3 className="font-serif text-2xl sm:text-3xl font-bold text-[#18181B]">Nothing live yet</h3>
+                  <p className="font-sans text-sm text-[#867461] mt-2 max-w-sm">
+                    No questions are available right now. Check back soon for the next question round!
+                  </p>
+                  <button
+                    onClick={() => navigate('/student/leaderboard')}
+                    className="mt-6 tactile-btn-white px-5 py-2.5 rounded-xl text-sm font-bold font-sans text-[#18181B] select-none cursor-pointer"
+                  >
+                    View Overall Standings ➔
+                  </button>
+                </div>
+              ) : (
+                <div className={`grid gap-4 sm:gap-5 ${polls.length > 1 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
+                  {polls.map((pollItem, idx) => {
+                    const id = pollItem.pollLaunchId;
+                    const isStarting = starting[id] ?? false;
+                    const err = errors[id] ?? '';
+                    const isCompleted = pollItem.completed;
+                    const isExpiredLocal = new Date(pollItem.expiresAt).getTime() - now <= 0;
+
+                    if (isCompleted) {
+                      return (
+                        <article
+                          key={id}
+                          className="rounded-2xl p-5 sm:p-6 bg-[#F0EDF1]/60 border border-[#D8C3AD]/40 flex flex-col justify-between gap-3 opacity-90 transition-all shadow-sm"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="inline-flex items-center gap-1.5 text-[#006C49] font-sans text-xs font-bold tracking-wider uppercase">
+                              <span className="w-4 h-4 rounded-full bg-[#006C49] text-white flex items-center justify-center text-[10px]">
+                                ✓
+                              </span>
+                              COMPLETED
+                            </span>
+                            <span className="font-sans text-xs font-semibold text-[#867461] uppercase tracking-wider">
+                              ROUND {polls.length > 1 ? idx + 1 : '1'}
+                            </span>
+                          </div>
+                          <h4 className="font-sans text-base text-[#18181B] font-medium line-through decoration-[#D8C3AD] line-clamp-3">
+                            {pollItem.text}
+                          </h4>
+                          <div className="flex items-center justify-between pt-2 border-t border-[#D8C3AD]/30">
+                            <p className="font-sans text-xs text-[#006C49] font-medium">
+                              ✓ Attempt recorded
+                            </p>
+                            <button
+                              onClick={() => navigate(`/leaderboard/${pollItem.pollLaunchId}`)}
+                              className="tactile-btn-white px-3.5 py-1.5 rounded-lg text-xs font-bold font-sans text-[#18181B] select-none cursor-pointer"
+                            >
+                              Result ➔
+                            </button>
+                          </div>
+                        </article>
+                      );
+                    }
+
                     return (
                       <article
                         key={id}
-                        className="rounded-xl p-4 sm:p-5 bg-[#F0EDF1]/60 border border-[#D8C3AD]/40 flex flex-col gap-2 opacity-90 transition-all"
+                        className="tactile-card rounded-2xl p-6 bg-white border border-[#D8C3AD]/60 shadow-[0_4px_0_#E2DDD2] flex flex-col justify-between gap-4 relative transition-all"
                       >
-                        <div className="flex items-center justify-between">
-                          <span className="inline-flex items-center gap-1.5 text-[#006C49] font-sans text-[11px] font-bold tracking-wider uppercase">
-                            <span className="w-4 h-4 rounded-full bg-[#006C49] text-white flex items-center justify-center text-[10px]">
-                              ✓
+                        <div className="flex flex-col gap-3">
+                          {/* Card Header: Live Status & Category/Index */}
+                          <div className="flex items-center justify-between">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFDAD4] text-[#400100] font-sans text-xs font-bold">
+                              <span className="w-2 h-2 rounded-full bg-[#B71607] animate-ping" />
+                              ● LIVE
                             </span>
-                            COMPLETED
-                          </span>
-                          <span className="font-sans text-[11px] font-semibold text-[#867461] uppercase tracking-wider">
-                            QUESTION {polls.length > 1 ? idx + 1 : '1'}
-                          </span>
+                            <span className="font-sans text-xs font-bold text-[#867461] tracking-wider uppercase">
+                              ROUND {polls.length > 1 ? idx + 1 : '1'}
+                            </span>
+                          </div>
+
+                          <h3 className="font-serif text-xl sm:text-2xl text-[#18181B] leading-snug font-medium line-clamp-3">
+                            {pollItem.text}
+                          </h3>
+                          <div className="flex flex-wrap items-center gap-2 text-[#534434] font-sans text-xs sm:text-sm mt-1">
+                            <span className="flex items-center gap-1 font-medium bg-[#FAF8F5] px-2.5 py-1 rounded-md border border-[#E5E1D8]">
+                              ⏱ {pollItem.timerSeconds}s
+                            </span>
+                            <span className="text-[#B71607] font-semibold bg-[#FFF0EE] px-2.5 py-1 rounded-md border border-[#FFDAD4]">
+                              {formatExpiryCountdown(pollItem.expiresAt, now)}
+                            </span>
+                            <span className="text-[#855300] font-bold bg-[#FFFBEB] px-2.5 py-1 rounded-md border border-[#FDE68A]">
+                              {pollItem.points === 0 ? '0 pts' : `+${pollItem.points} pts`}
+                            </span>
+                          </div>
                         </div>
-                        <h4 className="font-sans text-sm sm:text-base text-[#18181B] font-medium line-through decoration-[#D8C3AD] line-clamp-2">
-                          {pollItem.text}
-                        </h4>
-                        <div className="flex items-center justify-between mt-0.5">
-                          <p className="font-sans text-xs text-[#006C49] font-medium">
-                            ✓ Attempt recorded
+
+                        {/* Per-Card Error */}
+                        {err && (
+                          <p className="font-sans text-xs font-semibold text-[#B71607] bg-[#FEF2F2] p-2.5 rounded-lg border border-[#FCA5A5]">
+                            {err}
                           </p>
-                          <button
-                            onClick={() => navigate(`/leaderboard/${pollItem.pollLaunchId}`)}
-                            className="tactile-btn-white px-3 py-1.5 rounded-lg text-xs font-bold font-sans text-[#18181B] select-none cursor-pointer"
-                          >
-                            View Result ➔
-                          </button>
-                        </div>
+                        )}
+
+                        {/* Tactile Kinetic Primary Action Button */}
+                        <button
+                          onClick={() => handleStart(pollItem)}
+                          disabled={isStarting || isExpiredLocal}
+                          className="tactile-btn-red w-full py-3.5 px-4 rounded-xl font-sans font-bold text-sm sm:text-base flex items-center justify-center gap-2 disabled:opacity-50 select-none cursor-pointer mt-1"
+                        >
+                          <span>{isStarting ? 'Starting…' : isExpiredLocal ? 'Wait...' : 'Play Challenge'}</span>
+                          <span className="text-lg leading-none">➔</span>
+                        </button>
                       </article>
                     );
-                  }
-
-                  return (
-                    <article
-                      key={id}
-                      className="tactile-card rounded-xl p-5 sm:p-6 bg-white border border-[#D8C3AD]/60 shadow-[0_4px_0_#E2DDD2] flex flex-col gap-3.5 relative transition-all"
-                    >
-                      {/* Card Header: Live Status & Category/Index */}
-                      <div className="flex items-center justify-between">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FFDAD4] text-[#400100] font-sans text-[11px] font-bold">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#B71607] animate-ping" />
-                          ● LIVE
-                        </span>
-                        <span className="font-sans text-[11px] font-bold text-[#867461] tracking-wider uppercase">
-                          QUESTION {polls.length > 1 ? idx + 1 : '1'}
-                        </span>
-                      </div>
-
-                      <div className="flex flex-col gap-1">
-                        <h3 className="font-serif text-lg sm:text-xl text-[#18181B] leading-snug font-medium line-clamp-3">
-                          {pollItem.text}
-                        </h3>
-                        <div className="flex items-center gap-2 text-[#534434] font-sans text-xs sm:text-sm mt-1">
-                          <span className="flex items-center gap-1 font-medium">
-                            ⏱ {pollItem.timerSeconds}s
-                          </span>
-                          <span>•</span>
-                          <span className="text-[#B71607] font-semibold">
-                            {formatExpiryCountdown(pollItem.expiresAt, now)}
-                          </span>
-                          <span>•</span>
-                          <span className="text-[#855300] font-bold">
-                            {pollItem.points === 0 ? '0 pts' : `+${pollItem.points} pts`}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Per-Card Error */}
-                      {err && (
-                        <p className="font-sans text-xs font-semibold text-[#B71607] bg-[#FEF2F2] p-2 rounded-lg border border-[#FCA5A5]">
-                          {err}
-                        </p>
-                      )}
-
-                      {/* Tactile Kinetic Primary Action Button */}
-                      <button
-                        onClick={() => handleStart(pollItem)}
-                        disabled={isStarting || isExpiredLocal}
-                        className="tactile-btn-red w-full mt-1 py-3 px-4 rounded-xl font-sans font-bold text-sm sm:text-base flex items-center justify-center gap-2 disabled:opacity-50 select-none cursor-pointer"
-                      >
-                        <span>{isStarting ? 'Starting…' : isExpiredLocal ? 'Wait...' : 'Answer'}</span>
-                        <span className="text-lg leading-none">➔</span>
-                      </button>
-                    </article>
-                  );
-                })}
+                  })}
+                </div>
+              )}
+              
+              <div className="mt-2 mb-4 text-center lg:hidden">
+                <button
+                  onClick={() => navigate('/student/leaderboard')}
+                  className="text-[#867461] hover:text-[#18181B] text-sm font-bold underline transition-colors cursor-pointer"
+                >
+                  View Overall Leaderboard ➔
+                </button>
               </div>
-            )}
-            
-            <div className="mt-2 mb-4 text-center">
-              <button
-                onClick={() => navigate('/student/leaderboard')}
-                className="text-[#867461] hover:text-[#18181B] text-sm font-bold underline transition-colors cursor-pointer"
-              >
-                View Overall Leaderboard ➔
-              </button>
             </div>
-          </section>
 
-          {/* Campus Division & Profile Telemetry Card */}
-          <section className="tactile-card rounded-xl p-4 sm:p-5 bg-white border border-[#D8C3AD]/60 shadow-[0_3px_0_#E2DDD2] flex items-center justify-between mb-2">
-            <div>
-              <span className="font-sans text-[11px] font-bold text-[#867461] uppercase tracking-wider block">
-                CAMPUS ACADEMIC DIVISION
-              </span>
-              <p className="font-serif text-base sm:text-lg font-bold text-[#18181B] mt-0.5">
-                Branch: {student?.branch || 'General Academic'}
-              </p>
-              <p className="font-sans text-xs text-[#534434] mt-0.5">
-                Personal Best: <strong>{student?.bestStreak || 0} days</strong>
-              </p>
-            </div>
-            <button
-              onClick={() => navigate('/social')}
-              className="tactile-btn-white px-3 py-1.5 rounded-lg text-xs font-bold font-sans text-[#18181B] select-none cursor-pointer"
-            >
-              Standings ➔
-            </button>
-          </section>
-
+          </div>
         </main>
 
-        {/* Bottom Navigation Bar: Docked to Mobile-Style Content Envelope */}
-        <nav className="fixed bottom-0 left-0 right-0 w-full z-50 flex justify-around items-center px-2 py-2 max-w-[430px] sm:max-w-lg mx-auto pb-safe bg-white rounded-t-xl border-t border-[#E5E1D8] shadow-[0_-4px_16px_rgba(39,34,26,0.06)]">
-          {/* Home Tab (ACTIVE) */}
-          <button
-            onClick={() => navigate('/student')}
-            className="flex flex-col items-center justify-center bg-[#F59E0B] text-[#613B00] rounded-xl px-4 py-1.5 font-bold shadow-[0_2px_0_#613B00] active:scale-95 transition-all select-none cursor-pointer"
-          >
-            <span className="text-base leading-none">🎮</span>
-            <span className="font-sans text-[11px] mt-0.5">Home</span>
-          </button>
-          
-          {/* Compete Tab */}
-          <button
-            onClick={() => navigate('/social')}
-            className="flex flex-col items-center justify-center text-[#534434] hover:text-[#855300] px-3 py-1.5 font-semibold active:scale-95 transition-all select-none cursor-pointer"
-          >
-            <span className="text-base leading-none">🏆</span>
-            <span className="font-sans text-[11px] mt-0.5">Compete</span>
-          </button>
+        {/* Bottom Navigation Bar: Docked Responsive Command Center */}
+        <nav className="fixed bottom-0 left-0 right-0 w-full z-50 flex justify-center pb-safe px-3 sm:px-4">
+          <div className="bottom-nav-dock flex justify-around items-center px-3 sm:px-6 py-2 sm:py-2.5 bg-white/95 backdrop-blur-md rounded-t-2xl border-t border-[#E5E1D8] shadow-[0_-4px_24px_rgba(39,34,26,0.08)]">
+            {/* Home Tab (ACTIVE) */}
+            <button
+              onClick={() => navigate('/student')}
+              className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 bg-[#F59E0B] text-[#613B00] rounded-xl px-3.5 sm:px-5 py-1.5 sm:py-2 font-bold shadow-[0_2px_0_#613B00] active:scale-95 transition-all select-none cursor-pointer"
+            >
+              <span className="text-lg sm:text-xl leading-none">🎮</span>
+              <span className="font-sans text-[11px] sm:text-xs md:text-sm">Home</span>
+            </button>
+            
+            {/* Compete Tab */}
+            <button
+              onClick={() => navigate('/social')}
+              className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 text-[#534434] hover:text-[#855300] px-3 sm:px-4 py-1.5 sm:py-2 font-semibold active:scale-95 transition-all select-none cursor-pointer rounded-xl hover:bg-[#FAF8F5]"
+            >
+              <span className="text-lg sm:text-xl leading-none">🏆</span>
+              <span className="font-sans text-[11px] sm:text-xs md:text-sm">Compete</span>
+            </button>
 
-          {/* Leaderboard Tab */}
-          <button
-            onClick={() => navigate('/student/leaderboard')}
-            className="flex flex-col items-center justify-center text-[#534434] hover:text-[#855300] px-3 py-1.5 font-semibold active:scale-95 transition-all select-none cursor-pointer"
-          >
-            <span className="text-base leading-none">🏅</span>
-            <span className="font-sans text-[11px] mt-0.5">Leaderboard</span>
-          </button>
+            {/* Leaderboard Tab */}
+            <button
+              onClick={() => navigate('/student/leaderboard')}
+              className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 text-[#534434] hover:text-[#855300] px-3 sm:px-4 py-1.5 sm:py-2 font-semibold active:scale-95 transition-all select-none cursor-pointer rounded-xl hover:bg-[#FAF8F5]"
+            >
+              <span className="text-lg sm:text-xl leading-none">🏅</span>
+              <span className="font-sans text-[11px] sm:text-xs md:text-sm">Leaderboard</span>
+            </button>
 
-          {/* Profile Tab */}
-          <button
-            onClick={() => navigate('/stats')}
-            className="flex flex-col items-center justify-center text-[#534434] hover:text-[#855300] px-3 py-1.5 font-semibold active:scale-95 transition-all select-none cursor-pointer"
-          >
-            <span className="text-base leading-none">👤</span>
-            <span className="font-sans text-[11px] mt-0.5">Profile</span>
-          </button>
+            {/* Profile Tab */}
+            <button
+              onClick={() => navigate('/stats')}
+              className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 text-[#534434] hover:text-[#855300] px-3 sm:px-4 py-1.5 sm:py-2 font-semibold active:scale-95 transition-all select-none cursor-pointer rounded-xl hover:bg-[#FAF8F5]"
+            >
+              <span className="text-lg sm:text-xl leading-none">👤</span>
+              <span className="font-sans text-[11px] sm:text-xs md:text-sm">Profile</span>
+            </button>
+          </div>
         </nav>
 
       </div>

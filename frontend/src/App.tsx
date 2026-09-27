@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Landing from './pages/Landing';
 import StudentAuth from './pages/StudentAuth';
 import QuestionPage from './pages/QuestionPage';
@@ -18,6 +18,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<StudentAuth />} />
+        <Route path="/auth" element={<StudentAuth />} />
         
         {/* Student flow */}
         <Route path="/student" element={<Landing />} />
@@ -35,6 +36,9 @@ export default function App() {
         <Route path="/admin/questions/new" element={<AdminQuestion />} />
         <Route path="/admin/questions/:id/edit" element={<AdminQuestion />} />
         <Route path="/admin/admins" element={<AdminManagement />} />
+
+        {/* Wildcard fallback to root */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );
