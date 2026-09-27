@@ -26,7 +26,7 @@ export default function SocialHub() {
   return (
     <div className="paper-texture min-h-screen text-[#18181B] selection:bg-[#FFDAD4] selection:text-[#400100] flex flex-col justify-between">
       {/* Centered tactile editorial envelope */}
-      <div className="w-full max-w-[430px] sm:max-w-lg mx-auto min-h-screen flex flex-col bg-[#FAF8F5] relative shadow-[0_0_50px_rgba(39,34,26,0.06)] pb-28">
+      <div className="w-full max-w-[430px] sm:max-w-lg md:max-w-none mx-auto min-h-screen flex flex-col bg-[#FAF8F5] relative shadow-[0_0_50px_rgba(39,34,26,0.06)] md:shadow-none pb-28">
         
         {/* TopAppBar: Sticky editorial brand masthead */}
         <header className="w-full sticky top-0 z-40 bg-[#FAF8F5]/90 backdrop-blur-md border-b border-[#E5E1D8]/60 shadow-[0_2px_4px_rgba(39,34,26,0.04)]">
@@ -114,7 +114,7 @@ export default function SocialHub() {
         </main>
 
         {/* Bottom Navigation Bar: Docked to Mobile-Style Content Envelope */}
-        <nav className="fixed bottom-0 left-0 right-0 w-full z-50 flex justify-around items-center px-2 py-2 max-w-[430px] sm:max-w-lg mx-auto pb-safe bg-white rounded-t-xl border-t border-[#E5E1D8] shadow-[0_-4px_16px_rgba(39,34,26,0.06)]">
+        <nav className="fixed bottom-0 left-0 right-0 w-full z-50 flex justify-around md:justify-center md:gap-8 items-center px-2 py-2 max-w-[430px] sm:max-w-lg md:max-w-none mx-auto pb-safe bg-white rounded-t-xl border-t border-[#E5E1D8] shadow-[0_-4px_16px_rgba(39,34,26,0.06)]">
           {/* Home Tab */}
           <button
             onClick={() => navigate('/student')}

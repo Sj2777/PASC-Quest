@@ -152,11 +152,11 @@ export default function Landing() {
   return (
     <div className="paper-texture min-h-screen text-[#18181B] selection:bg-[#FFDAD4] selection:text-[#400100] flex flex-col justify-between">
       {/* Centered tactile editorial envelope */}
-      <div className="w-full max-w-[430px] sm:max-w-lg mx-auto min-h-screen flex flex-col bg-[#FAF8F5] relative shadow-[0_0_50px_rgba(39,34,26,0.06)] pb-28">
+      <div className="student-wrap min-h-screen flex flex-col bg-[#FAF8F5] md:bg-transparent relative pb-28">
         
         {/* TopAppBar: Sticky editorial brand masthead */}
         <header className="w-full sticky top-0 z-40 bg-[#FAF8F5]/90 backdrop-blur-md border-b border-[#E5E1D8]/60 shadow-[0_2px_4px_rgba(39,34,26,0.04)]">
-          <div className="flex justify-between items-center w-full px-5 py-2.5 max-w-[430px] sm:max-w-lg mx-auto">
+          <div className="student-wrap flex justify-between items-center py-2.5 px-5">
             {/* Leading: Student initial badge & Newsreader brand */}
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-full ring-2 ring-[#E5E1D8] bg-[#F0EDF1] flex items-center justify-center font-bold text-[#855300] text-sm shadow-sm select-none">
@@ -423,66 +423,48 @@ export default function Landing() {
             </div>
           </section>
 
-          {/* Campus Division & Profile Telemetry Card */}
-          <section className="tactile-card rounded-xl p-4 sm:p-5 bg-white border border-[#D8C3AD]/60 shadow-[0_3px_0_#E2DDD2] flex items-center justify-between mb-2">
-            <div>
-              <span className="font-sans text-[11px] font-bold text-[#867461] uppercase tracking-wider block">
-                CAMPUS ACADEMIC DIVISION
-              </span>
-              <p className="font-serif text-base sm:text-lg font-bold text-[#18181B] mt-0.5">
-                Branch: {student?.branch || 'General Academic'}
-              </p>
-              <p className="font-sans text-xs text-[#534434] mt-0.5">
-                Personal Best: <strong>{student?.bestStreak || 0} days</strong>
-              </p>
-            </div>
-            <button
-              onClick={() => navigate('/social')}
-              className="tactile-btn-white px-3 py-1.5 rounded-lg text-xs font-bold font-sans text-[#18181B] select-none cursor-pointer"
-            >
-              Standings ➔
-            </button>
-          </section>
 
         </main>
 
         {/* Bottom Navigation Bar: Docked to Mobile-Style Content Envelope */}
-        <nav className="fixed bottom-0 left-0 right-0 w-full z-50 flex justify-around items-center px-2 py-2 max-w-[430px] sm:max-w-lg mx-auto pb-safe bg-white rounded-t-xl border-t border-[#E5E1D8] shadow-[0_-4px_16px_rgba(39,34,26,0.06)]">
-          {/* Home Tab (ACTIVE) */}
-          <button
-            onClick={() => navigate('/student')}
-            className="flex flex-col items-center justify-center bg-[#F59E0B] text-[#613B00] rounded-xl px-4 py-1.5 font-bold shadow-[0_2px_0_#613B00] active:scale-95 transition-all select-none cursor-pointer"
-          >
-            <span className="text-base leading-none">🎮</span>
-            <span className="font-sans text-[11px] mt-0.5">Home</span>
-          </button>
-          
-          {/* Compete Tab */}
-          <button
-            onClick={() => navigate('/social')}
-            className="flex flex-col items-center justify-center text-[#534434] hover:text-[#855300] px-3 py-1.5 font-semibold active:scale-95 transition-all select-none cursor-pointer"
-          >
-            <span className="text-base leading-none">🏆</span>
-            <span className="font-sans text-[11px] mt-0.5">Compete</span>
-          </button>
+        <nav className="fixed bottom-0 left-0 right-0 w-full z-50 bg-white border-t border-[#E5E1D8] shadow-[0_-4px_16px_rgba(39,34,26,0.06)]">
+          <div className="student-nav-items">
+            {/* Home Tab (ACTIVE) */}
+            <button
+              onClick={() => navigate('/student')}
+              className="flex flex-col items-center justify-center bg-[#F59E0B] text-[#613B00] rounded-xl px-4 py-1.5 font-bold shadow-[0_2px_0_#613B00] active:scale-95 transition-all select-none cursor-pointer"
+            >
+              <span className="text-base leading-none">🎮</span>
+              <span className="font-sans text-[11px] mt-0.5">Home</span>
+            </button>
+            
+            {/* Compete Tab */}
+            <button
+              onClick={() => navigate('/social')}
+              className="flex flex-col items-center justify-center text-[#534434] hover:text-[#855300] px-3 py-1.5 font-semibold active:scale-95 transition-all select-none cursor-pointer"
+            >
+              <span className="text-base leading-none">🏆</span>
+              <span className="font-sans text-[11px] mt-0.5">Compete</span>
+            </button>
 
-          {/* Leaderboard Tab */}
-          <button
-            onClick={() => navigate('/student/leaderboard')}
-            className="flex flex-col items-center justify-center text-[#534434] hover:text-[#855300] px-3 py-1.5 font-semibold active:scale-95 transition-all select-none cursor-pointer"
-          >
-            <span className="text-base leading-none">🏅</span>
-            <span className="font-sans text-[11px] mt-0.5">Leaderboard</span>
-          </button>
+            {/* Leaderboard Tab */}
+            <button
+              onClick={() => navigate('/student/leaderboard')}
+              className="flex flex-col items-center justify-center text-[#534434] hover:text-[#855300] px-3 py-1.5 font-semibold active:scale-95 transition-all select-none cursor-pointer"
+            >
+              <span className="text-base leading-none">🏅</span>
+              <span className="font-sans text-[11px] mt-0.5">Leaderboard</span>
+            </button>
 
-          {/* Profile Tab */}
-          <button
-            onClick={() => navigate('/stats')}
-            className="flex flex-col items-center justify-center text-[#534434] hover:text-[#855300] px-3 py-1.5 font-semibold active:scale-95 transition-all select-none cursor-pointer"
-          >
-            <span className="text-base leading-none">👤</span>
-            <span className="font-sans text-[11px] mt-0.5">Profile</span>
-          </button>
+            {/* Profile Tab */}
+            <button
+              onClick={() => navigate('/stats')}
+              className="flex flex-col items-center justify-center text-[#534434] hover:text-[#855300] px-3 py-1.5 font-semibold active:scale-95 transition-all select-none cursor-pointer"
+            >
+              <span className="text-base leading-none">👤</span>
+              <span className="font-sans text-[11px] mt-0.5">Profile</span>
+            </button>
+          </div>
         </nav>
 
       </div>

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import { api } from '../api';
 import type { LeaderboardEntry, LeaderboardResponse } from '../api';
+import { useLeaderboardWebSocket } from '../useWebSocket';
 
 const MEDAL = ['🥇', '🥈', '🥉'];
 const POLL_INTERVAL_MS = 5000;
@@ -93,6 +94,12 @@ export default function Leaderboard() {
     return () => { if (tickRef.current) clearInterval(tickRef.current); };
   }, [lastUpdated]);
 
+  useLeaderboardWebSocket((event) => {
+    if (event.scope === 'poll' && event.pollLaunchId === targetId) {
+      fetchData(true);
+    }
+  });
+
   const isLive = data?.questionStatus === 'live';
 
   // Podium order: 2nd, 1st, 3rd
@@ -106,7 +113,7 @@ export default function Leaderboard() {
   return (
     <div className="paper-texture min-h-screen text-[#18181B] selection:bg-[#FFDAD4] selection:text-[#400100] flex flex-col justify-between pb-safe">
       {/* Centered tactile editorial envelope */}
-      <div className="w-full max-w-[430px] sm:max-w-lg mx-auto min-h-screen flex flex-col bg-[#FAF8F5] relative shadow-[0_0_50px_rgba(39,34,26,0.06)] pb-10">
+      <div className="w-full max-w-[430px] sm:max-w-lg md:max-w-none mx-auto min-h-screen flex flex-col bg-[#FAF8F5] relative shadow-[0_0_50px_rgba(39,34,26,0.06)] md:shadow-none pb-10">
         
         {/* TopAppBar: Sticky editorial brand masthead */}
         <header className="w-full sticky top-0 z-40 bg-[#FAF8F5]/90 backdrop-blur-md border-b border-[#E5E1D8]/60 shadow-[0_2px_4px_rgba(39,34,26,0.04)]">

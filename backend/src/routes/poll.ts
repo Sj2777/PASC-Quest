@@ -5,6 +5,7 @@ import prisma from '../lib/prisma';
 import { studentAuthMiddleware, optionalStudentAuth } from '../middleware/studentAuth';
 import { updateStreakOnCorrectAttempt } from '../services/streakService';
 import { LAUNCH_LIFETIME_MS } from '../services/launchService';
+import { broadcastLeaderboardUpdate } from '../websocket';
 
 const router = Router();
 
@@ -207,6 +208,10 @@ router.post('/attempts', studentAuthMiddleware, async (req: Request, res: Respon
     if (result === 'CORRECT') {
       await updateStreakOnCorrectAttempt(studentId);
     }
+
+    // Broadcast leaderboard updates (WebSocket Phase 1)
+    broadcastLeaderboardUpdate('overall');
+    broadcastLeaderboardUpdate('poll', launch.id);
 
     res.json({ result: result.toLowerCase(), correctIndex: q.correctIndex, awardedPoints });
   } catch (err: any) {

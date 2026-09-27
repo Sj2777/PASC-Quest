@@ -1,0 +1,34 @@
+# QuizPop — root .gitignore
+# Covers files that should never be committed at the repo level.
+
+# IDE and OS artifacts
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.idea/
+.vscode/
+
+# Environment secret files (covered in subpackages too, but belt-and-suspenders)
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Dependency directories
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+build/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

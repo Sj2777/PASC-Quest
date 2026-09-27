@@ -24,6 +24,19 @@ export default function StudentAuth() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(-1);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    api.getMe()
+      .then(() => {
+        if (active) navigate('/student');
+      })
+      .catch(() => {
+        if (active) setIsCheckingAuth(false);
+      });
+    return () => { active = false; };
+  }, [navigate]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -143,6 +156,14 @@ export default function StudentAuth() {
     setConfirmPassword('');
     setBranch('');
   };
+
+  if (isCheckingAuth) {
+    return (
+      <div className="relative min-h-screen flex items-center justify-center bg-[#FAF8F5]">
+        <div className="w-8 h-8 rounded-full border-3 border-[#D8C3AD] border-t-[#DB3320] animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center px-4 py-12 bg-[#FAF8F5] font-sans text-[#18181B] selection:bg-[#FFDAD4] selection:text-[#400100]">

@@ -21,11 +21,17 @@ const LoginSchema = z.object({
 });
 
 const COOKIE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+const isProd = process.env.NODE_ENV === 'production';
+const cookieOptions = {
+  httpOnly: true,
+  sameSite: isProd ? 'none' as const : 'lax' as const,
+  secure: isProd,
+  path: '/',
+};
 
 function setStudentCookie(res: Response, token: string) {
   res.cookie('student_token', token, {
-    httpOnly: true,
-    sameSite: 'lax',
+    ...cookieOptions,
     maxAge: COOKIE_MAX_AGE_MS,
   });
 }
@@ -112,7 +118,7 @@ router.post('/login', async (req: Request, res: Response) => {
 
 // POST /api/student/logout
 router.post('/logout', (_req: Request, res: Response) => {
-  res.clearCookie('student_token');
+  res.clearCookie('student_token', cookieOptions);
   res.json({ message: 'Logged out' });
 });
 

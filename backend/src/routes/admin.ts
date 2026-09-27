@@ -7,7 +7,6 @@ import { adminAuthMiddleware, requireRole } from '../middleware/adminAuth';
 import { stringify } from 'csv-stringify/sync';
 import { executeQuestionLaunch, closePollLaunch } from '../services/launchService';
 
-console.log('>>> admin.ts loaded');
 
 const router = Router();
 
@@ -53,9 +52,16 @@ router.post('/login', async (req: Request, res: Response) => {
       { expiresIn: '8h' }
     );
 
-    res.cookie('admin_token', token, {
+    const isProd = process.env.NODE_ENV === 'production';
+    const cookieOptions = {
       httpOnly: true,
-      sameSite: 'lax',
+      sameSite: isProd ? 'none' as const : 'lax' as const,
+      secure: isProd,
+      path: '/',
+    };
+
+    res.cookie('admin_token', token, {
+      ...cookieOptions,
       maxAge: 8 * 60 * 60 * 1000, // 8 hours
     });
 
@@ -67,13 +73,19 @@ router.post('/login', async (req: Request, res: Response) => {
 
 // POST /api/admin/logout
 router.post('/logout', adminAuthMiddleware, (_req: Request, res: Response) => {
-  res.clearCookie('admin_token');
+  const isProd = process.env.NODE_ENV === 'production';
+  const cookieOptions = {
+    httpOnly: true,
+    sameSite: isProd ? 'none' as const : 'lax' as const,
+    secure: isProd,
+    path: '/',
+  };
+  res.clearCookie('admin_token', cookieOptions);
   res.json({ message: 'Logged out' });
 });
 
 // GET /api/admin/me
 router.get('/me', adminAuthMiddleware, (req: Request, res: Response) => {
-  console.log('>>> /me handler hit');
   const admin = (req as any).admin;
   res.json({ id: admin.adminId, email: admin.email, role: admin.role });
 });

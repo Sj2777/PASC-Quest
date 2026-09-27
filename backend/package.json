@@ -8,6 +8,7 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "prisma:migrate": "prisma migrate dev",
+    "prisma:deploy": "prisma migrate deploy",
     "prisma:generate": "prisma generate",
     "seed": "ts-node prisma/seed.ts"
   },
@@ -28,6 +29,7 @@
     "jsonwebtoken": "^9.0.3",
     "node-cron": "^4.6.0",
     "uuid": "^14.0.2",
+    "ws": "^8.22.0",
     "zod": "^4.6.5"
   },
   "devDependencies": {
@@ -39,6 +41,7 @@
     "@types/node": "^22.20.3",
     "@types/node-cron": "^3.0.11",
     "@types/uuid": "^10.0.0",
+    "@types/ws": "^8.18.1",
     "nodemon": "^3.1.14",
     "prisma": "^5.22.0",
     "ts-node": "^10.9.2",

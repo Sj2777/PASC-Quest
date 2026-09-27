@@ -104,7 +104,7 @@ export default function ResultPage() {
   return (
     <div className="paper-texture min-h-screen text-[#18181B] selection:bg-[#FFDAD4] selection:text-[#400100] flex flex-col justify-between py-6 sm:py-10 px-4">
       {/* Centered tactical mobile envelope (max 430px, tablet/desktop responsive) */}
-      <div className="w-full max-w-[430px] sm:max-w-lg mx-auto flex flex-col gap-4 sm:gap-5 relative shadow-[0_0_50px_rgba(39,34,26,0.06)] bg-[#FAF8F5]">
+      <div className="w-full max-w-[430px] sm:max-w-lg md:max-w-none mx-auto flex flex-col gap-4 sm:gap-5 relative shadow-[0_0_50px_rgba(39,34,26,0.06)] md:shadow-none bg-[#FAF8F5]">
         
         {/* Result Hero Section */}
         <motion.div

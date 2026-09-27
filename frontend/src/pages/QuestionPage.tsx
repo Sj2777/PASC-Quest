@@ -109,7 +109,7 @@ export default function QuestionPage() {
   return (
     <div className="paper-texture min-h-screen text-[#18181B] selection:bg-[#FFDAD4] selection:text-[#400100] flex flex-col justify-between">
       {/* Centered tactical mobile envelope (max 430px, tablet/desktop responsive) */}
-      <div className="w-full max-w-[430px] sm:max-w-lg mx-auto min-h-screen flex flex-col justify-between bg-[#FAF8F5] relative shadow-[0_0_50px_rgba(39,34,26,0.06)]">
+      <div className="w-full max-w-[430px] sm:max-w-lg md:max-w-none mx-auto min-h-screen flex flex-col justify-between bg-[#FAF8F5] relative shadow-[0_0_50px_rgba(39,34,26,0.06)] md:shadow-none">
         
         {/* Top Container: Progress + Header + Main question body */}
         <div className="flex flex-col flex-1">

@@ -9,7 +9,13 @@ const prisma = new PrismaClient();
 async function main() {
   // ── Admins ──────────────────────────────────────────────────────────────────
   const superAdminEmail = process.env.ADMIN_EMAIL || 'admin@quizpop.dev';
-  const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+  const envPassword = process.env.ADMIN_PASSWORD;
+  
+  if (!envPassword && process.env.NODE_ENV === 'production') {
+    throw new Error('ADMIN_PASSWORD must be explicitly provided in production environments to prevent default credentials.');
+  }
+  
+  const adminPassword = envPassword || 'admin123';
   const superAdminPasswordHash = await bcrypt.hash(adminPassword, 12);
 
   const superAdmin = await prisma.admin.upsert({
@@ -27,7 +33,8 @@ async function main() {
   console.log(`✅ Super Admin seeded: ${superAdmin.email} [${superAdmin.role}]`);
   console.log(`   Login with: ${superAdminEmail} / ${adminPassword}`);
 
-  const staffAdminEmail = 'staff@quizpop.dev';
+  if (process.env.NODE_ENV !== 'production') {
+    const staffAdminEmail = 'staff@quizpop.dev';
   const staffAdminPasswordHash = await bcrypt.hash('admin123', 12);
 
   const staffAdmin = await prisma.admin.upsert({
@@ -107,8 +114,11 @@ async function main() {
     console.log(`✅ Question created: "${q.text.slice(0, 40)}" [${q.status}] (createdBy: ${q.createdById})`);
   }
 
-  // PollLaunch, Follow, and Attempt rows are deliberately left empty.
-  console.log(`\n🎉 Seed complete! ${createdQuestions.length} sample questions, 2 admins, 2 students seeded.`);
+    // PollLaunch, Follow, and Attempt rows are deliberately left empty.
+    console.log(`\n🎉 Dev seed complete! ${createdQuestions.length} sample questions, 2 admins, 2 students seeded.`);
+  } else {
+    console.log(`\n🎉 Production seed complete! 1 super admin seeded.`);
+  }
 }
 
 main()

@@ -2,12 +2,14 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
+import { createServer } from 'http';
 import adminRouter from './routes/admin';
 import pollRouter from './routes/poll';
 import studentRouter from './routes/student';
 import socialRouter from './routes/social';
 import leaderboardsRouter from './routes/leaderboards';
 import { startScheduler } from './jobs/scheduler';
+import { initWebSocketServer } from './websocket';
 
 dotenv.config();
 
@@ -40,11 +42,13 @@ app.use('/api/leaderboards', leaderboardsRouter);
 startScheduler();
 
 app.get('/api/ping', (_req, res) => {
-  console.log('>>> ping hit');
   res.json({ pong: true });
 });
 
-app.listen(PORT, () => {
+const server = createServer(app);
+initWebSocketServer(server);
+
+server.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });
 

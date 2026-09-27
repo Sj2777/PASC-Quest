@@ -149,3 +149,39 @@ h1, h2, h3, .font-display {
   * { transition: none !important; animation: none !important; }
 }
 
+/* ── Student Application Responsive Layout ──────────────────────────────────
+   student-wrap:      the main page shell — phone-width on mobile,
+                      centered 1280px column on desktop.
+   student-nav-items: inner wrapper for bottom-nav buttons — prevents the
+                      four tabs from spreading awkwardly across a wide viewport.
+   ───────────────────────────────────────────────────────────────────────── */
+.student-wrap {
+  width: 100%;
+  max-width: 430px;
+  margin-left: auto;
+  margin-right: auto;
+}
+@media (min-width: 640px)  { .student-wrap { max-width: 32rem; } }
+@media (min-width: 768px)  { .student-wrap { max-width: 80rem; } }  /* 1280px */
+
+.student-nav-items {
+  width: 100%;
+  max-width: 430px;
+  margin-left: auto;
+  margin-right: auto;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 0.5rem;
+  padding-bottom: env(safe-area-inset-bottom, 0.5rem);
+}
+@media (min-width: 640px) { .student-nav-items { max-width: 32rem; } }
+@media (min-width: 768px) {
+  .student-nav-items {
+    max-width: 44rem;           /* 704px — 4 tabs with room to breathe */
+    justify-content: center;
+    gap: 3rem;
+  }
+}
+
+
