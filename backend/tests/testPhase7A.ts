@@ -20,13 +20,13 @@
  *  L. Streak regression: Q1 CORRECT + Q2 CORRECT → streak increments only once
  */
 
-import prisma from './src/lib/prisma';
+import prisma from '../src/lib/prisma';
 import {
   executeQuestionLaunch,
   closePollLaunch,
   LAUNCH_LIFETIME_MS,
-} from './src/services/launchService';
-import { updateStreakOnCorrectAttempt } from './src/services/streakService';
+} from '../src/services/launchService';
+import { updateStreakOnCorrectAttempt } from '../src/services/streakService';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 

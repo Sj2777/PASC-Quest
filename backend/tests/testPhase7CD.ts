@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import express from 'express';
-import leaderboardsRouter from './src/routes/leaderboards';
-import { executeQuestionLaunch } from './src/services/launchService';
+import leaderboardsRouter from '../src/routes/leaderboards';
+import { executeQuestionLaunch } from '../src/services/launchService';
 import http from 'http';
 
 const prisma = new PrismaClient();

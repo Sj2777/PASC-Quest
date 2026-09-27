@@ -10,12 +10,12 @@
  *  D. Duplicate attempt on Q1 is rejected.
  */
 
-import prisma from './src/lib/prisma';
-import { executeQuestionLaunch, closePollLaunch, LAUNCH_LIFETIME_MS } from './src/services/launchService';
-import { updateStreakOnCorrectAttempt } from './src/services/streakService';
+import prisma from '../src/lib/prisma';
+import { executeQuestionLaunch, closePollLaunch, LAUNCH_LIFETIME_MS } from '../src/services/launchService';
+import { updateStreakOnCorrectAttempt } from '../src/services/streakService';
 import { Request, Response } from 'express';
 // @ts-ignore
-import { optionalStudentAuth } from './src/middleware/studentAuth';
+import { optionalStudentAuth } from '../src/middleware/studentAuth';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 

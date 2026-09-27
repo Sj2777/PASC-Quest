@@ -1,5 +1,5 @@
 
-import prisma from './src/lib/prisma';
+import prisma from '../src/lib/prisma';
 import { v4 as uuidv4 } from 'uuid';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';

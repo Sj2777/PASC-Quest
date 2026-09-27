@@ -17,12 +17,12 @@
  *  I–K. Landing navigation contract → each item has the fields QuestionPage needs
  */
 
-import prisma from './src/lib/prisma';
+import prisma from '../src/lib/prisma';
 import {
   executeQuestionLaunch,
   closePollLaunch,
   LAUNCH_LIFETIME_MS,
-} from './src/services/launchService';
+} from '../src/services/launchService';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 

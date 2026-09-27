@@ -1,4 +1,4 @@
-import prisma from './src/lib/prisma';
+import prisma from '../src/lib/prisma';
 
 
 const API_URL = 'http://localhost:3001/api';
