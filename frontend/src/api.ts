@@ -37,6 +37,7 @@ export const api = {
   follow: (nickname: string) => req<{ message: string }>(`/api/social/follow/${nickname}`, { method: 'POST' }),
   unfollow: (nickname: string) => req<{ message: string }>(`/api/social/unfollow/${nickname}`, { method: 'POST' }),
   getFriends: () => req<{ friends: Friend[] }>('/api/social/friends'),
+  getFollowSummary: () => req<FollowSummary>('/api/social/follow-summary'),
   getBranchBattle: () => req<{ leaderboard: BranchBattleEntry[] }>('/api/leaderboards/branch-battle'),
   getHallOfFame: () => req<{ hallOfFame: HallOfFameEntry[] }>('/api/leaderboards/hall-of-fame'),
   getSpeedKing: (pollLaunchId: string) => req<{ speedKing: SpeedKing | null }>(`/api/leaderboards/${pollLaunchId}/speed-king`),
@@ -149,6 +150,13 @@ export interface Friend {
   currentStreak: number;
   bestStreak: number;
   branch: string | null;
+}
+
+export interface FollowSummary {
+  followingCount: number;
+  followersCount: number;
+  following: Friend[];
+  followers: Friend[];
 }
 
 export interface BranchBattleEntry {

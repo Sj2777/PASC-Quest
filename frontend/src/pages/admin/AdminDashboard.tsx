@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useParams } from 'react-router-dom';
 import { api, getExportCsvUrl } from '../../api';
 import type { Stat, Question } from '../../api';
+import { ADMIN_BASE_PATH } from '../../config';
 
 const LAUNCH_LIFETIME_MS = 24 * 60 * 60 * 1000; // 24 hours
 
@@ -41,6 +42,9 @@ function expiresInLabel(launchedAt: string): string {
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
+  const { secretKey } = useParams<{ secretKey?: string }>();
+  const adminBase = secretKey ? `/${secretKey}/admin` : ADMIN_BASE_PATH;
+
   const [stats, setStats] = useState<Stat[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,13 +60,13 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     loadData()
-      .catch(() => navigate('/admin'))
+      .catch(() => navigate(adminBase))
       .finally(() => setLoading(false));
-  }, [loadData, navigate]);
+  }, [adminBase, loadData, navigate]);
 
   const handleLogout = async () => {
     await api.adminLogout().catch(() => {});
-    navigate('/admin');
+    navigate(adminBase);
   };
 
   const handleLaunch = async (id: string) => {
@@ -115,17 +119,17 @@ export default function AdminDashboard() {
           <span className="font-serif font-semibold text-lg text-[#18181B]">QuizPop Admin</span>
         </div>
         <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-          <Link to="/admin/dashboard" className="flex items-center px-3 py-2.5 bg-[#FAF8F5] text-[#18181B] rounded-md font-bold text-sm">
+          <Link to={`${adminBase}/dashboard`} className="flex items-center px-3 py-2.5 bg-[#FAF8F5] text-[#18181B] rounded-md font-bold text-sm">
             Dashboard
           </Link>
-          <Link to="/admin/questions/new" className="flex items-center px-3 py-2.5 text-[#534434] hover:bg-[#FAF8F5] hover:text-[#18181B] rounded-md font-semibold text-sm transition-colors">
+          <Link to={`${adminBase}/questions/new`} className="flex items-center px-3 py-2.5 text-[#534434] hover:bg-[#FAF8F5] hover:text-[#18181B] rounded-md font-semibold text-sm transition-colors">
             Questions
           </Link>
           <a href="#poll-history" className="flex items-center px-3 py-2.5 text-[#534434] hover:bg-[#FAF8F5] hover:text-[#18181B] rounded-md font-semibold text-sm transition-colors">
             Analytics
           </a>
           {role === 'SUPER_ADMIN' && (
-            <Link to="/admin/admins" className="flex items-center px-3 py-2.5 text-[#534434] hover:bg-[#FAF8F5] hover:text-[#18181B] rounded-md font-semibold text-sm transition-colors">
+            <Link to={`${adminBase}/admins`} className="flex items-center px-3 py-2.5 text-[#534434] hover:bg-[#FAF8F5] hover:text-[#18181B] rounded-md font-semibold text-sm transition-colors">
               Admin Management
             </Link>
           )}
@@ -165,7 +169,7 @@ export default function AdminDashboard() {
                 <p className="font-sans text-sm text-[#534434] mt-1.5">Command center for active launches, drafts, and system telemetry.</p>
               </div>
               <button
-                onClick={() => navigate('/admin/questions/new')}
+                onClick={() => navigate(`${adminBase}/questions/new`)}
                 className="bg-[#18181B] hover:bg-[#27221A] text-white px-5 py-2.5 rounded shadow-[0_2px_8px_rgba(39,34,26,0.08)] font-sans font-bold text-sm transition-colors cursor-pointer flex-shrink-0"
               >
                 + New Question
@@ -319,7 +323,7 @@ export default function AdminDashboard() {
                             </a>
                           )}
                           <button
-                            onClick={() => navigate(`/admin/questions/${q.id}/edit`)}
+                            onClick={() => navigate(`${adminBase}/questions/${q.id}/edit`)}
                             className="px-3 py-1.5 rounded border border-[#E5E1D8] text-[#534434] hover:bg-[#FAF8F5] text-xs font-bold transition-colors cursor-pointer"
                           >
                             Edit
@@ -429,17 +433,17 @@ export default function AdminDashboard() {
               </button>
             </div>
             <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-              <Link to="/admin/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center px-3 py-2.5 bg-[#FAF8F5] text-[#18181B] rounded-md font-bold text-sm">
+              <Link to={`${adminBase}/dashboard`} onClick={() => setIsMobileMenuOpen(false)} className="flex items-center px-3 py-2.5 bg-[#FAF8F5] text-[#18181B] rounded-md font-bold text-sm">
                 Dashboard
               </Link>
-              <Link to="/admin/questions/new" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center px-3 py-2.5 text-[#534434] hover:bg-[#FAF8F5] hover:text-[#18181B] rounded-md font-semibold text-sm transition-colors">
+              <Link to={`${adminBase}/questions/new`} onClick={() => setIsMobileMenuOpen(false)} className="flex items-center px-3 py-2.5 text-[#534434] hover:bg-[#FAF8F5] hover:text-[#18181B] rounded-md font-semibold text-sm transition-colors">
                 Questions
               </Link>
               <a href="#poll-history" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center px-3 py-2.5 text-[#534434] hover:bg-[#FAF8F5] hover:text-[#18181B] rounded-md font-semibold text-sm transition-colors">
                 Analytics
               </a>
               {role === 'SUPER_ADMIN' && (
-                <Link to="/admin/admins" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center px-3 py-2.5 text-[#534434] hover:bg-[#FAF8F5] hover:text-[#18181B] rounded-md font-semibold text-sm transition-colors">
+                <Link to={`${adminBase}/admins`} onClick={() => setIsMobileMenuOpen(false)} className="flex items-center px-3 py-2.5 text-[#534434] hover:bg-[#FAF8F5] hover:text-[#18181B] rounded-md font-semibold text-sm transition-colors">
                   Admin Management
                 </Link>
               )}

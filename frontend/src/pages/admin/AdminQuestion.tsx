@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { api, getExportCsvUrl } from '../../api';
 import type { QuestionInput } from '../../api';
+import { ADMIN_BASE_PATH } from '../../config';
 
 export default function AdminQuestion() {
   const navigate = useNavigate();
-  const { id } = useParams<{ id: string }>();
+  const { id, secretKey } = useParams<{ id: string; secretKey?: string }>();
+  const adminBase = secretKey ? `/${secretKey}/admin` : ADMIN_BASE_PATH;
   const isEdit = Boolean(id);
 
   const [text, setText] = useState('');
@@ -27,7 +29,7 @@ export default function AdminQuestion() {
     // 1. Fetch user role for sidebar
     api.getAdminMe()
       .then((me) => setRole(me.role))
-      .catch(() => navigate('/admin'));
+      .catch(() => navigate(adminBase));
 
     // 2. Fetch question data if editing
     if (!isEdit || !id) {
@@ -38,7 +40,7 @@ export default function AdminQuestion() {
     api.getQuestions()
       .then((qs) => {
         const q = qs.find((q) => q.id === id);
-        if (!q) { navigate('/admin/dashboard'); return; }
+        if (!q) { navigate(`${adminBase}/dashboard`); return; }
         setText(q.text);
         setOptions(q.options as string[]);
         setCorrectIndex(q.correctIndex);
@@ -52,13 +54,13 @@ export default function AdminQuestion() {
           setScheduledAt(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`);
         }
       })
-      .catch(() => navigate('/admin'))
+      .catch(() => navigate(adminBase))
       .finally(() => setLoading(false));
-  }, [id, isEdit, navigate]);
+  }, [adminBase, id, isEdit, navigate]);
 
   const handleLogout = async () => {
     await api.adminLogout().catch(() => {});
-    navigate('/admin');
+    navigate(adminBase);
   };
 
   const validate = (): boolean => {
@@ -90,7 +92,7 @@ export default function AdminQuestion() {
       } else {
         await api.createQuestion(body());
       }
-      navigate('/admin/dashboard');
+      navigate(`${adminBase}/dashboard`);
     } catch (err: any) {
       setError(err?.error ?? 'Failed to save.');
     } finally {
@@ -112,7 +114,7 @@ export default function AdminQuestion() {
         questionId = id;
       }
       await api.launchQuestion(questionId!);
-      navigate('/admin/dashboard');
+      navigate(`${adminBase}/dashboard`);
     } catch (err: any) {
       setError(err?.error ?? 'Failed to launch.');
     } finally {
@@ -154,17 +156,17 @@ export default function AdminQuestion() {
           <span className="font-serif font-semibold text-lg text-[#18181B]">QuizPop Admin</span>
         </div>
         <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-          <Link to="/admin/dashboard" className="flex items-center px-3 py-2.5 text-[#534434] hover:bg-[#FAF8F5] hover:text-[#18181B] rounded-md font-semibold text-sm transition-colors">
+          <Link to={`${adminBase}/dashboard`} className="flex items-center px-3 py-2.5 text-[#534434] hover:bg-[#FAF8F5] hover:text-[#18181B] rounded-md font-semibold text-sm transition-colors">
             Dashboard
           </Link>
-          <Link to="/admin/questions/new" className="flex items-center px-3 py-2.5 bg-[#FAF8F5] text-[#18181B] rounded-md font-bold text-sm">
+          <Link to={`${adminBase}/questions/new`} className="flex items-center px-3 py-2.5 bg-[#FAF8F5] text-[#18181B] rounded-md font-bold text-sm">
             Questions
           </Link>
-          <a href="/admin/dashboard#poll-history" className="flex items-center px-3 py-2.5 text-[#534434] hover:bg-[#FAF8F5] hover:text-[#18181B] rounded-md font-semibold text-sm transition-colors">
+          <a href={`${adminBase}/dashboard#poll-history`} className="flex items-center px-3 py-2.5 text-[#534434] hover:bg-[#FAF8F5] hover:text-[#18181B] rounded-md font-semibold text-sm transition-colors">
             Analytics
           </a>
           {role === 'SUPER_ADMIN' && (
-            <Link to="/admin/admins" className="flex items-center px-3 py-2.5 text-[#534434] hover:bg-[#FAF8F5] hover:text-[#18181B] rounded-md font-semibold text-sm transition-colors">
+            <Link to={`${adminBase}/admins`} className="flex items-center px-3 py-2.5 text-[#534434] hover:bg-[#FAF8F5] hover:text-[#18181B] rounded-md font-semibold text-sm transition-colors">
               Admin Management
             </Link>
           )}
@@ -201,7 +203,7 @@ export default function AdminQuestion() {
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
               <div className="flex items-start gap-4">
                 <button
-                  onClick={() => navigate('/admin/dashboard')}
+                  onClick={() => navigate(`${adminBase}/dashboard`)}
                   className="mt-1 flex items-center justify-center w-8 h-8 rounded-md hover:bg-[#E5E1D8] text-[#534434] transition-colors"
                   title="Back to Dashboard"
                 >
@@ -403,7 +405,7 @@ export default function AdminQuestion() {
               {/* ACTION FOOTER */}
               <div className="bg-[#FAF8F5] border-t border-[#E5E1D8] px-6 py-5 flex flex-col-reverse sm:flex-row items-center justify-end gap-3">
                 <button
-                  onClick={() => navigate('/admin/dashboard')}
+                  onClick={() => navigate(`${adminBase}/dashboard`)}
                   disabled={saving || launching}
                   className="w-full sm:w-auto px-5 py-2.5 rounded text-[#534434] hover:bg-[#E5E1D8] font-bold text-sm transition-colors disabled:opacity-50"
                 >
@@ -445,17 +447,17 @@ export default function AdminQuestion() {
               </button>
             </div>
             <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-              <Link to="/admin/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center px-3 py-2.5 text-[#534434] hover:bg-[#FAF8F5] hover:text-[#18181B] rounded-md font-semibold text-sm transition-colors">
+              <Link to={`${adminBase}/dashboard`} onClick={() => setIsMobileMenuOpen(false)} className="flex items-center px-3 py-2.5 text-[#534434] hover:bg-[#FAF8F5] hover:text-[#18181B] rounded-md font-semibold text-sm transition-colors">
                 Dashboard
               </Link>
-              <Link to="/admin/questions/new" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center px-3 py-2.5 bg-[#FAF8F5] text-[#18181B] rounded-md font-bold text-sm">
+              <Link to={`${adminBase}/questions/new`} onClick={() => setIsMobileMenuOpen(false)} className="flex items-center px-3 py-2.5 bg-[#FAF8F5] text-[#18181B] rounded-md font-bold text-sm">
                 Questions
               </Link>
-              <a href="/admin/dashboard#poll-history" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center px-3 py-2.5 text-[#534434] hover:bg-[#FAF8F5] hover:text-[#18181B] rounded-md font-semibold text-sm transition-colors">
+              <a href={`${adminBase}/dashboard#poll-history`} onClick={() => setIsMobileMenuOpen(false)} className="flex items-center px-3 py-2.5 text-[#534434] hover:bg-[#FAF8F5] hover:text-[#18181B] rounded-md font-semibold text-sm transition-colors">
                 Analytics
               </a>
               {role === 'SUPER_ADMIN' && (
-                <Link to="/admin/admins" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center px-3 py-2.5 text-[#534434] hover:bg-[#FAF8F5] hover:text-[#18181B] rounded-md font-semibold text-sm transition-colors">
+                <Link to={`${adminBase}/admins`} onClick={() => setIsMobileMenuOpen(false)} className="flex items-center px-3 py-2.5 text-[#534434] hover:bg-[#FAF8F5] hover:text-[#18181B] rounded-md font-semibold text-sm transition-colors">
                   Admin Management
                 </Link>
               )}

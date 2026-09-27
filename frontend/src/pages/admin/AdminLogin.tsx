@@ -1,13 +1,23 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../../api';
+import { ADMIN_BASE_PATH } from '../../config';
 
 export default function AdminLogin() {
   const navigate = useNavigate();
+  const { secretKey } = useParams<{ secretKey?: string }>();
+  const adminBase = secretKey ? `/${secretKey}/admin` : ADMIN_BASE_PATH;
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    api.getAdminMe()
+      .then(() => navigate(`${adminBase}/dashboard`, { replace: true }))
+      .catch(() => {});
+  }, [adminBase, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -15,7 +25,7 @@ export default function AdminLogin() {
     setLoading(true);
     try {
       await api.adminLogin(email, password);
-      navigate('/admin/dashboard');
+      navigate(`${adminBase}/dashboard`);
     } catch {
       setError('Invalid email or password.');
     } finally {

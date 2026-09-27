@@ -1,10 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useParams } from 'react-router-dom';
 import { api } from '../../api';
 import type { Admin } from '../../api';
+import { ADMIN_BASE_PATH } from '../../config';
 
 export default function AdminManagement() {
   const navigate = useNavigate();
+  const { secretKey } = useParams<{ secretKey?: string }>();
+  const adminBase = secretKey ? `/${secretKey}/admin` : ADMIN_BASE_PATH;
+
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -23,26 +27,26 @@ export default function AdminManagement() {
       setAdmins(data);
     } catch (err: any) {
       if (err.status === 403 || err.status === 401) {
-        navigate('/admin/dashboard');
+        navigate(`${adminBase}/dashboard`);
       } else {
         setError('Failed to load admins');
       }
     } finally {
       setLoading(false);
     }
-  }, [navigate]);
+  }, [adminBase, navigate]);
 
   useEffect(() => {
     api.getAdminMe()
       .then((me) => setMyRole(me.role))
-      .catch(() => navigate('/admin'));
+      .catch(() => navigate(adminBase));
 
     fetchAdmins();
-  }, [fetchAdmins, navigate]);
+  }, [adminBase, fetchAdmins, navigate]);
 
   const handleLogout = async () => {
     await api.adminLogout().catch(() => {});
-    navigate('/admin');
+    navigate(adminBase);
   };
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -100,17 +104,17 @@ export default function AdminManagement() {
           <span className="font-serif font-semibold text-lg text-[#18181B]">QuizPop Admin</span>
         </div>
         <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-          <Link to="/admin/dashboard" className="flex items-center px-3 py-2.5 text-[#534434] hover:bg-[#FAF8F5] hover:text-[#18181B] rounded-md font-semibold text-sm transition-colors">
+          <Link to={`${adminBase}/dashboard`} className="flex items-center px-3 py-2.5 text-[#534434] hover:bg-[#FAF8F5] hover:text-[#18181B] rounded-md font-semibold text-sm transition-colors">
             Dashboard
           </Link>
-          <Link to="/admin/questions/new" className="flex items-center px-3 py-2.5 text-[#534434] hover:bg-[#FAF8F5] hover:text-[#18181B] rounded-md font-semibold text-sm transition-colors">
+          <Link to={`${adminBase}/questions/new`} className="flex items-center px-3 py-2.5 text-[#534434] hover:bg-[#FAF8F5] hover:text-[#18181B] rounded-md font-semibold text-sm transition-colors">
             Questions
           </Link>
-          <a href="/admin/dashboard#poll-history" className="flex items-center px-3 py-2.5 text-[#534434] hover:bg-[#FAF8F5] hover:text-[#18181B] rounded-md font-semibold text-sm transition-colors">
+          <a href={`${adminBase}/dashboard#poll-history`} className="flex items-center px-3 py-2.5 text-[#534434] hover:bg-[#FAF8F5] hover:text-[#18181B] rounded-md font-semibold text-sm transition-colors">
             Analytics
           </a>
           {myRole === 'SUPER_ADMIN' && (
-            <Link to="/admin/admins" className="flex items-center px-3 py-2.5 bg-[#FAF8F5] text-[#18181B] rounded-md font-bold text-sm">
+            <Link to={`${adminBase}/admins`} className="flex items-center px-3 py-2.5 bg-[#FAF8F5] text-[#18181B] rounded-md font-bold text-sm">
               Admin Management
             </Link>
           )}
@@ -272,17 +276,17 @@ export default function AdminManagement() {
               </button>
             </div>
             <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-              <Link to="/admin/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center px-3 py-2.5 text-[#534434] hover:bg-[#FAF8F5] hover:text-[#18181B] rounded-md font-semibold text-sm transition-colors">
+              <Link to={`${adminBase}/dashboard`} onClick={() => setIsMobileMenuOpen(false)} className="flex items-center px-3 py-2.5 text-[#534434] hover:bg-[#FAF8F5] hover:text-[#18181B] rounded-md font-semibold text-sm transition-colors">
                 Dashboard
               </Link>
-              <Link to="/admin/questions/new" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center px-3 py-2.5 text-[#534434] hover:bg-[#FAF8F5] hover:text-[#18181B] rounded-md font-semibold text-sm transition-colors">
+              <Link to={`${adminBase}/questions/new`} onClick={() => setIsMobileMenuOpen(false)} className="flex items-center px-3 py-2.5 text-[#534434] hover:bg-[#FAF8F5] hover:text-[#18181B] rounded-md font-semibold text-sm transition-colors">
                 Questions
               </Link>
-              <a href="/admin/dashboard#poll-history" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center px-3 py-2.5 text-[#534434] hover:bg-[#FAF8F5] hover:text-[#18181B] rounded-md font-semibold text-sm transition-colors">
+              <a href={`${adminBase}/dashboard#poll-history`} onClick={() => setIsMobileMenuOpen(false)} className="flex items-center px-3 py-2.5 text-[#534434] hover:bg-[#FAF8F5] hover:text-[#18181B] rounded-md font-semibold text-sm transition-colors">
                 Analytics
               </a>
               {myRole === 'SUPER_ADMIN' && (
-                <Link to="/admin/admins" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center px-3 py-2.5 bg-[#FAF8F5] text-[#18181B] rounded-md font-bold text-sm">
+                <Link to={`${adminBase}/admins`} onClick={() => setIsMobileMenuOpen(false)} className="flex items-center px-3 py-2.5 bg-[#FAF8F5] text-[#18181B] rounded-md font-bold text-sm">
                   Admin Management
                 </Link>
               )}

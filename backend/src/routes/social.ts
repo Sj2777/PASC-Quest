@@ -95,4 +95,51 @@ router.get('/friends', studentAuthMiddleware, async (req: Request, res: Response
   }
 });
 
+// GET /api/social/follow-summary
+router.get('/follow-summary', studentAuthMiddleware, async (req: Request, res: Response) => {
+  const studentId = (req as any).studentId as string;
+
+  try {
+    const following = await prisma.follow.findMany({
+      where: { followerId: studentId },
+      include: {
+        followed: {
+          select: {
+            id: true,
+            nickname: true,
+            currentStreak: true,
+            bestStreak: true,
+            branch: true
+          }
+        }
+      }
+    });
+
+    const followers = await prisma.follow.findMany({
+      where: { followedId: studentId },
+      include: {
+        follower: {
+          select: {
+            id: true,
+            nickname: true,
+            currentStreak: true,
+            bestStreak: true,
+            branch: true
+          }
+        }
+      }
+    });
+
+    res.json({
+      followingCount: following.length,
+      followersCount: followers.length,
+      following: following.map(f => f.followed),
+      followers: followers.map(f => f.follower),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 export default router;

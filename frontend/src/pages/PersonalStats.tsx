@@ -1,25 +1,32 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
-import { api, type StudentStats, type ArchiveQuestion } from '../api';
+import { api, type StudentStats, type ArchiveQuestion, type FollowSummary, type Student } from '../api';
 
 export default function PersonalStats() {
   const navigate = useNavigate();
   const [stats, setStats] = useState<StudentStats | null>(null);
-  const [nickname, setNickname] = useState<string>('');
+  const [me, setMe] = useState<Student | null>(null);
+  const [followSummary, setFollowSummary] = useState<FollowSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedQuestion, setSelectedQuestion] = useState<ArchiveQuestion | null>(null);
+  const [followTab, setFollowTab] = useState<'following' | 'followers'>('following');
+  const [followInput, setFollowInput] = useState('');
+  const [followActionLoading, setFollowActionLoading] = useState(false);
+  const [socialMessage, setSocialMessage] = useState<{ text: string; isError?: boolean } | null>(null);
   const shouldReduceMotion = useReducedMotion();
 
   useEffect(() => {
     Promise.all([
       api.getStudentStats(),
-      api.getMe()
+      api.getMe(),
+      api.getFollowSummary().catch(() => null)
     ])
-      .then(([statsData, meData]) => {
+      .then(([statsData, meData, followData]) => {
         setStats(statsData);
-        setNickname(meData.nickname);
+        setMe(meData);
+        if (followData) setFollowSummary(followData);
       })
       .catch((err) => {
         if (err?.status === 401 || err?.error === 'not_authenticated') {
@@ -34,6 +41,59 @@ export default function PersonalStats() {
   const handleLogout = async () => {
     await api.logoutStudent().catch(() => {});
     navigate('/');
+  };
+
+  const handleFollow = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const target = followInput.trim();
+    if (!target) return;
+    if (me && target.toLowerCase() === me.nickname.toLowerCase()) {
+      setSocialMessage({ text: "You cannot follow yourself.", isError: true });
+      return;
+    }
+    setFollowActionLoading(true);
+    setSocialMessage(null);
+    try {
+      await api.follow(target);
+      setSocialMessage({ text: `Now following @${target}!`, isError: false });
+      setFollowInput('');
+      const updated = await api.getFollowSummary();
+      setFollowSummary(updated);
+    } catch (err: any) {
+      setSocialMessage({ text: err?.error || err?.message || 'Could not follow student.', isError: true });
+    } finally {
+      setFollowActionLoading(false);
+    }
+  };
+
+  const handleUnfollow = async (targetNickname: string) => {
+    setFollowActionLoading(true);
+    setSocialMessage(null);
+    try {
+      await api.unfollow(targetNickname);
+      setSocialMessage({ text: `Unfollowed @${targetNickname}`, isError: false });
+      const updated = await api.getFollowSummary();
+      setFollowSummary(updated);
+    } catch (err: any) {
+      setSocialMessage({ text: err?.error || err?.message || 'Failed to unfollow.', isError: true });
+    } finally {
+      setFollowActionLoading(false);
+    }
+  };
+
+  const handleQuickFollow = async (targetNickname: string) => {
+    setFollowActionLoading(true);
+    setSocialMessage(null);
+    try {
+      await api.follow(targetNickname);
+      setSocialMessage({ text: `Now following @${targetNickname}!`, isError: false });
+      const updated = await api.getFollowSummary();
+      setFollowSummary(updated);
+    } catch (err: any) {
+      setSocialMessage({ text: err?.error || err?.message || 'Could not follow student.', isError: true });
+    } finally {
+      setFollowActionLoading(false);
+    }
   };
 
   return (
@@ -81,119 +141,285 @@ export default function PersonalStats() {
               initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
-              className="flex flex-col gap-8"
+              className="w-full"
             >
-              {/* Profile Header */}
-              <section className="text-center mt-2 mb-4">
-                <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl text-[#18181B] font-bold tracking-tight">
-                  @{nickname}
-                </h1>
-                <div className="mt-3 inline-flex items-center gap-2 font-sans font-bold text-sm sm:text-base text-[#DB3320] bg-[#FFF0EE] border border-[#FFDAD4] px-5 py-2 rounded-full shadow-sm">
-                  <span className="text-lg">🔥</span>
-                  <span>{stats.currentStreak > 0 ? `${stats.currentStreak} day streak${stats.currentStreak !== 1 ? 's' : ''}` : '0 days active'}</span>
-                </div>
-              </section>
+              {/* 1:2 Ratio Layout: 4 cols for Smaller Section, 8 cols for Bigger Section */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+                
+                {/* SMALLER SECTION (1/3 width = 4 columns on lg) */}
+                <div className="lg:col-span-4 flex flex-col gap-5">
+                  {/* 1. Person's Name & Info Card */}
+                  <div className="tactile-card rounded-2xl p-5 bg-white border border-[#D8C3AD]/60 shadow-[0_3px_0_#E2DDD2] flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-[#FFF8ED] border-2 border-[#F59E0B]/40 text-[#855300] font-serif text-2xl font-bold flex items-center justify-center shadow-inner shrink-0 select-none">
+                      {me?.nickname ? me.nickname.charAt(0).toUpperCase() : '?'}
+                    </div>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h1 className="font-serif text-2xl sm:text-3xl text-[#18181B] font-bold tracking-tight truncate">
+                          @{me?.nickname || 'Student'}
+                        </h1>
+                        {me?.branch && (
+                          <span className="font-sans text-[11px] font-bold text-[#855300] bg-[#FFFBEB] px-2.5 py-0.5 rounded-full border border-[#F59E0B]/30 uppercase tracking-wide">
+                            {me.branch}
+                          </span>
+                        )}
+                      </div>
+                      <div className="mt-1.5 flex items-center gap-2">
+                        <span className="inline-flex items-center gap-1 font-sans font-bold text-xs text-[#DB3320] bg-[#FFF0EE] border border-[#FFDAD4] px-2.5 py-0.5 rounded-full">
+                          <span>🔥</span>
+                          <span>{stats.currentStreak > 0 ? `${stats.currentStreak} day streak` : '0 days streak'}</span>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
 
-              {/* Performance Stats: 6-item Grid on Large Screens */}
-              <section>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5 sm:gap-4 md:gap-5">
-                  {/* Total Points */}
-                  <div className="tactile-card rounded-2xl p-4 sm:p-5 bg-white border border-[#FDBA74] shadow-[0_3px_0_#FED7AA] flex flex-col items-center justify-center text-center">
-                    <div className="font-sans font-extrabold text-2xl sm:text-3xl tabular-nums text-[#B45309] leading-tight">
-                      {stats.totalPoints}<span className="text-xs sm:text-sm font-bold text-[#D97706] ml-0.5">pts</span>
+                  {/* 2. Analytics in Small Cards */}
+                  <div className="tactile-card rounded-2xl p-4 sm:p-5 bg-white border border-[#D8C3AD]/60 shadow-[0_3px_0_#E2DDD2] flex flex-col gap-3">
+                    <div className="flex items-center justify-between border-b border-[#E5E1D8]/60 pb-2.5">
+                      <span className="font-serif text-base font-bold text-[#18181B]">Analytics & Metrics</span>
+                      <span className="font-sans text-[10px] font-bold text-[#867461] uppercase tracking-wider bg-[#F4EFEA] px-2 py-0.5 rounded-full border border-[#E5E1D8]">
+                        Telemetry
+                      </span>
                     </div>
-                    <div className="font-sans text-[10px] sm:text-xs font-bold uppercase tracking-wider mt-1 text-[#855300]">
-                      Total Points
-                    </div>
-                  </div>
-                  {/* Accuracy */}
-                  <div className="tactile-card rounded-2xl p-4 sm:p-5 bg-white border border-[#D8C3AD]/60 shadow-[0_3px_0_#E2DDD2] flex flex-col items-center justify-center text-center">
-                    <div className="font-sans font-extrabold text-2xl sm:text-3xl tabular-nums text-[#18181B] leading-tight">
-                      {stats.accuracy}<span className="text-xs sm:text-sm font-bold text-[#867461] ml-0.5">%</span>
-                    </div>
-                    <div className="font-sans text-[10px] sm:text-xs font-bold uppercase tracking-wider mt-1 text-[#867461]">
-                      Accuracy
-                    </div>
-                  </div>
-                  {/* Average Time */}
-                  <div className="tactile-card rounded-2xl p-4 sm:p-5 bg-white border border-[#D8C3AD]/60 shadow-[0_3px_0_#E2DDD2] flex flex-col items-center justify-center text-center">
-                    <div className="font-sans font-extrabold text-2xl sm:text-3xl tabular-nums text-[#18181B] leading-tight">
-                      {stats.avgTimeMs !== null ? (stats.avgTimeMs / 1000).toFixed(1) : '-'}<span className="text-xs sm:text-sm font-bold text-[#867461] ml-0.5">s</span>
-                    </div>
-                    <div className="font-sans text-[10px] sm:text-xs font-bold uppercase tracking-wider mt-1 text-[#867461]">
-                      Avg Time
-                    </div>
-                  </div>
-                  {/* Current Streak */}
-                  <div className="tactile-card rounded-2xl p-4 sm:p-5 bg-white border border-[#FDBA74] shadow-[0_3px_0_#FED7AA] flex flex-col items-center justify-center text-center">
-                    <div className="font-sans font-extrabold text-2xl sm:text-3xl tabular-nums text-[#DB3320] leading-tight">
-                      {stats.currentStreak}<span className="text-xs sm:text-sm font-bold text-[#DB3320] ml-0.5">d</span>
-                    </div>
-                    <div className="font-sans text-[10px] sm:text-xs font-bold uppercase tracking-wider mt-1 text-[#B71607]">
-                      Current Streak
-                    </div>
-                  </div>
-                  {/* Best Streak */}
-                  <div className="tactile-card rounded-2xl p-4 sm:p-5 bg-white border border-[#E5E1D8] shadow-[0_3px_0_#E2DDD2] flex flex-col items-center justify-center text-center">
-                    <div className="font-sans font-extrabold text-2xl sm:text-3xl tabular-nums text-[#855300] leading-tight">
-                      {stats.bestStreak}<span className="text-xs sm:text-sm font-bold text-[#855300] ml-0.5">d</span>
-                    </div>
-                    <div className="font-sans text-[10px] sm:text-xs font-bold uppercase tracking-wider mt-1 text-[#855300]">
-                      Best Streak
-                    </div>
-                  </div>
-                  {/* Archive Count */}
-                  <div className="tactile-card rounded-2xl p-4 sm:p-5 bg-white border border-[#A7F3D0] shadow-[0_3px_0_#BBF7D0] flex flex-col items-center justify-center text-center">
-                    <div className="font-sans font-extrabold text-2xl sm:text-3xl tabular-nums text-[#006C49] leading-tight">
-                      {stats.questionArchive.length}
-                    </div>
-                    <div className="font-sans text-[10px] sm:text-xs font-bold uppercase tracking-wider mt-1 text-[#006C49]">
-                      Archived Qs
-                    </div>
-                  </div>
-                </div>
-              </section>
 
-              {/* Question Archive: Multi-Column on Large Screens */}
-              <section className="mt-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-serif text-2xl sm:text-3xl text-[#18181B] font-bold">Question Archive</h2>
-                  {stats.questionArchive && (
-                    <span className="font-sans text-xs sm:text-sm font-bold text-[#867461] bg-[#F0EDF1] px-3 py-1 rounded-full border border-[#E5E1D8]">
-                      {stats.questionArchive.length} round{stats.questionArchive.length !== 1 ? 's' : ''} recorded
-                    </span>
-                  )}
-                </div>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      {/* Total Points */}
+                      <div className="rounded-xl p-3 bg-[#FFFBEB] border border-[#FDBA74]/50 flex flex-col">
+                        <span className="font-sans text-[10px] font-bold uppercase tracking-wider text-[#855300]">Total Points</span>
+                        <div className="font-sans font-extrabold text-xl sm:text-2xl text-[#B45309] mt-0.5 leading-tight tabular-nums">
+                          {stats.totalPoints}<span className="text-xs font-semibold ml-0.5">pts</span>
+                        </div>
+                      </div>
 
-                {!stats.questionArchive || stats.questionArchive.length === 0 ? (
-                  <div className="tactile-card rounded-2xl p-8 sm:p-12 text-center bg-white border border-[#D8C3AD]/40 flex flex-col items-center">
-                    <span className="text-4xl mb-3 opacity-80">🗄️</span>
-                    <p className="font-sans text-sm sm:text-base text-[#867461] font-medium">No questions have been played yet.</p>
+                      {/* Accuracy */}
+                      <div className="rounded-xl p-3 bg-[#FAF8F5] border border-[#D8C3AD]/50 flex flex-col">
+                        <span className="font-sans text-[10px] font-bold uppercase tracking-wider text-[#867461]">Accuracy</span>
+                        <div className="font-sans font-extrabold text-xl sm:text-2xl text-[#18181B] mt-0.5 leading-tight tabular-nums">
+                          {stats.accuracy}<span className="text-xs font-semibold ml-0.5">%</span>
+                        </div>
+                      </div>
+
+                      {/* Avg Speed */}
+                      <div className="rounded-xl p-3 bg-[#FAF8F5] border border-[#D8C3AD]/50 flex flex-col">
+                        <span className="font-sans text-[10px] font-bold uppercase tracking-wider text-[#867461]">Avg Speed</span>
+                        <div className="font-sans font-extrabold text-xl sm:text-2xl text-[#18181B] mt-0.5 leading-tight tabular-nums">
+                          {stats.avgTimeMs !== null ? (stats.avgTimeMs / 1000).toFixed(1) : '-'}<span className="text-xs font-semibold ml-0.5">s</span>
+                        </div>
+                      </div>
+
+                      {/* Current Streak */}
+                      <div className="rounded-xl p-3 bg-[#FFF0EE] border border-[#FFDAD4] flex flex-col">
+                        <span className="font-sans text-[10px] font-bold uppercase tracking-wider text-[#B71607]">Current Streak</span>
+                        <div className="font-sans font-extrabold text-xl sm:text-2xl text-[#DB3320] mt-0.5 leading-tight tabular-nums">
+                          {stats.currentStreak}<span className="text-xs font-semibold ml-0.5">d</span>
+                        </div>
+                      </div>
+
+                      {/* Best Streak */}
+                      <div className="rounded-xl p-3 bg-[#FFFBEB] border border-[#FDE68A] flex flex-col">
+                        <span className="font-sans text-[10px] font-bold uppercase tracking-wider text-[#855300]">Best Streak</span>
+                        <div className="font-sans font-extrabold text-xl sm:text-2xl text-[#855300] mt-0.5 leading-tight tabular-nums">
+                          {stats.bestStreak}<span className="text-xs font-semibold ml-0.5">d</span>
+                        </div>
+                      </div>
+
+                      {/* Archived Qs */}
+                      <div className="rounded-xl p-3 bg-[#ECFDF5] border border-[#A7F3D0] flex flex-col">
+                        <span className="font-sans text-[10px] font-bold uppercase tracking-wider text-[#006C49]">Archived Qs</span>
+                        <div className="font-sans font-extrabold text-xl sm:text-2xl text-[#006C49] mt-0.5 leading-tight tabular-nums">
+                          {stats.questionArchive.length}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {stats.questionArchive.map((q, i) => (
+
+                  {/* 3. Following / Followers Section */}
+                  <div className="tactile-card rounded-2xl p-4 sm:p-5 bg-white border border-[#D8C3AD]/60 shadow-[0_3px_0_#E2DDD2] flex flex-col gap-3.5">
+                    {/* Tabs */}
+                    <div className="flex items-center justify-between gap-2 border-b border-[#E5E1D8]/60 pb-3">
+                      <div className="flex gap-1.5 p-1 bg-[#F4EFEA] rounded-xl w-full">
+                        <button
+                          type="button"
+                          onClick={() => setFollowTab('following')}
+                          className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                            followTab === 'following'
+                              ? 'bg-white text-[#855300] shadow-[0_1px_2px_rgba(0,0,0,0.06)]'
+                              : 'text-[#867461] hover:text-[#18181B]'
+                          }`}
+                        >
+                          Following ({followSummary?.followingCount ?? 0})
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFollowTab('followers')}
+                          className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                            followTab === 'followers'
+                              ? 'bg-white text-[#855300] shadow-[0_1px_2px_rgba(0,0,0,0.06)]'
+                              : 'text-[#867461] hover:text-[#18181B]'
+                          }`}
+                        >
+                          Followers ({followSummary?.followersCount ?? 0})
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Follow by nickname form */}
+                    <form onSubmit={handleFollow} className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Follow @nickname..."
+                        value={followInput}
+                        onChange={(e) => setFollowInput(e.target.value)}
+                        className="flex-1 min-w-0 px-3 py-1.5 text-xs font-medium rounded-xl border border-[#D8C3AD]/60 bg-[#FAF8F5] focus:bg-white focus:outline-none focus:border-[#855300] transition-colors"
+                      />
                       <button
-                        key={q.questionId}
-                        onClick={() => setSelectedQuestion(q)}
-                        className="w-full text-left tactile-card rounded-2xl p-5 bg-white border border-[#D8C3AD]/60 shadow-[0_3px_0_#E2DDD2] hover:border-[#867461] active:translate-y-1 active:shadow-none transition-all flex flex-col justify-between gap-3 cursor-pointer"
+                        type="submit"
+                        disabled={followActionLoading || !followInput.trim()}
+                        className="px-3 py-1.5 bg-[#855300] text-white hover:bg-[#6b4200] disabled:opacity-40 text-xs font-bold rounded-xl shadow-[0_2px_0_#4a2e00] active:translate-y-0.5 cursor-pointer transition-all whitespace-nowrap"
                       >
-                        <div className="flex justify-between items-center w-full">
-                          <span className="font-sans text-xs font-bold text-[#867461] uppercase tracking-wider">
-                            Round {stats.questionArchive.length - i}
-                          </span>
-                          <span className="font-sans text-xs font-bold text-[#855300] bg-[#FFFBEB] px-2.5 py-1 rounded-full border border-[#F59E0B]/30 whitespace-nowrap">
-                            +{q.points} pts ➔
-                          </span>
-                        </div>
-                        <div className="font-serif text-base sm:text-lg text-[#18181B] font-medium leading-snug line-clamp-3">
-                          {q.text}
-                        </div>
+                        + Follow
                       </button>
-                    ))}
+                    </form>
+
+                    {/* Social message banner */}
+                    {socialMessage && (
+                      <div
+                        className={`text-xs px-3 py-2 rounded-xl font-medium flex justify-between items-center ${
+                          socialMessage.isError
+                            ? 'bg-[#FFF0EE] text-[#B71607] border border-[#FFDAD4]'
+                            : 'bg-[#ECFDF5] text-[#065F46] border border-[#A7F3D0]'
+                        }`}
+                      >
+                        <span className="truncate mr-2">{socialMessage.text}</span>
+                        <button
+                          type="button"
+                          onClick={() => setSocialMessage(null)}
+                          className="font-bold cursor-pointer opacity-70 hover:opacity-100"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    )}
+
+                    {/* List of followers / following */}
+                    <div className="flex flex-col gap-2 max-h-64 overflow-y-auto pr-1 divide-y divide-[#E5E1D8]/50">
+                      {(followTab === 'following' ? followSummary?.following : followSummary?.followers)?.length === 0 ? (
+                        <div className="py-6 text-center text-xs text-[#867461] font-medium">
+                          {followTab === 'following'
+                            ? 'Not following anyone yet.'
+                            : 'No followers yet.'}
+                        </div>
+                      ) : (
+                        (followTab === 'following' ? followSummary?.following : followSummary?.followers)?.map((user) => {
+                          const isAlreadyFollowing = followSummary?.following.some(
+                            (f) => f.nickname.toLowerCase() === user.nickname.toLowerCase()
+                          );
+                          return (
+                            <div key={user.id} className="pt-2.5 pb-1 flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="w-8 h-8 rounded-full bg-[#FAF8F5] border border-[#D8C3AD]/60 flex items-center justify-center text-xs font-bold text-[#855300] shrink-0">
+                                  {user.nickname.charAt(0).toUpperCase()}
+                                </div>
+                                <div className="flex flex-col min-w-0">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="font-serif text-sm font-semibold text-[#18181B] truncate">
+                                      @{user.nickname}
+                                    </span>
+                                    {user.branch && (
+                                      <span className="text-[9px] font-bold text-[#867461] bg-[#F4EFEA] px-1.5 py-0.2 rounded border border-[#E5E1D8]">
+                                        {user.branch}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <span className="text-[10px] text-[#DB3320] font-medium flex items-center gap-0.5">
+                                    🔥 {user.currentStreak}d
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div className="shrink-0">
+                                {followTab === 'following' ? (
+                                  <button
+                                    type="button"
+                                    disabled={followActionLoading}
+                                    onClick={() => handleUnfollow(user.nickname)}
+                                    className="px-2.5 py-1 text-[11px] font-bold rounded-lg border border-[#FFDAD4] text-[#DB3320] hover:bg-[#FFF0EE] transition-all cursor-pointer disabled:opacity-50"
+                                  >
+                                    Unfollow
+                                  </button>
+                                ) : isAlreadyFollowing ? (
+                                  <span className="text-[10px] font-bold text-[#867461] bg-[#F4EFEA] px-2 py-0.5 rounded-md border border-[#E5E1D8]">
+                                    Following
+                                  </span>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    disabled={followActionLoading}
+                                    onClick={() => handleQuickFollow(user.nickname)}
+                                    className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-[#855300] text-white hover:bg-[#6b4200] transition-all cursor-pointer disabled:opacity-50"
+                                  >
+                                    + Follow
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
                   </div>
-                )}
-              </section>
+                </div>
+
+                {/* BIGGER SECTION (2/3 width = 8 columns on lg) */}
+                <div className="lg:col-span-8 flex flex-col gap-5">
+                  <div className="tactile-card rounded-2xl p-5 sm:p-6 bg-white border border-[#D8C3AD]/60 shadow-[0_3px_0_#E2DDD2] flex flex-col gap-5">
+                    <div className="flex items-center justify-between border-b border-[#E5E1D8]/60 pb-3.5">
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-xl">🗄️</span>
+                        <h2 className="font-serif text-2xl sm:text-3xl text-[#18181B] font-bold">
+                          Question Archive
+                        </h2>
+                      </div>
+                      {stats.questionArchive && (
+                        <span className="font-sans text-xs sm:text-sm font-bold text-[#867461] bg-[#F4EFEA] px-3.5 py-1 rounded-full border border-[#E5E1D8]">
+                          {stats.questionArchive.length} round{stats.questionArchive.length !== 1 ? 's' : ''} recorded
+                        </span>
+                      )}
+                    </div>
+
+                    {!stats.questionArchive || stats.questionArchive.length === 0 ? (
+                      <div className="py-16 sm:py-20 text-center flex flex-col items-center">
+                        <span className="text-5xl mb-3 opacity-70">🗄️</span>
+                        <p className="font-sans text-base text-[#867461] font-medium">No questions have been played yet.</p>
+                        <p className="font-sans text-xs text-[#A89A8A] mt-1">Questions you participate in will be preserved here for review.</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {stats.questionArchive.map((q, i) => (
+                          <button
+                            key={q.questionId}
+                            onClick={() => setSelectedQuestion(q)}
+                            className="w-full text-left tactile-card rounded-xl p-4 sm:p-5 bg-[#FAF8F5] border border-[#D8C3AD]/60 shadow-[0_2px_0_#E2DDD2] hover:border-[#855300] hover:bg-white active:translate-y-0.5 active:shadow-none transition-all flex flex-col justify-between gap-3.5 cursor-pointer group"
+                          >
+                            <div className="flex justify-between items-center w-full">
+                              <span className="font-sans text-xs font-bold text-[#867461] uppercase tracking-wider group-hover:text-[#855300] transition-colors">
+                                Round {stats.questionArchive.length - i}
+                              </span>
+                              <span className="font-sans text-xs font-bold text-[#855300] bg-[#FFFBEB] px-2.5 py-0.5 rounded-full border border-[#F59E0B]/30 whitespace-nowrap">
+                                +{q.points} pts ➔
+                              </span>
+                            </div>
+                            <div className="font-serif text-base sm:text-lg text-[#18181B] font-medium leading-snug line-clamp-3">
+                              {q.text}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+              </div>
             </motion.div>
           ) : null}
         </main>
