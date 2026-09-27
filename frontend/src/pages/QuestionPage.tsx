@@ -106,19 +106,24 @@ export default function QuestionPage() {
   const isUrgent = secondsLeft <= 5;
   const formattedTime = secondsLeft < 10 ? `00:0${secondsLeft}` : `00:${secondsLeft}`;
 
+  const progressColor = progressPercent > 50 ? 'bg-[#10B981]' : progressPercent > 25 ? 'bg-[#F59E0B]' : 'bg-[#DB3320]';
+
+  const OPTION_CLASSES = ['option-strip-a', 'option-strip-b', 'option-strip-c', 'option-strip-d'];
+  const BADGE_COLORS = ['bg-[#3B82F6]', 'bg-[#10B981]', 'bg-[#F59E0B]', 'bg-[#8B5CF6]'];
+
   return (
     <div className="paper-texture min-h-screen text-[#18181B] selection:bg-[#FFDAD4] selection:text-[#400100] flex flex-col justify-between">
+      {isUrgent && <div className="vignette-urgent fixed inset-0 pointer-events-none z-50"></div>}
+      
       {/* Widescreen 16:9 full-screen responsive container */}
       <div className="w-full min-h-screen flex flex-col justify-between bg-[#FAF8F5] relative">
         
         {/* Top Container: Progress + Header + Main question body */}
         <div className="flex flex-col flex-1">
           {/* Top Ambient Dynamic Progress Bar */}
-          <div className="w-full h-2 sm:h-2.5 bg-[#E5E1D8]/60 overflow-hidden">
+          <div className="w-full h-2.5 sm:h-3 bg-[#E5E1D8]/60 overflow-hidden progress-glow">
             <div
-              className={`h-full transition-all duration-1000 ease-linear rounded-r-full ${
-                isUrgent ? 'bg-[#DB3320]' : 'bg-[#F59E0B]'
-              }`}
+              className={`h-full transition-all duration-1000 ease-linear rounded-r-full ${progressColor}`}
               style={{ width: `${progressPercent}%` }}
             />
           </div>
@@ -136,32 +141,31 @@ export default function QuestionPage() {
 
               {/* Prominent Tension Timer Badge */}
               <div
-                className={`flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 rounded-2xl border transition-colors ${
+                className={`flex items-center gap-3 px-4 py-2 sm:px-5 sm:py-2.5 rounded-2xl border transition-colors ${
                   isUrgent
                     ? 'bg-[#FFDAD4] border-[#DB3320]/40 shadow-[0_3px_0_#FFDAD4]'
                     : 'bg-[#FFEDD5]/70 border-[#F59E0B]/30 shadow-[0_3px_0_#FED7AA]'
                 }`}
               >
-                <svg
-                  className={`w-5 h-5 sm:w-6 sm:h-6 ${isUrgent ? 'text-[#B71607] animate-bounce' : 'text-[#855300]'}`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                <span
+                {/* SVG Countdown Ring */}
+                <div className="relative w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center countdown-ring">
+                  <svg className="absolute top-0 left-0 w-full h-full -rotate-90" viewBox="0 0 40 40">
+                    <circle cx="20" cy="20" r="16" fill="none" stroke="currentColor" strokeWidth="4" className={`opacity-20 ${isUrgent ? 'text-[#B71607]' : 'text-[#855300]'}`} />
+                    <circle cx="20" cy="20" r="16" fill="none" stroke="currentColor" strokeWidth="4" 
+                      strokeDasharray={100.53} strokeDashoffset={100.53 - (progressPercent * 100.53 / 100)} 
+                      className={`transition-all duration-1000 ease-linear ${isUrgent ? 'text-[#B71607]' : 'text-[#855300]'}`} />
+                  </svg>
+                </div>
+                
+                <motion.span
+                  animate={isUrgent ? { scale: [1, 1.1, 1] } : { scale: 1 }}
+                  transition={isUrgent ? { duration: 0.5, repeat: Infinity } : {}}
                   className={`font-sans font-extrabold text-lg sm:text-2xl tabular-nums leading-none tracking-tight ${
                     isUrgent ? 'text-[#B71607]' : 'text-[#855300]'
                   }`}
                 >
                   {formattedTime}
-                </span>
+                </motion.span>
               </div>
             </div>
           </header>
@@ -205,12 +209,12 @@ export default function QuestionPage() {
               initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.25 }}
-              className="relative bg-white border border-[#E5E1D8] rounded-2xl p-6 sm:p-8 md:p-10 shadow-[0_4px_0_#E2DDD2,0_8px_24px_rgba(39,34,26,0.05)]"
+              className="relative bg-white rounded-2xl p-6 sm:p-8 md:p-10 shadow-[0_4px_0_#E2DDD2,0_8px_24px_rgba(39,34,26,0.05)] gradient-border"
             >
-              <div className="absolute -top-3.5 left-6 bg-[#18181B] text-[#FAF8F5] text-xs font-bold tracking-widest px-3 py-1 rounded uppercase shadow-sm">
-                QUESTION
+              <div className="absolute -top-3.5 left-6 bg-[#18181B] text-[#FAF8F5] text-xs font-bold tracking-widest px-3 py-1 rounded uppercase shadow-sm shimmer overflow-hidden">
+                <span className="relative z-10">QUESTION</span>
               </div>
-              <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-[#18181B] leading-snug sm:leading-tight tracking-tight pt-2 font-semibold break-words">
+              <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-[#18181B] leading-snug sm:leading-tight tracking-tight pt-2 font-semibold break-words relative z-10 bg-white">
                 {poll.text}
               </h1>
             </motion.div>
@@ -220,6 +224,8 @@ export default function QuestionPage() {
               {options.map((opt, idx) => {
                 const isSelected = selected === idx;
                 const isOtherSelected = selected !== null && !isSelected;
+                const optionClass = OPTION_CLASSES[idx % 4];
+                const badgeColor = BADGE_COLORS[idx % 4];
 
                 return (
                   <motion.button
@@ -229,7 +235,7 @@ export default function QuestionPage() {
                     disabled={selected !== null || submitting}
                     initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 8 }}
                     animate={{
-                      opacity: isOtherSelected ? 0.45 : 1,
+                      opacity: isOtherSelected ? 0.3 : 1,
                       y: isSelected ? -2 : 0,
                     }}
                     whileHover={
@@ -243,19 +249,19 @@ export default function QuestionPage() {
                         : {}
                     }
                     transition={{ duration: 0.15 }}
-                    className={`w-full text-left rounded-2xl p-5 sm:p-6 flex items-center justify-between transition-all ${
+                    className={`w-full text-left rounded-2xl p-5 sm:p-6 flex items-center justify-between transition-all card-lift relative overflow-hidden ${optionClass} ${
                       isSelected
                         ? 'bg-[#FFDAD4]/30 border-2 border-[#DB3320] shadow-[0_4px_0_#920700]'
                         : 'bg-white border border-[#E5E1D8] shadow-[0_3px_0_#DDD8CE] hover:border-[#867461] active:translate-y-0.5 active:shadow-[0_1px_0_#DDD8CE]'
                     } ${selected !== null || submitting ? 'cursor-default' : 'cursor-pointer'}`}
                   >
-                    <div className="flex items-center gap-3.5 sm:gap-4 min-w-0 pr-2">
+                    <div className="flex items-center gap-3.5 sm:gap-4 min-w-0 pr-2 relative z-10">
                       {/* Left Letter Badge */}
                       <span
-                        className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center font-sans text-base sm:text-lg font-bold flex-shrink-0 transition-colors ${
+                        className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center font-sans text-base sm:text-lg font-bold flex-shrink-0 transition-colors text-white shadow-sm ${
                           isSelected
-                            ? 'bg-[#DB3320] text-white shadow-sm'
-                            : 'bg-[#F0EDF1] border border-[#E5E1D8] text-[#534434]'
+                            ? 'bg-[#DB3320]'
+                            : badgeColor
                         }`}
                       >
                         {String.fromCharCode(65 + idx)}
@@ -274,7 +280,7 @@ export default function QuestionPage() {
                     </div>
 
                     {/* Right-Hand Radio / Status Indicator */}
-                    <div className="flex-shrink-0 ml-3">
+                    <div className="flex-shrink-0 ml-3 relative z-10">
                       {submitting && isSelected ? (
                         <div className="w-6 h-6 rounded-full border-2 border-[#DB3320] border-t-transparent animate-spin" />
                       ) : isSelected ? (
@@ -306,7 +312,7 @@ export default function QuestionPage() {
 
         {/* Bottom Action & Footnote Strip */}
         <footer className="w-full px-5 pt-4 pb-8 flex flex-col items-center">
-          <div className="flex items-center justify-center gap-2 text-[#534434]/80 text-xs sm:text-sm font-medium">
+          <div className="glass-card flex items-center justify-center gap-2 text-[#534434]/80 text-xs sm:text-sm font-medium px-6 py-3 rounded-full shadow-sm border border-[#E5E1D8]">
             <svg
               className="w-4 h-4 sm:w-5 sm:h-5 text-[#006C49]"
               fill="none"

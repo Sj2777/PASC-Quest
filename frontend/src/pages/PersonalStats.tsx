@@ -50,7 +50,7 @@ export default function PersonalStats() {
     const target = followInput.trim();
     if (!target) return;
     if (me && target.toLowerCase() === me.nickname.toLowerCase()) {
-      setSocialMessage({ text: "You cannot follow yourself.", isError: true });
+      setSocialMessage({ text: 'You cannot follow yourself.', isError: true });
       return;
     }
     setFollowActionLoading(true);
@@ -144,10 +144,7 @@ export default function PersonalStats() {
 
   return (
     <div className="paper-texture min-h-screen text-[#18181B] selection:bg-[#FFDAD4] selection:text-[#400100] flex flex-col justify-between relative">
-      {/* Widescreen 16:9 responsive container */}
       <div className="w-full min-h-screen flex flex-col bg-[#FAF8F5] relative pb-28">
-        
-        {/* TopAppBar: Sticky editorial brand masthead */}
         <header className="w-full sticky top-0 z-40 bg-[#FAF8F5]/90 backdrop-blur-md border-b border-[#E5E1D8]/80 shadow-[0_2px_4px_rgba(39,34,26,0.04)]">
           <div className="screen-container flex justify-between items-center py-3.5 sm:py-4">
             <div className="flex items-center gap-2.5">
@@ -155,7 +152,6 @@ export default function PersonalStats() {
                 Profile & Telemetry
               </span>
             </div>
-            {/* Header Actions */}
             <div className="flex items-center gap-2">
               <button
                 onClick={handleLogout}
@@ -189,14 +185,10 @@ export default function PersonalStats() {
               transition={{ duration: 0.3 }}
               className="w-full"
             >
-              {/* 1:2 Ratio Layout: 4 cols for Smaller Section, 8 cols for Bigger Section */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
-                
-                {/* SMALLER SECTION (1/3 width = 4 columns on lg) */}
                 <div className="lg:col-span-4 flex flex-col gap-5">
-                  {/* 1. Person's Name & Info Card */}
-                  <div className="tactile-card rounded-2xl p-5 bg-white border border-[#D8C3AD]/60 shadow-[0_3px_0_#E2DDD2] flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-[#FFF8ED] border-2 border-[#F59E0B]/40 text-[#855300] font-serif text-2xl font-bold flex items-center justify-center shadow-inner shrink-0 select-none">
+                  <div className="tactile-card card-lift rounded-2xl p-5 bg-white border border-[#D8C3AD]/60 shadow-[0_3px_0_#E2DDD2] flex items-center gap-4">
+                    <div className={`w-16 h-16 rounded-2xl bg-[#FFF8ED] text-[#855300] font-serif text-2xl font-bold flex items-center justify-center shrink-0 select-none ${stats.totalPoints >= 500 ? 'rank-ring-gold glow-gold' : stats.totalPoints >= 200 ? 'rank-ring-silver' : 'rank-ring-bronze'}`}>
                       {me?.nickname ? me.nickname.charAt(0).toUpperCase() : '?'}
                     </div>
                     <div className="flex flex-col min-w-0 flex-1">
@@ -210,16 +202,30 @@ export default function PersonalStats() {
                           </span>
                         )}
                       </div>
-                      <div className="mt-1.5 flex items-center gap-2">
+                      <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+                        <span className="inline-flex items-center gap-1 font-sans font-bold text-xs text-white bg-[#8B5CF6] px-2.5 py-0.5 rounded-full shadow-sm shimmer">
+                          Level {Math.floor(stats.totalPoints / 100) + 1}
+                        </span>
                         <span className="inline-flex items-center gap-1 font-sans font-bold text-xs text-[#DB3320] bg-[#FFF0EE] border border-[#FFDAD4] px-2.5 py-0.5 rounded-full">
                           <span>🔥</span>
                           <span>{stats.currentStreak > 0 ? `${stats.currentStreak} day streak` : '0 days streak'}</span>
                         </span>
                       </div>
+                      <div className="mt-3 w-full">
+                        <div className="flex justify-between text-[10px] font-bold text-[#867461] mb-1 px-0.5">
+                          <span>XP Progress</span>
+                          <span>{stats.totalPoints % 100} / 100</span>
+                        </div>
+                        <div className="xp-bar w-full h-2.5 bg-[#F0EDF1] rounded-full overflow-hidden border border-[#E5E1D8]">
+                          <div 
+                            className="xp-bar-fill h-full bg-gradient-to-r from-[#F59E0B] to-[#FDBA74]" 
+                            style={{ width: `${(stats.totalPoints % 100)}%` }} 
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
 
-                  {/* 2. Analytics in Small Cards */}
                   <div className="tactile-card rounded-2xl p-4 sm:p-5 bg-white border border-[#D8C3AD]/60 shadow-[0_3px_0_#E2DDD2] flex flex-col gap-3">
                     <div className="flex items-center justify-between border-b border-[#E5E1D8]/60 pb-2.5">
                       <span className="font-serif text-base font-bold text-[#18181B]">Analytics & Metrics</span>
@@ -227,74 +233,59 @@ export default function PersonalStats() {
                         Telemetry
                       </span>
                     </div>
-
                     <div className="grid grid-cols-2 gap-2.5">
-                      {/* Total Points */}
-                      <div className="rounded-xl p-3 bg-[#FFFBEB] border border-[#FDBA74]/50 flex flex-col">
-                        <span className="font-sans text-[10px] font-bold uppercase tracking-wider text-[#855300]">Total Points</span>
-                        <div className="font-sans font-extrabold text-xl sm:text-2xl text-[#B45309] mt-0.5 leading-tight tabular-nums">
-                          {stats.totalPoints}<span className="text-xs font-semibold ml-0.5">pts</span>
+                      <div className="rounded-xl p-3 bg-[#FFFBEB] border border-[#FDBA74]/50 flex flex-col glow-amber">
+                        <span className="font-sans text-[10px] font-bold uppercase tracking-wider text-[#855300] flex items-center gap-1">⭐ Total Points</span>
+                        <div className="font-sans font-black text-2xl sm:text-3xl text-[#B45309] mt-0.5 leading-tight tabular-nums drop-shadow-sm">
+                          {stats.totalPoints}<span className="text-sm font-semibold ml-0.5">pts</span>
                         </div>
                       </div>
-
-                      {/* Accuracy */}
                       <div className="rounded-xl p-3 bg-[#FAF8F5] border border-[#D8C3AD]/50 flex flex-col">
-                        <span className="font-sans text-[10px] font-bold uppercase tracking-wider text-[#867461]">Accuracy</span>
-                        <div className="font-sans font-extrabold text-xl sm:text-2xl text-[#18181B] mt-0.5 leading-tight tabular-nums">
-                          {stats.accuracy}<span className="text-xs font-semibold ml-0.5">%</span>
+                        <span className="font-sans text-[10px] font-bold uppercase tracking-wider text-[#867461] flex items-center gap-1">🎯 Accuracy</span>
+                        <div className="font-sans font-black text-2xl sm:text-3xl text-[#18181B] mt-0.5 leading-tight tabular-nums">
+                          {stats.accuracy}<span className="text-sm font-semibold ml-0.5">%</span>
                         </div>
                       </div>
-
-                      {/* Avg Speed */}
                       <div className="rounded-xl p-3 bg-[#FAF8F5] border border-[#D8C3AD]/50 flex flex-col">
-                        <span className="font-sans text-[10px] font-bold uppercase tracking-wider text-[#867461]">Avg Speed</span>
-                        <div className="font-sans font-extrabold text-xl sm:text-2xl text-[#18181B] mt-0.5 leading-tight tabular-nums">
-                          {stats.avgTimeMs !== null ? (stats.avgTimeMs / 1000).toFixed(1) : '-'}<span className="text-xs font-semibold ml-0.5">s</span>
+                        <span className="font-sans text-[10px] font-bold uppercase tracking-wider text-[#867461] flex items-center gap-1">⚡ Avg Speed</span>
+                        <div className="font-sans font-black text-2xl sm:text-3xl text-[#18181B] mt-0.5 leading-tight tabular-nums">
+                          {stats.avgTimeMs !== null ? (stats.avgTimeMs / 1000).toFixed(1) : '-'}<span className="text-sm font-semibold ml-0.5">s</span>
                         </div>
                       </div>
-
-                      {/* Current Streak */}
-                      <div className="rounded-xl p-3 bg-[#FFF0EE] border border-[#FFDAD4] flex flex-col">
-                        <span className="font-sans text-[10px] font-bold uppercase tracking-wider text-[#B71607]">Current Streak</span>
-                        <div className="font-sans font-extrabold text-xl sm:text-2xl text-[#DB3320] mt-0.5 leading-tight tabular-nums">
-                          {stats.currentStreak}<span className="text-xs font-semibold ml-0.5">d</span>
+                      <div className={`rounded-xl p-3 bg-[#FFF0EE] border border-[#FFDAD4] flex flex-col ${stats.currentStreak > 0 ? 'fire-particles' : ''}`}>
+                        <span className="font-sans text-[10px] font-bold uppercase tracking-wider text-[#B71607] flex items-center gap-1">🔥 Current Streak</span>
+                        <div className="font-sans font-black text-2xl sm:text-3xl text-[#DB3320] mt-0.5 leading-tight tabular-nums drop-shadow-sm">
+                          {stats.currentStreak}<span className="text-sm font-semibold ml-0.5">d</span>
                         </div>
                       </div>
-
-                      {/* Best Streak */}
                       <div className="rounded-xl p-3 bg-[#FFFBEB] border border-[#FDE68A] flex flex-col">
-                        <span className="font-sans text-[10px] font-bold uppercase tracking-wider text-[#855300]">Best Streak</span>
-                        <div className="font-sans font-extrabold text-xl sm:text-2xl text-[#855300] mt-0.5 leading-tight tabular-nums">
-                          {stats.bestStreak}<span className="text-xs font-semibold ml-0.5">d</span>
+                        <span className="font-sans text-[10px] font-bold uppercase tracking-wider text-[#855300] flex items-center gap-1">🏆 Best Streak</span>
+                        <div className="font-sans font-black text-2xl sm:text-3xl text-[#855300] mt-0.5 leading-tight tabular-nums">
+                          {stats.bestStreak}<span className="text-sm font-semibold ml-0.5">d</span>
                         </div>
                       </div>
-
-                      {/* Archived Qs */}
                       <div className="rounded-xl p-3 bg-[#ECFDF5] border border-[#A7F3D0] flex flex-col">
-                        <span className="font-sans text-[10px] font-bold uppercase tracking-wider text-[#006C49]">Archived Qs</span>
-                        <div className="font-sans font-extrabold text-xl sm:text-2xl text-[#006C49] mt-0.5 leading-tight tabular-nums">
+                        <span className="font-sans text-[10px] font-bold uppercase tracking-wider text-[#006C49] flex items-center gap-1">📚 Archived Qs</span>
+                        <div className="font-sans font-black text-2xl sm:text-3xl text-[#006C49] mt-0.5 leading-tight tabular-nums">
                           {stats.questionArchive.length}
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Streak Protection & Recovery Card */}
-                  <div className="tactile-card rounded-2xl p-4 sm:p-5 bg-white border border-[#D8C3AD]/60 shadow-[0_3px_0_#E2DDD2] flex flex-col gap-3">
+                  <div className={`tactile-card rounded-2xl p-4 sm:p-5 bg-white border border-[#D8C3AD]/60 shadow-[0_3px_0_#E2DDD2] flex flex-col gap-3 ${stats.totalPoints >= 50 ? 'glow-amber' : ''}`}>
                     <div className="flex items-center justify-between border-b border-[#E5E1D8]/60 pb-2.5">
                       <div className="flex items-center gap-2">
-                        <span className="text-lg">🔥</span>
+                        <span className="text-lg">🛡️</span>
                         <span className="font-serif text-base font-bold text-[#18181B]">Streak Protection</span>
                       </div>
                       <span className="font-sans text-[10px] font-bold text-[#855300] bg-[#FFFBEB] px-2.5 py-0.5 rounded-full border border-[#F59E0B]/30 uppercase tracking-wide">
                         50 pts / day
                       </span>
                     </div>
-
                     <p className="font-sans text-xs text-[#534434]">
                       Lost your streak or need +1 day boost? Spend <strong>50 points</strong> to restore or advance your streak by 1 day.
                     </p>
-
                     <div className="flex items-center justify-between pt-1">
                       <span className="font-sans text-xs font-bold text-[#867461]">
                         Available: <strong className="text-[#855300]">{stats.totalPoints} pts</strong>
@@ -304,7 +295,7 @@ export default function PersonalStats() {
                         disabled={renewing || stats.totalPoints < 50}
                         className={`px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs sm:text-sm font-bold font-sans transition-all flex items-center gap-1.5 cursor-pointer ${
                           stats.totalPoints >= 50
-                            ? 'tactile-btn-primary bg-[#DB3320] text-white hover:bg-[#B71607] shadow-[0_2px_0_#8E1A0C] active:translate-y-0.5'
+                            ? 'tactile-btn-primary bg-[#DB3320] text-white hover:bg-[#B71607] shadow-[0_2px_0_#8E1A0C] active:translate-y-0.5 shimmer-fast'
                             : 'bg-zinc-200 text-zinc-400 border border-zinc-300 cursor-not-allowed shadow-none'
                         }`}
                         title={stats.totalPoints < 50 ? 'Requires 50 points' : 'Renew or advance streak'}
@@ -313,7 +304,6 @@ export default function PersonalStats() {
                         <span>{renewing ? 'Processing...' : 'Renew Streak (50 pts)'}</span>
                       </button>
                     </div>
-
                     {renewFeedback && (
                       <div
                         className={`p-2.5 rounded-xl text-xs font-bold border transition-all ${
@@ -327,9 +317,7 @@ export default function PersonalStats() {
                     )}
                   </div>
 
-                  {/* 3. Following / Followers Section */}
-                  <div className="tactile-card rounded-2xl p-4 sm:p-5 bg-white border border-[#D8C3AD]/60 shadow-[0_3px_0_#E2DDD2] flex flex-col gap-3.5">
-                    {/* Tabs */}
+                  <div className="tactile-card card-lift rounded-2xl p-4 sm:p-5 bg-white border border-[#D8C3AD]/60 shadow-[0_3px_0_#E2DDD2] flex flex-col gap-3.5">
                     <div className="flex items-center justify-between gap-2 border-b border-[#E5E1D8]/60 pb-3">
                       <div className="flex gap-1.5 p-1 bg-[#F4EFEA] rounded-xl w-full">
                         <button
@@ -356,8 +344,6 @@ export default function PersonalStats() {
                         </button>
                       </div>
                     </div>
-
-                    {/* Follow by nickname form */}
                     <form onSubmit={handleFollow} className="flex gap-2">
                       <input
                         type="text"
@@ -374,8 +360,6 @@ export default function PersonalStats() {
                         + Follow
                       </button>
                     </form>
-
-                    {/* Social message banner */}
                     {socialMessage && (
                       <div
                         className={`text-xs px-3 py-2 rounded-xl font-medium flex justify-between items-center ${
@@ -394,20 +378,14 @@ export default function PersonalStats() {
                         </button>
                       </div>
                     )}
-
-                    {/* List of followers / following */}
                     <div className="flex flex-col gap-2 max-h-64 overflow-y-auto pr-1 divide-y divide-[#E5E1D8]/50">
                       {(followTab === 'following' ? followSummary?.following : followSummary?.followers)?.length === 0 ? (
                         <div className="py-6 text-center text-xs text-[#867461] font-medium">
-                          {followTab === 'following'
-                            ? 'Not following anyone yet.'
-                            : 'No followers yet.'}
+                          {followTab === 'following' ? 'Not following anyone yet.' : 'No followers yet.'}
                         </div>
                       ) : (
                         (followTab === 'following' ? followSummary?.following : followSummary?.followers)?.map((user) => {
-                          const isAlreadyFollowing = followSummary?.following.some(
-                            (f) => f.nickname.toLowerCase() === user.nickname.toLowerCase()
-                          );
+                          const isAlreadyFollowing = followSummary?.following.some((f) => f.nickname.toLowerCase() === user.nickname.toLowerCase());
                           return (
                             <div key={user.id} className="pt-2.5 pb-1 flex items-center justify-between gap-2">
                               <div className="flex items-center gap-2.5 min-w-0">
@@ -416,21 +394,14 @@ export default function PersonalStats() {
                                 </div>
                                 <div className="flex flex-col min-w-0">
                                   <div className="flex items-center gap-1.5">
-                                    <span className="font-serif text-sm font-semibold text-[#18181B] truncate">
-                                      @{user.nickname}
-                                    </span>
+                                    <span className="font-serif text-sm font-semibold text-[#18181B] truncate">@{user.nickname}</span>
                                     {user.branch && (
-                                      <span className="text-[9px] font-bold text-[#867461] bg-[#F4EFEA] px-1.5 py-0.2 rounded border border-[#E5E1D8]">
-                                        {user.branch}
-                                      </span>
+                                      <span className="text-[9px] font-bold text-[#867461] bg-[#F4EFEA] px-1.5 py-0.2 rounded border border-[#E5E1D8]">{user.branch}</span>
                                     )}
                                   </div>
-                                  <span className="text-[10px] text-[#DB3320] font-medium flex items-center gap-0.5">
-                                    🔥 {user.currentStreak}d
-                                  </span>
+                                  <span className="text-[10px] text-[#DB3320] font-medium flex items-center gap-0.5">🔥 {user.currentStreak}d</span>
                                 </div>
                               </div>
-
                               <div className="shrink-0">
                                 {followTab === 'following' ? (
                                   <button
@@ -442,9 +413,7 @@ export default function PersonalStats() {
                                     Unfollow
                                   </button>
                                 ) : isAlreadyFollowing ? (
-                                  <span className="text-[10px] font-bold text-[#867461] bg-[#F4EFEA] px-2 py-0.5 rounded-md border border-[#E5E1D8]">
-                                    Following
-                                  </span>
+                                  <span className="text-[10px] font-bold text-[#867461] bg-[#F4EFEA] px-2 py-0.5 rounded-md border border-[#E5E1D8]">Following</span>
                                 ) : (
                                   <button
                                     type="button"
@@ -464,15 +433,12 @@ export default function PersonalStats() {
                   </div>
                 </div>
 
-                {/* BIGGER SECTION (2/3 width = 8 columns on lg) */}
                 <div className="lg:col-span-8 flex flex-col gap-5">
                   <div className="tactile-card rounded-2xl p-5 sm:p-6 bg-white border border-[#D8C3AD]/60 shadow-[0_3px_0_#E2DDD2] flex flex-col gap-5">
                     <div className="flex items-center justify-between border-b border-[#E5E1D8]/60 pb-3.5">
                       <div className="flex items-center gap-2.5">
                         <span className="text-xl">🗄️</span>
-                        <h2 className="font-serif text-2xl sm:text-3xl text-[#18181B] font-bold">
-                          Question Archive
-                        </h2>
+                        <h2 className="font-serif text-2xl sm:text-3xl text-[#18181B] font-bold">Question Archive</h2>
                       </div>
                       {stats.questionArchive && (
                         <span className="font-sans text-xs sm:text-sm font-bold text-[#867461] bg-[#F4EFEA] px-3.5 py-1 rounded-full border border-[#E5E1D8]">
@@ -480,7 +446,6 @@ export default function PersonalStats() {
                         </span>
                       )}
                     </div>
-
                     {!stats.questionArchive || stats.questionArchive.length === 0 ? (
                       <div className="py-16 sm:py-20 text-center flex flex-col items-center">
                         <span className="text-5xl mb-3 opacity-70">🗄️</span>
@@ -493,10 +458,11 @@ export default function PersonalStats() {
                           <button
                             key={q.questionId}
                             onClick={() => setSelectedQuestion(q)}
-                            className="w-full text-left tactile-card rounded-xl p-4 sm:p-5 bg-[#FAF8F5] border border-[#D8C3AD]/60 shadow-[0_2px_0_#E2DDD2] hover:border-[#855300] hover:bg-white active:translate-y-0.5 active:shadow-none transition-all flex flex-col justify-between gap-3.5 cursor-pointer group"
+                            className="w-full text-left tactile-card card-lift rounded-xl p-4 sm:p-5 bg-[#FAF8F5] border border-[#D8C3AD]/60 shadow-[0_2px_0_#E2DDD2] hover:border-[#855300] hover:bg-white active:translate-y-0.5 active:shadow-none transition-all flex flex-col justify-between gap-3.5 cursor-pointer group"
                           >
                             <div className="flex justify-between items-center w-full">
-                              <span className="font-sans text-xs font-bold text-[#867461] uppercase tracking-wider group-hover:text-[#855300] transition-colors">
+                              <span className="font-sans text-xs font-bold text-[#867461] uppercase tracking-wider group-hover:text-[#855300] transition-colors flex items-center gap-1.5">
+                                <span className="w-4 h-4 rounded-full bg-[#ECFDF5] border border-[#10B981]/30 text-[#006C49] flex items-center justify-center text-[9px]">✓</span>
                                 Round {stats.questionArchive.length - i}
                               </span>
                               <span className="font-sans text-xs font-bold text-[#855300] bg-[#FFFBEB] px-2.5 py-0.5 rounded-full border border-[#F59E0B]/30 whitespace-nowrap">
@@ -512,98 +478,45 @@ export default function PersonalStats() {
                     )}
                   </div>
                 </div>
-
               </div>
             </motion.div>
           ) : null}
         </main>
 
-        {/* Bottom Navigation Bar */}
         <nav className="fixed bottom-0 left-0 right-0 w-full z-50 flex justify-center pb-safe px-3 sm:px-4">
-          <div className="bottom-nav-dock flex justify-around items-center px-3 sm:px-6 py-2 sm:py-2.5 bg-white/95 backdrop-blur-md rounded-t-2xl border-t border-[#E5E1D8] shadow-[0_-4px_24px_rgba(39,34,26,0.08)]">
-            {/* Home Tab */}
-            <button
-              onClick={() => navigate('/student')}
-              className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 text-[#534434] hover:text-[#855300] px-3 sm:px-4 py-1.5 sm:py-2 font-semibold active:scale-95 transition-all select-none cursor-pointer rounded-xl hover:bg-[#FAF8F5]"
-            >
-              <span className="text-lg sm:text-xl leading-none">🎮</span>
-              <span className="font-sans text-[11px] sm:text-xs md:text-sm">Home</span>
+          <div className="bottom-nav-dock glass-nav flex justify-around items-center px-3 sm:px-6 py-2 sm:py-2.5 bg-white/95 backdrop-blur-md rounded-t-2xl border-t border-[#E5E1D8] shadow-[0_-4px_24px_rgba(39,34,26,0.08)]">
+            <button onClick={() => navigate('/student')} className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 text-[#534434] hover:text-[#855300] px-3 sm:px-4 py-1.5 sm:py-2 font-semibold active:scale-95 transition-all select-none cursor-pointer rounded-xl hover:bg-[#FAF8F5]">
+              <span className="text-lg sm:text-xl leading-none">🎮</span><span className="font-sans text-[11px] sm:text-xs md:text-sm">Home</span>
             </button>
-            
-            {/* Compete Tab */}
-            <button
-              onClick={() => navigate('/social')}
-              className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 text-[#534434] hover:text-[#855300] px-3 sm:px-4 py-1.5 sm:py-2 font-semibold active:scale-95 transition-all select-none cursor-pointer rounded-xl hover:bg-[#FAF8F5]"
-            >
-              <span className="text-lg sm:text-xl leading-none">🏆</span>
-              <span className="font-sans text-[11px] sm:text-xs md:text-sm">Compete</span>
+            <button onClick={() => navigate('/social')} className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 text-[#534434] hover:text-[#855300] px-3 sm:px-4 py-1.5 sm:py-2 font-semibold active:scale-95 transition-all select-none cursor-pointer rounded-xl hover:bg-[#FAF8F5]">
+              <span className="text-lg sm:text-xl leading-none">🏆</span><span className="font-sans text-[11px] sm:text-xs md:text-sm">Compete</span>
             </button>
-
-            {/* Leaderboard Tab */}
-            <button
-              onClick={() => navigate('/student/leaderboard')}
-              className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 text-[#534434] hover:text-[#855300] px-3 sm:px-4 py-1.5 sm:py-2 font-semibold active:scale-95 transition-all select-none cursor-pointer rounded-xl hover:bg-[#FAF8F5]"
-            >
-              <span className="text-lg sm:text-xl leading-none">🏅</span>
-              <span className="font-sans text-[11px] sm:text-xs md:text-sm">Leaderboard</span>
+            <button onClick={() => navigate('/student/leaderboard')} className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 text-[#534434] hover:text-[#855300] px-3 sm:px-4 py-1.5 sm:py-2 font-semibold active:scale-95 transition-all select-none cursor-pointer rounded-xl hover:bg-[#FAF8F5]">
+              <span className="text-lg sm:text-xl leading-none">🏅</span><span className="font-sans text-[11px] sm:text-xs md:text-sm">Leaderboard</span>
             </button>
-
-            {/* Profile Tab (ACTIVE) */}
-            <button
-              onClick={() => navigate('/stats')}
-              className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 bg-[#F59E0B] text-[#613B00] rounded-xl px-3.5 sm:px-5 py-1.5 sm:py-2 font-bold shadow-[0_2px_0_#613B00] active:scale-95 transition-all select-none cursor-pointer"
-            >
-              <span className="text-lg sm:text-xl leading-none">👤</span>
-              <span className="font-sans text-[11px] sm:text-xs md:text-sm">Profile</span>
+            <button onClick={() => navigate('/stats')} className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 bg-[#F59E0B] text-[#613B00] rounded-xl px-3.5 sm:px-5 py-1.5 sm:py-2 font-bold shadow-[0_2px_0_#613B00] active:scale-95 transition-all select-none cursor-pointer">
+              <span className="text-lg sm:text-xl leading-none">👤</span><span className="font-sans text-[11px] sm:text-xs md:text-sm">Profile</span>
             </button>
           </div>
         </nav>
       </div>
 
-      {/* Modal */}
       <AnimatePresence>
         {selectedQuestion && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#18181B]/40 backdrop-blur-sm"
-            onClick={() => setSelectedQuestion(null)}
-          >
-            <motion.div
-              initial={{ y: 20, opacity: 0, scale: 0.95 }}
-              animate={{ y: 0, opacity: 1, scale: 1 }}
-              exit={{ y: 20, opacity: 0, scale: 0.95 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="bg-[#FAF8F5] w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-[#E5E1D8]"
-              onClick={(e) => e.stopPropagation()}
-            >
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#18181B]/40 backdrop-blur-sm" onClick={() => setSelectedQuestion(null)}>
+            <motion.div initial={{ y: 20, opacity: 0, scale: 0.95 }} animate={{ y: 0, opacity: 1, scale: 1 }} exit={{ y: 20, opacity: 0, scale: 0.95 }} transition={{ type: "spring", damping: 25, stiffness: 300 }} className="bg-[#FAF8F5] w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-[#E5E1D8]" onClick={(e) => e.stopPropagation()}>
               <div className="flex justify-between items-center px-6 py-5 border-b border-[#E5E1D8]">
                 <h3 className="font-serif text-2xl font-bold text-[#18181B]">Question Detail</h3>
-                <button
-                  onClick={() => setSelectedQuestion(null)}
-                  className="w-9 h-9 rounded-full bg-[#E5E1D8]/60 flex items-center justify-center text-[#534434] hover:bg-[#D8C3AD] transition-colors cursor-pointer text-base"
-                  aria-label="Close modal"
-                >
-                  ✕
-                </button>
+                <button onClick={() => setSelectedQuestion(null)} className="w-9 h-9 rounded-full bg-[#E5E1D8]/60 flex items-center justify-center text-[#534434] hover:bg-[#D8C3AD] transition-colors cursor-pointer text-base" aria-label="Close modal">✕</button>
               </div>
               <div className="p-6 flex flex-col gap-6 max-h-[75vh] overflow-y-auto">
                 <div>
-                  <div className="font-sans text-xs font-bold text-[#867461] uppercase tracking-wider mb-2">
-                    Question
-                  </div>
-                  <div className="font-serif text-xl sm:text-2xl text-[#18181B] leading-snug break-words font-medium">
-                    {selectedQuestion.text}
-                  </div>
+                  <div className="font-sans text-xs font-bold text-[#867461] uppercase tracking-wider mb-2">Question</div>
+                  <div className="font-serif text-xl sm:text-2xl text-[#18181B] leading-snug break-words font-medium">{selectedQuestion.text}</div>
                 </div>
                 <div className="p-5 rounded-2xl bg-[#ECFDF5] border border-[#10B981]/30">
-                  <div className="font-sans text-xs font-bold text-[#006C49] uppercase tracking-wider mb-1.5">
-                    Correct Answer
-                  </div>
-                  <div className="font-sans text-lg sm:text-xl font-bold text-[#065F46] break-words">
-                    {selectedQuestion.correctAnswer}
-                  </div>
+                  <div className="font-sans text-xs font-bold text-[#006C49] uppercase tracking-wider mb-1.5">Correct Answer</div>
+                  <div className="font-sans text-lg sm:text-xl font-bold text-[#065F46] break-words">{selectedQuestion.correctAnswer}</div>
                 </div>
               </div>
             </motion.div>

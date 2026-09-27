@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { api, type PollCurrent, type SpeedKing, type GhostMode } from '../api';
 
@@ -11,6 +11,7 @@ interface ResultState {
     result: 'correct' | 'wrong' | 'timeout';
     correctIndex: number;
     awardedPoints?: number;
+    timeTakenMs?: number;
   };
   poll: PollCurrent;
   pollLaunchId?: string;
@@ -37,11 +38,11 @@ export default function ResultPage() {
     if (state.result.result === 'correct' && !confettiFired.current) {
       confettiFired.current = true;
       confetti({
-        particleCount: 160,
-        spread: 85,
+        particleCount: 300,
+        spread: 100,
         origin: { y: 0.45 },
-        colors: ['#DB3320', '#F59E0B', '#006C49', '#855300', '#FFDAD4'],
-        scalar: 1.05,
+        colors: ['#DB3320', '#F59E0B', '#006C49', '#855300', '#FFDAD4', '#FFD700'],
+        scalar: 1.2,
       });
     }
 
@@ -100,11 +101,28 @@ export default function ResultPage() {
   };
 
   const isSpeedKingWinner = me?.nickname === speedKing?.nickname;
+  const myTime = state.result.timeTakenMs;
+  const diffTime = (myTime && speedKing) ? myTime - speedKing.timeTakenMs : null;
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(`I just scored ${state.result.awardedPoints || 0} pts on QuizPop! Can you beat me?`);
+  };
 
   return (
-    <div className="paper-texture min-h-screen text-[#18181B] selection:bg-[#FFDAD4] selection:text-[#400100] flex flex-col justify-between py-6 sm:py-10 px-4 sm:px-6 md:px-8">
+    <div className="paper-texture min-h-screen text-[#18181B] selection:bg-[#FFDAD4] selection:text-[#400100] flex flex-col justify-between py-6 sm:py-10 px-4 sm:px-6 md:px-8 relative overflow-hidden">
+      <AnimatePresence>
+        {outcome === 'wrong' && (
+          <motion.div
+            initial={{ opacity: 1 }}
+            animate={{ opacity: 0 }}
+            transition={{ duration: 1, delay: 0.2 }}
+            className="fixed inset-0 bg-[#DB3320]/5 pointer-events-none z-50 vignette-urgent"
+          />
+        )}
+      </AnimatePresence>
+
       {/* Widescreen 16:9 responsive container */}
-      <div className="w-full max-w-6xl mx-auto flex flex-col gap-6 sm:gap-8 relative bg-[#FAF8F5]">
+      <div className="w-full max-w-6xl mx-auto flex flex-col gap-6 sm:gap-8 relative bg-[#FAF8F5] z-10">
         
         {/* Result Hero Section */}
         <motion.div
@@ -115,10 +133,10 @@ export default function ResultPage() {
               : { scale: 1, opacity: 1 }
           }
           transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-          className="text-center pt-2 pb-1"
+          className="text-center pt-2 pb-1 relative"
         >
           {/* Status Badge */}
-          <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full border mb-4 text-xs sm:text-sm font-sans font-extrabold tracking-wider uppercase transition-all shadow-sm ${config.badgeBg} ${config.badgeBorder} ${config.badgeShadow}`}>
+          <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full border mb-4 text-xs sm:text-sm font-sans font-extrabold tracking-wider uppercase transition-all shadow-sm ${config.badgeBg} ${config.badgeBorder} ${config.badgeShadow} ${outcome === 'correct' ? 'shimmer' : ''}`}>
             <span
               className={`w-2.5 h-2.5 rounded-full ${
                 outcome === 'correct'
@@ -133,14 +151,15 @@ export default function ResultPage() {
 
           {/* Timeout emoji accent (staggered) */}
           {outcome === 'timeout' && (
-            <div className="flex justify-center gap-3 mb-3">
+            <div className="flex justify-center gap-3 mb-3 relative h-12">
               {TIMEOUT_EMOJIS.map((e, i) => (
                 <motion.span
                   key={i}
-                  initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 12, scale: 0.7 }}
+                  initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 20, scale: 0.7 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={{ delay: i * 0.08, type: 'spring', stiffness: 260 }}
-                  className="text-3xl sm:text-4xl"
+                  transition={{ delay: i * 0.15, type: 'spring', stiffness: 260 }}
+                  className="text-3xl sm:text-4xl absolute float-gentle"
+                  style={{ left: `calc(50% + ${(i - 1.5) * 40}px)`, animationDelay: `${i * 0.5}s` }}
                 >
                   {e}
                 </motion.span>
@@ -160,11 +179,11 @@ export default function ResultPage() {
 
           {/* Points & Streak Feedback */}
           <div className="flex flex-wrap items-center justify-center gap-3 mt-4">
-            <div className={`font-sans font-extrabold text-2xl sm:text-3xl md:text-4xl px-4 py-1.5 rounded-2xl bg-white border border-[#E5E1D8] shadow-sm ${outcome === 'correct' ? 'text-[#006C49]' : 'text-[#855300]'}`}>
+            <div className={`font-sans font-extrabold text-3xl sm:text-4xl md:text-5xl px-6 py-2 rounded-2xl bg-white border border-[#E5E1D8] shadow-sm ${outcome === 'correct' ? 'text-[#006C49] glow-gold golden-flash' : 'text-[#855300]'}`}>
               {state.result.awardedPoints != null ? (state.result.awardedPoints === 0 ? '0 pts' : `+${state.result.awardedPoints} pts`) : '0 pts'}
             </div>
             {me?.currentStreak !== undefined && me.currentStreak > 0 && (
-              <div className="font-sans text-base sm:text-lg font-bold text-[#DB3320] bg-[#FFF0EE] border border-[#FFDAD4] px-4 py-2 rounded-2xl shadow-sm">
+              <div className={`font-sans text-base sm:text-lg font-bold text-[#DB3320] bg-[#FFF0EE] border border-[#FFDAD4] px-4 py-2 rounded-2xl shadow-sm ${me.currentStreak > 2 ? 'fire-particles' : ''}`}>
                 🔥 {me.currentStreak} day streak{me.currentStreak !== 1 ? 's' : ''}
               </div>
             )}
@@ -179,10 +198,10 @@ export default function ResultPage() {
             initial={{ y: shouldReduceMotion ? 0 : 16, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.2, duration: 0.35 }}
-            className="lg:col-span-7 relative bg-white border border-[#E5E1D8] rounded-2xl p-6 sm:p-8 shadow-[0_4px_0_#E2DDD2,0_8px_24px_rgba(39,34,26,0.04)]"
+            className="lg:col-span-7 relative bg-white border border-[#E5E1D8] rounded-2xl p-6 sm:p-8 shadow-[0_4px_0_#E2DDD2,0_8px_24px_rgba(39,34,26,0.04)] gradient-border card-lift"
           >
             {/* Raised Category Tab */}
-            <div className="absolute -top-3.5 left-6 bg-[#18181B] text-[#FAF8F5] text-xs font-sans font-bold tracking-widest px-3 py-1 rounded uppercase shadow-sm">
+            <div className="absolute -top-3.5 left-6 bg-[#18181B] text-[#FAF8F5] text-xs font-sans font-bold tracking-widest px-3 py-1 rounded uppercase shadow-sm shimmer">
               ANSWER REVIEW
             </div>
 
@@ -201,8 +220,8 @@ export default function ResultPage() {
                     key={idx}
                     className={`w-full text-left rounded-2xl p-4 sm:p-5 flex items-center justify-between transition-all ${
                       isCorrect
-                        ? 'bg-[#ECFDF5] border-2 border-[#10B981] shadow-[0_3px_0_#059669]'
-                        : 'bg-white border border-[#E5E1D8] shadow-[0_2px_0_#DDD8CE] opacity-65'
+                        ? 'bg-[#ECFDF5] border-2 border-[#10B981] shadow-[0_3px_0_#059669] glow-green'
+                        : 'bg-white border border-[#E5E1D8] shadow-[0_2px_0_#DDD8CE] opacity-40'
                     }`}
                   >
                     <div className="flex items-center gap-3.5 min-w-0 pr-2">
@@ -221,7 +240,7 @@ export default function ResultPage() {
                       <span
                         className={`font-sans text-base sm:text-lg leading-snug break-words ${
                           isCorrect
-                            ? 'text-[#18181B] font-bold'
+                            ? 'text-[#006C49] font-extrabold'
                             : 'text-[#534434] font-medium'
                         }`}
                       >
@@ -262,47 +281,68 @@ export default function ResultPage() {
                 initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4, type: 'spring', stiffness: 300, damping: 25 }}
-                className={`rounded-2xl p-5 sm:p-6 flex items-center justify-between ${
+                className={`rounded-2xl p-5 sm:p-6 flex flex-col justify-between relative card-lift ${
                   isSpeedKingWinner
-                    ? 'bg-[#FFFBEB] border-2 border-[#F59E0B] shadow-[0_4px_0_#D97706]'
+                    ? 'bg-[#FFFBEB] border-2 border-[#F59E0B] shadow-[0_4px_0_#D97706] glow-gold shimmer'
                     : 'bg-white border border-[#E5E1D8] shadow-[0_3px_0_#E2DDD2]'
                 }`}
               >
-                <div className="flex items-center gap-3.5">
-                  <div
-                    className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-2xl flex-shrink-0 shadow-sm ${
-                      isSpeedKingWinner
-                        ? 'bg-[#F59E0B] text-white'
-                        : 'bg-[#FFEDD5] text-[#855300] border border-[#F59E0B]/30'
-                    }`}
+                {isSpeedKingWinner && (
+                  <motion.div 
+                    initial={{ y: -10, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.6, type: "spring" }}
+                    className="absolute -top-6 -right-2 text-4xl float-gentle z-20 drop-shadow-md"
                   >
-                    ⚡
-                  </div>
-                  <div>
-                    <p
-                      className={`text-xs font-sans font-extrabold uppercase tracking-wider ${
-                        isSpeedKingWinner ? 'text-[#B45309]' : 'text-[#867461]'
+                    👑
+                  </motion.div>
+                )}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3.5">
+                    <div
+                      className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-2xl flex-shrink-0 shadow-sm ${
+                        isSpeedKingWinner
+                          ? 'bg-[#F59E0B] text-white'
+                          : 'bg-[#FFEDD5] text-[#855300] border border-[#F59E0B]/30'
                       }`}
                     >
-                      {isSpeedKingWinner ? 'SPEED KING WINNER' : 'SPEED KING'}
-                    </p>
-                    <p className="font-serif text-lg sm:text-xl font-bold text-[#18181B] leading-tight mt-0.5">
-                      {isSpeedKingWinner ? 'Fastest correct answer!' : speedKing.nickname}
-                    </p>
+                      ⚡
+                    </div>
+                    <div>
+                      <p
+                        className={`text-xs font-sans font-extrabold uppercase tracking-wider ${
+                          isSpeedKingWinner ? 'text-[#B45309]' : 'text-[#867461]'
+                        }`}
+                      >
+                        {isSpeedKingWinner ? 'SPEED KING WINNER' : 'SPEED KING'}
+                      </p>
+                      <p className="font-serif text-lg sm:text-xl font-bold text-[#18181B] leading-tight mt-0.5">
+                        {isSpeedKingWinner ? 'Fastest correct answer!' : speedKing.nickname}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="text-right pl-3 flex-shrink-0">
+                    <span
+                      className={`font-sans font-extrabold text-lg sm:text-2xl tabular-nums px-3 py-1.5 rounded-xl ${
+                        isSpeedKingWinner
+                          ? 'bg-[#F59E0B]/20 text-[#B45309]'
+                          : 'bg-[#F0EDF1] border border-[#E5E1D8] text-[#534434]'
+                      }`}
+                    >
+                      {formatTime(speedKing.timeTakenMs)}
+                    </span>
                   </div>
                 </div>
 
-                <div className="text-right pl-3 flex-shrink-0">
-                  <span
-                    className={`font-sans font-extrabold text-base sm:text-xl tabular-nums px-3 py-1.5 rounded-xl ${
-                      isSpeedKingWinner
-                        ? 'bg-[#F59E0B]/20 text-[#B45309]'
-                        : 'bg-[#F0EDF1] border border-[#E5E1D8] text-[#534434]'
-                    }`}
-                  >
-                    {formatTime(speedKing.timeTakenMs)}
-                  </span>
-                </div>
+                {!isSpeedKingWinner && diffTime != null && diffTime > 0 && (
+                  <div className="mt-4 pt-3 border-t border-[#E5E1D8] flex items-center justify-between">
+                    <span className="text-sm font-sans font-medium text-[#855300]">You were {(diffTime / 1000).toFixed(2)}s behind!</span>
+                    <div className="w-1/2 h-2 bg-[#F0EDF1] rounded-full overflow-hidden">
+                      <div className="h-full bg-[#F59E0B]" style={{ width: `${Math.max(10, 100 - (diffTime / 5000) * 100)}%` }} />
+                    </div>
+                  </div>
+                )}
               </motion.div>
             )}
 
@@ -312,7 +352,7 @@ export default function ResultPage() {
                 initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
-                className="bg-white border border-[#E5E1D8] rounded-2xl p-6 shadow-[0_3px_0_#E2DDD2]"
+                className="bg-white border border-[#E5E1D8] rounded-2xl p-6 shadow-[0_3px_0_#E2DDD2] card-lift"
               >
                 <div className="flex items-center justify-between mb-4 border-b border-[#E5E1D8]/60 pb-3">
                   <h3 className="font-sans font-bold text-sm text-[#18181B] uppercase tracking-wider flex items-center gap-2">
@@ -325,7 +365,7 @@ export default function ResultPage() {
 
                 <div className="space-y-4">
                   {/* Correct row */}
-                  <div>
+                  <div className="bg-[#ECFDF5]/50 p-2 rounded-xl">
                     <div className="flex items-center justify-between text-xs sm:text-sm font-sans mb-1.5">
                       <span className="font-bold text-[#006C49] flex items-center gap-1.5">
                         <span className="w-2.5 h-2.5 rounded-full bg-[#10B981]" /> Correct
@@ -334,18 +374,20 @@ export default function ResultPage() {
                         {ghostMode.correctPercent.toFixed(1)}%
                       </span>
                     </div>
-                    <div className="w-full bg-[#E5E1D8]/60 rounded-full h-2.5 overflow-hidden">
+                    <div className="w-full bg-[#E5E1D8]/60 rounded-full h-3 overflow-hidden relative">
                       <motion.div
-                        className="bg-[#10B981] h-full rounded-full"
+                        className="bg-[#10B981] h-full rounded-full progress-glow flex items-center justify-end pr-1"
                         initial={{ width: 0 }}
                         animate={{ width: `${ghostMode.correctPercent}%` }}
                         transition={{ duration: shouldReduceMotion ? 0 : 0.8, ease: 'easeOut', delay: 0.6 }}
-                      />
+                      >
+                        {ghostMode.correctPercent > 15 && <span className="text-[10px] text-white font-bold">{Math.round(ghostMode.correctPercent)}%</span>}
+                      </motion.div>
                     </div>
                   </div>
 
                   {/* Wrong row */}
-                  <div>
+                  <div className="bg-[#FFF0EE]/50 p-2 rounded-xl">
                     <div className="flex items-center justify-between text-xs sm:text-sm font-sans mb-1.5">
                       <span className="font-bold text-[#B71607] flex items-center gap-1.5">
                         <span className="w-2.5 h-2.5 rounded-full bg-[#DB3320]" /> Wrong
@@ -354,18 +396,20 @@ export default function ResultPage() {
                         {ghostMode.wrongPercent.toFixed(1)}%
                       </span>
                     </div>
-                    <div className="w-full bg-[#E5E1D8]/60 rounded-full h-2.5 overflow-hidden">
+                    <div className="w-full bg-[#E5E1D8]/60 rounded-full h-3 overflow-hidden relative">
                       <motion.div
-                        className="bg-[#DB3320] h-full rounded-full"
+                        className="bg-[#DB3320] h-full rounded-full progress-glow flex items-center justify-end pr-1"
                         initial={{ width: 0 }}
                         animate={{ width: `${ghostMode.wrongPercent}%` }}
                         transition={{ duration: shouldReduceMotion ? 0 : 0.8, ease: 'easeOut', delay: 0.6 }}
-                      />
+                      >
+                        {ghostMode.wrongPercent > 15 && <span className="text-[10px] text-white font-bold">{Math.round(ghostMode.wrongPercent)}%</span>}
+                      </motion.div>
                     </div>
                   </div>
 
                   {/* Timeout row */}
-                  <div>
+                  <div className="bg-[#FFFBEB]/50 p-2 rounded-xl">
                     <div className="flex items-center justify-between text-xs sm:text-sm font-sans mb-1.5">
                       <span className="font-bold text-[#855300] flex items-center gap-1.5">
                         <span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B]" /> Timeout
@@ -374,13 +418,15 @@ export default function ResultPage() {
                         {ghostMode.timeoutPercent.toFixed(1)}%
                       </span>
                     </div>
-                    <div className="w-full bg-[#E5E1D8]/60 rounded-full h-2.5 overflow-hidden">
+                    <div className="w-full bg-[#E5E1D8]/60 rounded-full h-3 overflow-hidden relative">
                       <motion.div
-                        className="bg-[#F59E0B] h-full rounded-full"
+                        className="bg-[#F59E0B] h-full rounded-full progress-glow flex items-center justify-end pr-1"
                         initial={{ width: 0 }}
                         animate={{ width: `${ghostMode.timeoutPercent}%` }}
                         transition={{ duration: shouldReduceMotion ? 0 : 0.8, ease: 'easeOut', delay: 0.6 }}
-                      />
+                      >
+                        {ghostMode.timeoutPercent > 15 && <span className="text-[10px] text-white font-bold">{Math.round(ghostMode.timeoutPercent)}%</span>}
+                      </motion.div>
                     </div>
                   </div>
                 </div>
@@ -398,19 +444,30 @@ export default function ResultPage() {
               <button
                 type="button"
                 onClick={() => navigate('/student')}
-                className="w-full py-4 px-6 rounded-xl font-sans font-extrabold text-sm sm:text-base bg-[#DB3320] text-white shadow-[0_4px_0_#920700] hover:brightness-105 active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-2 cursor-pointer border-0"
+                className="w-full py-4 px-6 rounded-xl font-sans font-extrabold text-sm sm:text-base bg-[#DB3320] text-white shadow-[0_4px_0_#920700] hover:brightness-105 active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-2 cursor-pointer border-0 shimmer-fast tactile-btn-red"
               >
-                <span>← Back to Questions</span>
+                <span>Next Challenge →</span>
               </button>
 
-              {/* Secondary Varsity White Button */}
-              <button
-                type="button"
-                onClick={() => navigate(`/leaderboard/${targetLaunchId}`)}
-                className="w-full py-3.5 px-6 rounded-xl font-sans font-bold text-sm sm:text-base bg-white text-[#18181B] border border-[#E5E1D8] shadow-[0_3px_0_#DDD8CE] hover:border-[#867461] active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <span>🏆 See Leaderboard</span>
-              </button>
+              <div className="flex gap-3">
+                {/* Secondary Varsity White Button */}
+                <button
+                  type="button"
+                  onClick={() => navigate(`/leaderboard/${targetLaunchId}`)}
+                  className="w-1/2 py-3.5 px-3 rounded-xl font-sans font-bold text-sm sm:text-base bg-white text-[#18181B] border border-[#E5E1D8] shadow-[0_3px_0_#DDD8CE] hover:border-[#867461] active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-2 cursor-pointer tactile-btn-white"
+                >
+                  <span>🏆 Leaderboard</span>
+                </button>
+                
+                {/* Third Copy Result Button */}
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  className="w-1/2 py-3.5 px-3 rounded-xl font-sans font-bold text-sm sm:text-base bg-white text-[#18181B] border border-[#E5E1D8] shadow-[0_3px_0_#DDD8CE] hover:border-[#867461] active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-2 cursor-pointer tactile-btn-white"
+                >
+                  <span>📋 Copy Result</span>
+                </button>
+              </div>
             </motion.div>
           </div>
 

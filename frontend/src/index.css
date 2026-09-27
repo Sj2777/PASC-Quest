@@ -20,6 +20,15 @@
   --tertiary-green: #006C49;
   --tertiary-wash: #ECFDF5;
 
+  /* Gamified accent tokens */
+  --glow-amber: rgba(245, 158, 11, 0.18);
+  --glow-red: rgba(219, 51, 32, 0.15);
+  --glow-green: rgba(16, 185, 129, 0.15);
+  --glow-gold: rgba(251, 191, 36, 0.25);
+  --accent-blue: #3B82F6;
+  --accent-purple: #8B5CF6;
+  --accent-teal: #14B8A6;
+
   /* Legacy fallback variables for other screens */
   --primary: #FF4D8D;
   --primary-dark: #e03070;
@@ -57,22 +66,29 @@ h1, h2, h3, .font-display {
   font-family: 'Newsreader', 'Baloo 2', cursive, serif;
 }
 
-/* Paper tactile background pattern */
+/* ═══════════════════════════════════════════════════════════
+   Paper texture — refined dot grid
+   ═══════════════════════════════════════════════════════════ */
 .paper-texture {
   background-color: #FAF8F5;
-  background-image: radial-gradient(rgba(39, 34, 26, 0.04) 1px, transparent 1px);
-  background-size: 20px 20px;
+  background-image:
+    radial-gradient(rgba(39, 34, 26, 0.03) 1px, transparent 1px);
+  background-size: 24px 24px;
 }
 
-/* 3D Tactile Buttons & Cards */
+/* ═══════════════════════════════════════════════════════════
+   3D Tactile Buttons
+   ═══════════════════════════════════════════════════════════ */
 .tactile-btn-red {
   background-color: #DB3320;
   color: #FFFFFF;
   box-shadow: 0 4px 0 #920700;
-  transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.1s ease;
+  transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.12s ease, filter 0.12s ease;
 }
 .tactile-btn-red:hover:not(:disabled) {
-  filter: brightness(1.05);
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+  box-shadow: 0 5px 0 #920700;
 }
 .tactile-btn-red:active:not(:disabled) {
   transform: translateY(4px);
@@ -84,10 +100,12 @@ h1, h2, h3, .font-display {
   color: #18181B;
   border: 1px solid #E5E1D8;
   box-shadow: 0 3px 0 #DDD8CE;
-  transition: transform 0.1s ease, box-shadow 0.1s ease, border-color 0.1s ease;
+  transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.12s ease, border-color 0.15s ease;
 }
 .tactile-btn-white:hover:not(:disabled) {
   border-color: #867461;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 0 #DDD8CE;
 }
 .tactile-btn-white:active:not(:disabled) {
   transform: translateY(3px);
@@ -100,34 +118,316 @@ h1, h2, h3, .font-display {
   box-shadow: 0 4px 0 #E2DDD2;
 }
 
-/* Widescreen & 16:9 Responsive Envelopes */
-.screen-container {
-  width: 100%;
-  max-width: 1360px;
-  margin-left: auto;
-  margin-right: auto;
-  padding-left: clamp(1rem, 2.5vw, 2.5rem);
-  padding-right: clamp(1rem, 2.5vw, 2.5rem);
+/* ═══════════════════════════════════════════════════════════
+   Glow effects — ambient accent lighting
+   ═══════════════════════════════════════════════════════════ */
+.glow-amber {
+  box-shadow: 0 4px 0 #E2DDD2, 0 0 24px var(--glow-amber), 0 0 48px rgba(245, 158, 11, 0.06);
+}
+.glow-red {
+  box-shadow: 0 4px 0 #E2DDD2, 0 0 20px var(--glow-red), 0 0 40px rgba(219, 51, 32, 0.06);
+}
+.glow-green {
+  box-shadow: 0 4px 0 #E2DDD2, 0 0 20px var(--glow-green), 0 0 40px rgba(16, 185, 129, 0.06);
+}
+.glow-gold {
+  box-shadow: 0 0 24px var(--glow-gold), 0 0 60px rgba(251, 191, 36, 0.1);
 }
 
-.screen-container-quiz {
-  width: 100%;
-  max-width: 1080px;
-  margin-left: auto;
-  margin-right: auto;
-  padding-left: clamp(1rem, 2.5vw, 2rem);
-  padding-right: clamp(1rem, 2.5vw, 2rem);
+/* ═══════════════════════════════════════════════════════════
+   Glassmorphism card
+   ═══════════════════════════════════════════════════════════ */
+.glass-card {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  border: 1px solid rgba(255, 255, 255, 0.35);
 }
 
-/* Dynamic Nav Bar */
-.bottom-nav-dock {
-  width: 100%;
-  max-width: 768px;
-  margin-left: auto;
-  margin-right: auto;
+.glass-nav {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  border: 1px solid rgba(255, 255, 255, 0.4);
 }
 
-/* Ambient blob animations */
+/* ═══════════════════════════════════════════════════════════
+   Card interactions — hover lift, spring ease
+   ═══════════════════════════════════════════════════════════ */
+.card-lift {
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+}
+.card-lift:hover {
+  transform: translateY(-3px);
+}
+
+.card-press {
+  transition: transform 0.1s ease;
+}
+.card-press:active {
+  transform: translateY(2px) scale(0.98);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Shimmer / shine sweep effect
+   ═══════════════════════════════════════════════════════════ */
+@keyframes shimmer-sweep {
+  0% { transform: translateX(-100%) skewX(-15deg); }
+  100% { transform: translateX(200%) skewX(-15deg); }
+}
+
+.shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.35),
+    transparent
+  );
+  animation: shimmer-sweep 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Faster shimmer for buttons on hover */
+.shimmer-fast::after {
+  animation-duration: 1.5s;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Floating / breathing animations
+   ═══════════════════════════════════════════════════════════ */
+@keyframes gentle-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+.float-gentle {
+  animation: gentle-float 3s ease-in-out infinite;
+}
+
+@keyframes gentle-breathe {
+  0%, 100% { opacity: 0.7; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.04); }
+}
+
+.breathe {
+  animation: gentle-breathe 2.5s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Pulse ring — for live indicators
+   ═══════════════════════════════════════════════════════════ */
+@keyframes pulse-ring {
+  0% { transform: scale(1); opacity: 0.8; }
+  70% { transform: scale(2.2); opacity: 0; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+.pulse-ring {
+  position: relative;
+}
+.pulse-ring::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse-ring 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Progress bar with inner glow
+   ═══════════════════════════════════════════════════════════ */
+.progress-glow {
+  position: relative;
+}
+.progress-glow::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: inherit;
+  filter: blur(6px);
+  opacity: 0.4;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Animated gradient border
+   ═══════════════════════════════════════════════════════════ */
+@keyframes gradient-rotate {
+  0% { --angle: 0deg; }
+  100% { --angle: 360deg; }
+}
+
+@property --angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.gradient-border {
+  position: relative;
+  background: white;
+  border-radius: 1rem;
+}
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: conic-gradient(from var(--angle), #F59E0B, #DB3320, #8B5CF6, #14B8A6, #F59E0B);
+  animation: gradient-rotate 4s linear infinite;
+  z-index: -1;
+  opacity: 0.6;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Countdown ring (circular SVG timer)
+   ═══════════════════════════════════════════════════════════ */
+.countdown-ring {
+  transform: rotate(-90deg);
+  transform-origin: center;
+}
+.countdown-ring circle {
+  transition: stroke-dashoffset 1s linear;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Screen vignette — urgency overlay
+   ═══════════════════════════════════════════════════════════ */
+@keyframes vignette-pulse {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}
+
+.vignette-urgent {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 60%,
+    rgba(219, 51, 32, 0.08) 100%
+  );
+  animation: vignette-pulse 2s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Option accent strips (A=blue, B=green, C=amber, D=purple)
+   ═══════════════════════════════════════════════════════════ */
+.option-strip-a { border-left: 4px solid #3B82F6; }
+.option-strip-b { border-left: 4px solid #10B981; }
+.option-strip-c { border-left: 4px solid #F59E0B; }
+.option-strip-d { border-left: 4px solid #8B5CF6; }
+
+/* ═══════════════════════════════════════════════════════════
+   Stamp effect — rotated badge
+   ═══════════════════════════════════════════════════════════ */
+.stamp-badge {
+  transform: rotate(-6deg);
+  border: 3px solid currentColor;
+  border-radius: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Rank rings — avatar borders based on level
+   ═══════════════════════════════════════════════════════════ */
+.rank-ring-bronze { ring-color: #CD7F32; box-shadow: 0 0 0 3px #CD7F32, 0 0 12px rgba(205, 127, 50, 0.3); }
+.rank-ring-silver { ring-color: #C0C0C0; box-shadow: 0 0 0 3px #C0C0C0, 0 0 12px rgba(192, 192, 192, 0.3); }
+.rank-ring-gold { ring-color: #FFD700; box-shadow: 0 0 0 3px #FFD700, 0 0 16px rgba(255, 215, 0, 0.35); }
+.rank-ring-diamond { box-shadow: 0 0 0 3px #8B5CF6, 0 0 20px rgba(139, 92, 246, 0.35); }
+
+/* ═══════════════════════════════════════════════════════════
+   Fire particle rising effect (CSS only)
+   ═══════════════════════════════════════════════════════════ */
+@keyframes fire-rise {
+  0% { transform: translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateY(-18px) scale(0.4); opacity: 0; }
+}
+
+.fire-particles {
+  position: relative;
+}
+.fire-particles::before,
+.fire-particles::after {
+  content: '🔥';
+  position: absolute;
+  font-size: 8px;
+  pointer-events: none;
+  animation: fire-rise 1.8s ease-out infinite;
+}
+.fire-particles::before {
+  top: -2px;
+  left: 20%;
+  animation-delay: 0s;
+}
+.fire-particles::after {
+  top: -2px;
+  left: 65%;
+  animation-delay: 0.6s;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Golden flash for point changes
+   ═══════════════════════════════════════════════════════════ */
+@keyframes golden-flash {
+  0% { background-color: transparent; }
+  15% { background-color: rgba(251, 191, 36, 0.2); }
+  100% { background-color: transparent; }
+}
+
+.golden-flash {
+  animation: golden-flash 0.8s ease-out;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   XP progress bar
+   ═══════════════════════════════════════════════════════════ */
+.xp-bar {
+  height: 3px;
+  background: linear-gradient(90deg, #E5E1D8, #E5E1D8);
+  position: relative;
+  overflow: hidden;
+}
+.xp-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #F59E0B, #FBBF24);
+  transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+}
+.xp-bar-fill::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: -2px;
+  bottom: -2px;
+  width: 8px;
+  background: #FBBF24;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(251, 191, 36, 0.6);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Ambient blob animations
+   ═══════════════════════════════════════════════════════════ */
 @keyframes blob-drift {
   0%, 100% { transform: translate(0, 0) scale(1); }
   33% { transform: translate(20px, -15px) scale(1.05); }
@@ -173,7 +473,45 @@ h1, h2, h3, .font-display {
 
 @media (prefers-reduced-motion: reduce) {
   .blob { animation: none; }
-  * { transition: none !important; animation: none !important; }
+  .shimmer::after { animation: none; display: none; }
+  .shimmer-fast::after { animation: none; display: none; }
+  .float-gentle { animation: none; }
+  .breathe { animation: none; }
+  .pulse-ring::before { animation: none; display: none; }
+  .fire-particles::before,
+  .fire-particles::after { animation: none; display: none; }
+  .gradient-border::before { animation: none; }
+  .vignette-urgent { animation: none; }
+  * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Widescreen & 16:9 Responsive Envelopes
+   ═══════════════════════════════════════════════════════════ */
+.screen-container {
+  width: 100%;
+  max-width: 1360px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: clamp(1rem, 2.5vw, 2.5rem);
+  padding-right: clamp(1rem, 2.5vw, 2.5rem);
+}
+
+.screen-container-quiz {
+  width: 100%;
+  max-width: 1080px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: clamp(1rem, 2.5vw, 2rem);
+  padding-right: clamp(1rem, 2.5vw, 2rem);
+}
+
+/* Dynamic Nav Bar */
+.bottom-nav-dock {
+  width: 100%;
+  max-width: 768px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* ── Student Application Responsive Layout ──────────────────────────────────

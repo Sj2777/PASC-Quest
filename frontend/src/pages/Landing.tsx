@@ -14,12 +14,21 @@ function formatExpiryCountdown(expiresAt: string, nowMs: number): string {
   return `Expires in ${mins}m`;
 }
 
+const MOTIVATIONAL_TAGLINES = [
+  "Let's make today count.",
+  "Ready to climb the ranks?",
+  "Your streak awaits.",
+  "Time to dominate.",
+  "Show them what you've got."
+];
+
 export default function Landing() {
   const navigate = useNavigate();
   const [student, setStudent] = useState<Student | null>(null);
   const [polls, setPolls] = useState<PollLaunchItem[]>([]);
   const [streakStatus, setStreakStatus] = useState<StreakStatus | null>(null);
   const [loading, setLoading] = useState(true);
+  const [tagline, setTagline] = useState(MOTIVATIONAL_TAGLINES[0]);
   
   // Per-launch starting state (keyed by pollLaunchId)
   const [starting, setStarting] = useState<Record<string, boolean>>({});
@@ -61,6 +70,8 @@ export default function Landing() {
   }, [polls]);
 
   useEffect(() => {
+    setTagline(MOTIVATIONAL_TAGLINES[Math.floor(Math.random() * MOTIVATIONAL_TAGLINES.length)]);
+    
     api.getMe()
       .then((me) => {
         setStudent(me);
@@ -196,6 +207,11 @@ export default function Landing() {
   const hour = new Date().getHours();
   const timeGreeting = hour < 12 ? 'GOOD MORNING' : hour < 18 ? 'GOOD AFTERNOON' : 'GOOD EVENING';
   const activeCount = polls.filter((p) => !p.completed).length;
+  
+  const currentStreak = streakStatus?.currentStreak ?? student?.currentStreak ?? 0;
+  const totalPts = student?.totalPoints ?? 0;
+  
+  const rankRingClass = totalPts >= 500 ? 'rank-ring-gold' : totalPts >= 200 ? 'rank-ring-silver' : 'rank-ring-bronze';
 
   return (
     <div className="paper-texture min-h-screen text-[#18181B] selection:bg-[#FFDAD4] selection:text-[#400100] flex flex-col justify-between">
@@ -203,11 +219,11 @@ export default function Landing() {
       <div className="w-full min-h-screen flex flex-col bg-[#FAF8F5] relative pb-28">
         
         {/* TopAppBar: Sticky editorial brand masthead */}
-        <header className="w-full sticky top-0 z-40 bg-[#FAF8F5]/90 backdrop-blur-md border-b border-[#E5E1D8]/80 shadow-[0_2px_4px_rgba(39,34,26,0.04)]">
+        <header className="w-full sticky top-0 z-40 bg-[#FAF8F5]/90 backdrop-blur-md border-b border-[#E5E1D8]/80 shadow-[0_2px_4px_rgba(39,34,26,0.04)] relative">
           <div className="screen-container flex justify-between items-center py-3 sm:py-4">
             {/* Leading: Student initial badge & Newsreader brand */}
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full ring-2 ring-[#E5E1D8] bg-[#F0EDF1] flex items-center justify-center font-bold text-[#855300] text-sm sm:text-base shadow-sm select-none">
+              <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-full ring-2 ring-[#E5E1D8] bg-[#F0EDF1] flex items-center justify-center font-bold text-[#855300] text-sm sm:text-base shadow-sm select-none ${rankRingClass}`}>
                 {student?.nickname ? student.nickname.charAt(0).toUpperCase() : 'Q'}
               </div>
               <span className="font-serif text-2xl sm:text-3xl font-semibold text-[#855300] tracking-tight">
@@ -219,20 +235,20 @@ export default function Landing() {
             <div className="flex items-center gap-1.5 sm:gap-3">
               {/* Streak Pill */}
               <div 
-                className="flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 bg-white rounded-full border border-[#D8C3AD]/60 shadow-[0_2px_0_#E2DDD2] active:translate-y-0.5 transition-all text-xs sm:text-sm font-bold text-[#18181B] select-none"
+                className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 bg-white rounded-full border border-[#D8C3AD]/60 shadow-[0_2px_0_#E2DDD2] active:translate-y-0.5 transition-all text-xs sm:text-sm font-bold text-[#18181B] select-none ${currentStreak > 2 ? 'fire-particles' : ''} ${currentStreak > 0 ? 'glow-amber' : ''}`}
                 title="Current active streak"
               >
                 <span className="text-base sm:text-lg">🔥</span>
-                <span>{streakStatus?.currentStreak ?? student?.currentStreak ?? 0} {((streakStatus?.currentStreak ?? student?.currentStreak ?? 0) === 1) ? 'day' : 'days'}</span>
+                <span>{currentStreak} {currentStreak === 1 ? 'day' : 'days'}</span>
               </div>
 
               {/* Points Pill */}
               <div 
-                className="flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 bg-white rounded-full border border-[#FDBA74] shadow-[0_2px_0_#FED7AA] active:translate-y-0.5 transition-all text-xs sm:text-sm font-bold text-[#855300] select-none"
+                className="flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 bg-white rounded-full border border-[#FDBA74] shadow-[0_2px_0_#FED7AA] active:translate-y-0.5 transition-all text-xs sm:text-sm font-bold text-[#855300] select-none glow-gold"
                 title="Total points earned"
               >
                 <span className="text-base sm:text-lg">⭐</span>
-                <span className="tabular-nums">{student?.totalPoints ?? 0} pts</span>
+                <span className="tabular-nums font-extrabold">{totalPts} pts</span>
               </div>
 
               {/* Logout Action */}
@@ -244,6 +260,10 @@ export default function Landing() {
                 Logout
               </button>
             </div>
+          </div>
+          {/* XP Bar underneath header */}
+          <div className="xp-bar absolute bottom-0 left-0 w-full h-1 bg-[#E5E1D8]">
+            <div className="xp-bar-fill h-full bg-[#F59E0B]" style={{ width: `${totalPts % 100}%` }} />
           </div>
         </header>
 
@@ -259,7 +279,7 @@ export default function Landing() {
                   {timeGreeting}, {student?.nickname || 'STUDENT'}
                 </p>
                 <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl text-[#18181B] font-semibold tracking-tight">
-                  Competition
+                  {tagline}
                 </h1>
               </section>
 
@@ -281,7 +301,7 @@ export default function Landing() {
                 <motion.section
                   initial={animationState === 'comeback_reveal' ? { opacity: 0, scale: shouldReduceMotion ? 1 : 0.95 } : false}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="tactile-card rounded-2xl p-5 sm:p-6 bg-white border border-[#FDBA74] shadow-[0_3px_0_#FED7AA] flex flex-col gap-4"
+                  className="tactile-card card-lift rounded-2xl p-5 sm:p-6 bg-white border border-[#FDBA74] shadow-[0_3px_0_#FED7AA] flex flex-col gap-4 glow-amber"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex flex-col gap-2">
@@ -322,13 +342,13 @@ export default function Landing() {
                     </div>
                     <button
                       onClick={handleRenewStreak}
-                      disabled={renewing || (student?.totalPoints ?? 0) < 50}
-                      className={`px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs sm:text-sm font-bold font-sans transition-all flex items-center gap-1.5 cursor-pointer ${
-                        (student?.totalPoints ?? 0) >= 50
+                      disabled={renewing || totalPts < 50}
+                      className={`px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs sm:text-sm font-bold font-sans transition-all flex items-center gap-1.5 cursor-pointer shimmer-fast ${
+                        totalPts >= 50
                           ? 'tactile-btn-primary bg-[#DB3320] text-white hover:bg-[#B71607] shadow-[0_2px_0_#8E1A0C] active:translate-y-0.5'
                           : 'bg-zinc-200 text-zinc-400 border border-zinc-300 cursor-not-allowed shadow-none'
                       }`}
-                      title={(student?.totalPoints ?? 0) < 50 ? 'Requires 50 points' : 'Renew streak now'}
+                      title={totalPts < 50 ? 'Requires 50 points' : 'Renew streak now'}
                     >
                       <span>🔥</span>
                       <span>{renewing ? 'Renewing...' : 'Renew Streak (50 pts)'}</span>
@@ -339,7 +359,7 @@ export default function Landing() {
 
               {/* Inactive Streak Card - Option to kickstart with points */}
               {streakStatus && !streakStatus.comebackActive && streakStatus.currentStreak === 0 && (
-                <section className="tactile-card rounded-2xl p-5 sm:p-6 bg-white border border-[#D8C3AD]/60 shadow-[0_3px_0_#E2DDD2] flex flex-col gap-3.5">
+                <section className="tactile-card rounded-2xl p-5 sm:p-6 bg-white border border-red-200 animate-pulse border-[2px] shadow-[0_3px_0_#E2DDD2] flex flex-col gap-3.5">
                   <div className="flex items-center justify-between">
                     <div>
                       <span className="font-sans text-xs font-bold text-[#867461] tracking-wider uppercase block">
@@ -352,22 +372,22 @@ export default function Landing() {
                         Lost your streak? Redeem 50 points to buy 1 day and ignite your momentum!
                       </p>
                     </div>
-                    <span className="text-3xl select-none opacity-60">⏳</span>
+                    <span className="text-3xl select-none opacity-60 float-gentle">⏳</span>
                   </div>
 
                   <div className="pt-2.5 border-t border-[#E5E1D8]/60 flex items-center justify-between">
                     <span className="text-xs font-bold text-[#855300]">
-                      Points: {student?.totalPoints ?? 0} pts
+                      Points: {totalPts} pts
                     </span>
                     <button
                       onClick={handleRenewStreak}
-                      disabled={renewing || (student?.totalPoints ?? 0) < 50}
-                      className={`px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs sm:text-sm font-bold font-sans transition-all flex items-center gap-1.5 cursor-pointer ${
-                        (student?.totalPoints ?? 0) >= 50
+                      disabled={renewing || totalPts < 50}
+                      className={`px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs sm:text-sm font-bold font-sans transition-all flex items-center gap-1.5 cursor-pointer shimmer-fast ${
+                        totalPts >= 50
                           ? 'tactile-btn-primary bg-[#DB3320] text-white hover:bg-[#B71607] shadow-[0_2px_0_#8E1A0C] active:translate-y-0.5'
                           : 'bg-zinc-200 text-zinc-400 border border-zinc-300 cursor-not-allowed shadow-none'
                       }`}
-                      title={(student?.totalPoints ?? 0) < 50 ? 'Requires 50 points' : 'Buy 1 day streak'}
+                      title={totalPts < 50 ? 'Requires 50 points' : 'Buy 1 day streak'}
                     >
                       <span>🔥</span>
                       <span>{renewing ? 'Processing...' : 'Buy 1-Day Streak (50 pts)'}</span>
@@ -385,9 +405,9 @@ export default function Landing() {
                       initial={{ scale: shouldReduceMotion ? 1 : 0.9, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       exit={{ scale: shouldReduceMotion ? 1 : 0.95, opacity: 0 }}
-                      className="tactile-card rounded-2xl p-5 sm:p-6 text-center bg-white border border-[#FDBA74] shadow-[0_4px_0_#FED7AA]"
+                      className="tactile-card rounded-2xl p-5 sm:p-6 text-center bg-white border border-[#FDBA74] shadow-[0_4px_0_#FED7AA] shimmer glow-amber"
                     >
-                      <span className="text-4xl block mb-2">🔥</span>
+                      <span className="text-4xl block mb-2 float-gentle">🔥</span>
                       <h3 className="font-serif text-xl sm:text-2xl font-bold text-[#855300]">
                         {milestone} Day Streak Milestone!
                       </h3>
@@ -401,16 +421,16 @@ export default function Landing() {
                       initial={{ scale: shouldReduceMotion ? 1 : 0.9, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       exit={{ scale: shouldReduceMotion ? 1 : 0.95, opacity: 0 }}
-                      className="tactile-card rounded-2xl p-5 sm:p-6 text-center bg-[#ECFDF5] border border-[#A7F3D0] shadow-[0_4px_0_#BBF7D0]"
+                      className="tactile-card rounded-2xl p-5 sm:p-6 text-center bg-[#ECFDF5] border border-[#A7F3D0] shadow-[0_4px_0_#BBF7D0] shimmer glow-green"
                     >
-                      <span className="text-4xl block mb-2">🛡️</span>
+                      <span className="text-4xl block mb-2 float-gentle">🛡️</span>
                       <h3 className="font-serif text-xl sm:text-2xl font-bold text-[#006C49]">Streak Restored!</h3>
                       <p className="font-sans text-xs sm:text-sm text-[#065F46] mt-1 font-medium">
                         Your {restoredStreak}-day streak is officially back.
                       </p>
                     </motion.section>
                   ) : (
-                    <section className="tactile-card rounded-2xl p-5 sm:p-6 bg-white border border-[#D8C3AD]/40 shadow-[0_2px_4px_rgba(39,34,26,0.04)] flex flex-col gap-3">
+                    <section className="tactile-card card-lift rounded-2xl p-5 sm:p-6 bg-white border border-[#D8C3AD]/40 shadow-[0_2px_4px_rgba(39,34,26,0.04)] flex flex-col gap-3 glow-amber">
                       <div className="flex items-center justify-between">
                         <div>
                           <span className="font-sans text-xs font-bold text-[#855300] tracking-wider uppercase block">
@@ -428,9 +448,9 @@ export default function Landing() {
                         </span>
                         <button
                           onClick={handleRenewStreak}
-                          disabled={renewing || (student?.totalPoints ?? 0) < 50}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-bold font-sans transition-all flex items-center gap-1 cursor-pointer ${
-                            (student?.totalPoints ?? 0) >= 50
+                          disabled={renewing || totalPts < 50}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold font-sans transition-all flex items-center gap-1 cursor-pointer shimmer-fast ${
+                            totalPts >= 50
                               ? 'bg-[#FFF8ED] text-[#855300] border border-[#FDBA74] hover:bg-[#FFEDD5] shadow-[0_1px_0_#FED7AA] active:translate-y-0.5'
                               : 'bg-zinc-100 text-zinc-400 border border-zinc-200 cursor-not-allowed shadow-none'
                           }`}
@@ -446,7 +466,7 @@ export default function Landing() {
               )}
 
               {/* Campus Division & Profile Telemetry Card */}
-              <section className="tactile-card rounded-2xl p-5 sm:p-6 bg-white border border-[#D8C3AD]/60 shadow-[0_3px_0_#E2DDD2] flex items-center justify-between">
+              <section className="tactile-card card-lift rounded-2xl p-5 sm:p-6 bg-white border border-[#D8C3AD]/60 shadow-[0_3px_0_#E2DDD2] flex items-center justify-between">
                 <div>
                   <span className="font-sans text-xs font-bold text-[#867461] uppercase tracking-wider block">
                     CAMPUS ACADEMIC DIVISION
@@ -494,7 +514,7 @@ export default function Landing() {
                 </div>
               ) : polls.length === 0 ? (
                 <div className="tactile-card rounded-2xl p-10 sm:p-14 text-center bg-white border border-[#D8C3AD]/40 flex flex-col items-center">
-                  <div className="w-16 h-16 rounded-full bg-[#F0EDF1] flex items-center justify-center text-3xl mb-4">
+                  <div className="w-16 h-16 rounded-full bg-[#F0EDF1] flex items-center justify-center text-3xl mb-4 float-gentle">
                     ☕
                   </div>
                   <h3 className="font-serif text-2xl sm:text-3xl font-bold text-[#18181B]">Nothing live yet</h3>
@@ -524,7 +544,7 @@ export default function Landing() {
                           className="rounded-2xl p-5 sm:p-6 bg-[#F0EDF1]/60 border border-[#D8C3AD]/40 flex flex-col justify-between gap-3 opacity-90 transition-all shadow-sm"
                         >
                           <div className="flex items-center justify-between">
-                            <span className="inline-flex items-center gap-1.5 text-[#006C49] font-sans text-xs font-bold tracking-wider uppercase">
+                            <span className="inline-flex items-center gap-1.5 text-[#006C49] font-sans text-xs font-bold tracking-wider uppercase stamp-badge">
                               <span className="w-4 h-4 rounded-full bg-[#006C49] text-white flex items-center justify-center text-[10px]">
                                 ✓
                               </span>
@@ -555,13 +575,13 @@ export default function Landing() {
                     return (
                       <article
                         key={id}
-                        className="tactile-card rounded-2xl p-6 bg-white border border-[#D8C3AD]/60 shadow-[0_4px_0_#E2DDD2] flex flex-col justify-between gap-4 relative transition-all"
+                        className="tactile-card card-lift glow-red rounded-2xl p-6 bg-white border border-[#D8C3AD]/60 shadow-[0_4px_0_#E2DDD2] flex flex-col justify-between gap-4 relative transition-all"
                       >
                         <div className="flex flex-col gap-3">
                           {/* Card Header: Live Status & Category/Index */}
                           <div className="flex items-center justify-between">
                             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFDAD4] text-[#400100] font-sans text-xs font-bold">
-                              <span className="w-2 h-2 rounded-full bg-[#B71607] animate-ping" />
+                              <span className="w-2 h-2 rounded-full bg-[#B71607] pulse-ring" />
                               ● LIVE
                             </span>
                             <span className="font-sans text-xs font-bold text-[#867461] tracking-wider uppercase">
@@ -596,7 +616,7 @@ export default function Landing() {
                         <button
                           onClick={() => handleStart(pollItem)}
                           disabled={isStarting || isExpiredLocal}
-                          className="tactile-btn-red w-full py-3.5 px-4 rounded-xl font-sans font-bold text-sm sm:text-base flex items-center justify-center gap-2 disabled:opacity-50 select-none cursor-pointer mt-1"
+                          className="tactile-btn-red w-full py-3.5 px-4 rounded-xl font-sans font-bold text-sm sm:text-base flex items-center justify-center gap-2 disabled:opacity-50 select-none cursor-pointer mt-1 shimmer-fast"
                         >
                           <span>{isStarting ? 'Starting…' : isExpiredLocal ? 'Wait...' : 'Play Challenge'}</span>
                           <span className="text-lg leading-none">➔</span>
@@ -622,12 +642,13 @@ export default function Landing() {
 
         {/* Bottom Navigation Bar: Docked Responsive Command Center */}
         <nav className="fixed bottom-0 left-0 right-0 w-full z-50 flex justify-center pb-safe px-3 sm:px-4">
-          <div className="bottom-nav-dock flex justify-around items-center px-3 sm:px-6 py-2 sm:py-2.5 bg-white/95 backdrop-blur-md rounded-t-2xl border-t border-[#E5E1D8] shadow-[0_-4px_24px_rgba(39,34,26,0.08)]">
+          <div className="bottom-nav-dock flex justify-around items-center px-3 sm:px-6 py-2 sm:py-2.5 glass-nav rounded-2xl border-t border-[#E5E1D8] shadow-[0_-4px_24px_rgba(39,34,26,0.08)] mb-2">
             {/* Home Tab (ACTIVE) */}
             <button
               onClick={() => navigate('/student')}
-              className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 bg-[#F59E0B] text-[#613B00] rounded-xl px-3.5 sm:px-5 py-1.5 sm:py-2 font-bold shadow-[0_2px_0_#613B00] active:scale-95 transition-all select-none cursor-pointer"
+              className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 bg-gradient-to-r from-[#F59E0B] to-[#FBBF24] text-[#613B00] rounded-xl px-3.5 sm:px-5 py-1.5 sm:py-2 font-bold shadow-[0_2px_0_#613B00] active:scale-95 transition-all select-none cursor-pointer relative"
             >
+              <div className="absolute -top-1 w-1.5 h-1.5 rounded-full bg-[#855300]"></div>
               <span className="text-lg sm:text-xl leading-none">🎮</span>
               <span className="font-sans text-[11px] sm:text-xs md:text-sm">Home</span>
             </button>
@@ -635,7 +656,7 @@ export default function Landing() {
             {/* Compete Tab */}
             <button
               onClick={() => navigate('/social')}
-              className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 text-[#534434] hover:text-[#855300] px-3 sm:px-4 py-1.5 sm:py-2 font-semibold active:scale-95 transition-all select-none cursor-pointer rounded-xl hover:bg-[#FAF8F5]"
+              className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 text-[#534434] hover:text-[#855300] hover:scale-105 px-3 sm:px-4 py-1.5 sm:py-2 font-semibold active:scale-95 transition-all select-none cursor-pointer rounded-xl"
             >
               <span className="text-lg sm:text-xl leading-none">🏆</span>
               <span className="font-sans text-[11px] sm:text-xs md:text-sm">Compete</span>
@@ -644,7 +665,7 @@ export default function Landing() {
             {/* Leaderboard Tab */}
             <button
               onClick={() => navigate('/student/leaderboard')}
-              className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 text-[#534434] hover:text-[#855300] px-3 sm:px-4 py-1.5 sm:py-2 font-semibold active:scale-95 transition-all select-none cursor-pointer rounded-xl hover:bg-[#FAF8F5]"
+              className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 text-[#534434] hover:text-[#855300] hover:scale-105 px-3 sm:px-4 py-1.5 sm:py-2 font-semibold active:scale-95 transition-all select-none cursor-pointer rounded-xl"
             >
               <span className="text-lg sm:text-xl leading-none">🏅</span>
               <span className="font-sans text-[11px] sm:text-xs md:text-sm">Leaderboard</span>
@@ -653,7 +674,7 @@ export default function Landing() {
             {/* Profile Tab */}
             <button
               onClick={() => navigate('/stats')}
-              className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 text-[#534434] hover:text-[#855300] px-3 sm:px-4 py-1.5 sm:py-2 font-semibold active:scale-95 transition-all select-none cursor-pointer rounded-xl hover:bg-[#FAF8F5]"
+              className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 text-[#534434] hover:text-[#855300] hover:scale-105 px-3 sm:px-4 py-1.5 sm:py-2 font-semibold active:scale-95 transition-all select-none cursor-pointer rounded-xl"
             >
               <span className="text-lg sm:text-xl leading-none">👤</span>
               <span className="font-sans text-[11px] sm:text-xs md:text-sm">Profile</span>

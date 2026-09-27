@@ -5,13 +5,10 @@ import type { BranchBattleEntry } from '../api';
 
 export default function SocialHub() {
   const navigate = useNavigate();
-  
   const [branchLeaderboard, setBranchLeaderboard] = useState<BranchBattleEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
     setLoading(true);
@@ -23,38 +20,40 @@ export default function SocialHub() {
     }
   };
 
+  const getBranchColor = (branch: string) => {
+    const b = branch.toUpperCase();
+    if (b.includes('COMP')) return 'bg-[#3B82F6] text-white';
+    if (b.includes('IT')) return 'bg-[#8B5CF6] text-white';
+    if (b.includes('AIDS') || b.includes('AI')) return 'bg-[#14B8A6] text-white';
+    if (b.includes('ENTC')) return 'bg-[#F59E0B] text-white';
+    if (b.includes('EXTC')) return 'bg-[#DB3320] text-white';
+    return 'bg-[#867461] text-white';
+  };
+
   return (
     <div className="paper-texture min-h-screen text-[#18181B] selection:bg-[#FFDAD4] selection:text-[#400100] flex flex-col justify-between">
-      {/* Widescreen 16:9 responsive container */}
       <div className="w-full min-h-screen flex flex-col bg-[#FAF8F5] relative pb-28">
-        
-        {/* TopAppBar: Sticky editorial brand masthead */}
         <header className="w-full sticky top-0 z-40 bg-[#FAF8F5]/90 backdrop-blur-md border-b border-[#E5E1D8]/80 shadow-[0_2px_4px_rgba(39,34,26,0.04)]">
           <div className="screen-container flex justify-between items-center py-3.5 sm:py-4">
             <div className="flex items-center gap-2.5">
-              <span className="font-serif text-2xl sm:text-3xl font-semibold text-[#855300] tracking-tight">
-                Competition & Rivals
-              </span>
+              <span className="font-serif text-2xl sm:text-3xl font-semibold text-[#855300] tracking-tight">Competition & Rivals</span>
             </div>
-            {/* Minimal Back to Home Action */}
-            <button
-              onClick={() => navigate('/student')}
-              className="px-3.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-bold rounded-full border border-[#D8C3AD]/60 text-[#867461] hover:text-[#18181B] bg-white/70 hover:bg-white shadow-[0_1px_0_#E2DDD2] transition-all active:translate-y-0.5 cursor-pointer"
-            >
+            <button onClick={() => navigate('/student')} className="px-3.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-bold rounded-full border border-[#D8C3AD]/60 text-[#867461] hover:text-[#18181B] bg-white/70 hover:bg-white shadow-[0_1px_0_#E2DDD2] transition-all active:translate-y-0.5 cursor-pointer">
               Home ➔
             </button>
           </div>
         </header>
 
         <main className="screen-container pt-6 sm:pt-8 md:pt-10 flex-1 flex flex-col gap-6 sm:gap-8">
-          {/* Header section */}
-          <section className="flex flex-col gap-1">
-            <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl text-[#18181B] font-bold tracking-tight leading-tight">
-              The Arena
+          <section className="flex flex-col gap-1 text-center sm:text-left">
+            <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl text-[#18181B] font-extrabold tracking-tight leading-tight flex items-center gap-3">
+              ⚔️ The Arena
             </h1>
-            <p className="font-sans text-xs sm:text-sm text-[#867461] uppercase tracking-wider font-bold">
-              Campus Branch Standings & Rivalries
-            </p>
+            <div className="inline-flex mt-2">
+              <span className="font-sans text-xs sm:text-sm text-white bg-[#18181B] px-4 py-1.5 rounded-full uppercase tracking-wider font-bold shimmer inline-block">
+                Campus Branch Standings & Rivalries
+              </span>
+            </div>
           </section>
 
           {loading ? (
@@ -80,30 +79,43 @@ export default function SocialHub() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
                   {branchLeaderboard.map((entry, idx) => {
                     const isFirst = idx === 0;
+                    const accentColor = getBranchColor(entry.branch);
                     return (
                       <div
                         key={entry.branch}
-                        className={`relative bg-white rounded-2xl p-5 sm:p-6 flex items-center justify-between border shadow-[0_3px_0_#E2DDD2] ${
-                          isFirst ? 'border-[#FDBA74]' : 'border-[#E5E1D8]'
+                        className={`card-lift relative bg-white rounded-2xl p-5 sm:p-6 flex flex-col justify-between border shadow-[0_3px_0_#E2DDD2] gap-4 ${
+                          isFirst ? 'glow-gold shimmer border-[#FDBA74] scale-[1.02] transform origin-bottom z-10' : 'border-[#E5E1D8]'
                         }`}
                       >
-                        {isFirst && <div className="absolute top-0 bottom-0 left-0 w-2 rounded-l-2xl bg-[#F59E0B]" />}
-                        <div className={`flex items-center gap-4 ${isFirst ? 'ml-1' : ''}`}>
-                          <span className={`font-serif font-extrabold text-2xl sm:text-3xl w-8 text-center ${isFirst ? 'text-[#F59E0B]' : 'text-[#D8C3AD]'}`}>
-                            #{idx + 1}
-                          </span>
-                          <div>
-                            <div className="font-sans font-bold text-[#18181B] text-lg sm:text-xl leading-tight">{entry.branch}</div>
-                            <div className="text-xs font-bold text-[#867461] uppercase tracking-wide mt-1">
-                              {entry.totalAttempts} total attempt{entry.totalAttempts !== 1 ? 's' : ''}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <span className={`font-serif font-extrabold text-3xl sm:text-4xl w-10 text-center ${isFirst ? 'text-[#F59E0B] drop-shadow-md' : 'text-[#D8C3AD]'}`}>
+                              #{idx + 1}
+                            </span>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className={`px-2.5 py-0.5 rounded-md text-xs font-bold ${accentColor} shadow-sm`}>
+                                  {entry.branch}
+                                </span>
+                              </div>
+                              <div className="text-[10px] font-bold text-[#867461] uppercase tracking-wide mt-1.5">
+                                {entry.totalAttempts} total attempt{entry.totalAttempts !== 1 ? 's' : ''}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        <div className="flex flex-col items-end">
-                          <div className={`font-sans font-extrabold text-2xl sm:text-3xl tabular-nums ${isFirst ? 'text-[#B45309]' : 'text-[#18181B]'}`}>
-                            {entry.accuracy}<span className="text-sm sm:text-base ml-0.5">%</span>
+                          <div className="flex flex-col items-end">
+                            <div className={`font-sans font-black text-2xl sm:text-3xl tabular-nums ${isFirst ? 'text-[#B45309]' : 'text-[#18181B]'}`}>
+                              {entry.accuracy}<span className="text-sm sm:text-base ml-0.5">%</span>
+                            </div>
+                            <span className="text-[10px] font-bold text-[#867461] uppercase">Accuracy</span>
                           </div>
-                          <span className="text-[10px] font-bold text-[#867461] uppercase">Accuracy</span>
+                        </div>
+                        
+                        <div className="w-full bg-[#F0EDF1] h-2.5 rounded-full overflow-hidden border border-[#E5E1D8]">
+                          <div 
+                            className={`h-full progress-glow ${accentColor}`} 
+                            style={{ width: `${Math.min(100, Math.max(0, entry.accuracy))}%` }}
+                          />
                         </div>
                       </div>
                     );
@@ -114,43 +126,19 @@ export default function SocialHub() {
           )}
         </main>
 
-        {/* Bottom Navigation Bar */}
         <nav className="fixed bottom-0 left-0 right-0 w-full z-50 flex justify-center pb-safe px-3 sm:px-4">
-          <div className="bottom-nav-dock flex justify-around items-center px-3 sm:px-6 py-2 sm:py-2.5 bg-white/95 backdrop-blur-md rounded-t-2xl border-t border-[#E5E1D8] shadow-[0_-4px_24px_rgba(39,34,26,0.08)]">
-            {/* Home Tab */}
-            <button
-              onClick={() => navigate('/student')}
-              className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 text-[#534434] hover:text-[#855300] px-3 sm:px-4 py-1.5 sm:py-2 font-semibold active:scale-95 transition-all select-none cursor-pointer rounded-xl hover:bg-[#FAF8F5]"
-            >
-              <span className="text-lg sm:text-xl leading-none">🎮</span>
-              <span className="font-sans text-[11px] sm:text-xs md:text-sm">Home</span>
+          <div className="bottom-nav-dock glass-nav flex justify-around items-center px-3 sm:px-6 py-2 sm:py-2.5 bg-white/95 backdrop-blur-md rounded-t-2xl border-t border-[#E5E1D8] shadow-[0_-4px_24px_rgba(39,34,26,0.08)]">
+            <button onClick={() => navigate('/student')} className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 text-[#534434] hover:text-[#855300] px-3 sm:px-4 py-1.5 sm:py-2 font-semibold active:scale-95 transition-all select-none cursor-pointer rounded-xl hover:bg-[#FAF8F5]">
+              <span className="text-lg sm:text-xl leading-none">🎮</span><span className="font-sans text-[11px] sm:text-xs md:text-sm">Home</span>
             </button>
-            
-            {/* Compete Tab (ACTIVE) */}
-            <button
-              onClick={() => navigate('/social')}
-              className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 bg-[#F59E0B] text-[#613B00] rounded-xl px-3.5 sm:px-5 py-1.5 sm:py-2 font-bold shadow-[0_2px_0_#613B00] active:scale-95 transition-all select-none cursor-pointer"
-            >
-              <span className="text-lg sm:text-xl leading-none">🏆</span>
-              <span className="font-sans text-[11px] sm:text-xs md:text-sm">Compete</span>
+            <button onClick={() => navigate('/social')} className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 bg-[#F59E0B] text-[#613B00] rounded-xl px-3.5 sm:px-5 py-1.5 sm:py-2 font-bold shadow-[0_2px_0_#613B00] active:scale-95 transition-all select-none cursor-pointer">
+              <span className="text-lg sm:text-xl leading-none">🏆</span><span className="font-sans text-[11px] sm:text-xs md:text-sm">Compete</span>
             </button>
-
-            {/* Leaderboard Tab */}
-            <button
-              onClick={() => navigate('/student/leaderboard')}
-              className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 text-[#534434] hover:text-[#855300] px-3 sm:px-4 py-1.5 sm:py-2 font-semibold active:scale-95 transition-all select-none cursor-pointer rounded-xl hover:bg-[#FAF8F5]"
-            >
-              <span className="text-lg sm:text-xl leading-none">🏅</span>
-              <span className="font-sans text-[11px] sm:text-xs md:text-sm">Leaderboard</span>
+            <button onClick={() => navigate('/student/leaderboard')} className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 text-[#534434] hover:text-[#855300] px-3 sm:px-4 py-1.5 sm:py-2 font-semibold active:scale-95 transition-all select-none cursor-pointer rounded-xl hover:bg-[#FAF8F5]">
+              <span className="text-lg sm:text-xl leading-none">🏅</span><span className="font-sans text-[11px] sm:text-xs md:text-sm">Leaderboard</span>
             </button>
-
-            {/* Profile Tab */}
-            <button
-              onClick={() => navigate('/stats')}
-              className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 text-[#534434] hover:text-[#855300] px-3 sm:px-4 py-1.5 sm:py-2 font-semibold active:scale-95 transition-all select-none cursor-pointer rounded-xl hover:bg-[#FAF8F5]"
-            >
-              <span className="text-lg sm:text-xl leading-none">👤</span>
-              <span className="font-sans text-[11px] sm:text-xs md:text-sm">Profile</span>
+            <button onClick={() => navigate('/stats')} className="flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 text-[#534434] hover:text-[#855300] px-3 sm:px-4 py-1.5 sm:py-2 font-semibold active:scale-95 transition-all select-none cursor-pointer rounded-xl hover:bg-[#FAF8F5]">
+              <span className="text-lg sm:text-xl leading-none">👤</span><span className="font-sans text-[11px] sm:text-xs md:text-sm">Profile</span>
             </button>
           </div>
         </nav>
