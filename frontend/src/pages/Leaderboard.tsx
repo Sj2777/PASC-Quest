@@ -112,7 +112,7 @@ export default function Leaderboard() {
         <header className="w-full sticky top-0 z-40 bg-[#FAF8F5]/90 backdrop-blur-md border-b border-[#E5E1D8]/80 shadow-[0_2px_4px_rgba(39,34,26,0.04)]">
           <div className="screen-container flex justify-between items-center py-3.5 sm:py-4">
             <div className="flex items-center gap-2.5">
-              <span className="font-serif text-2xl sm:text-3xl font-semibold text-[#855300] tracking-tight">Competition Standings</span>
+              <span className="font-serif text-xl sm:text-2xl font-semibold text-[#855300] tracking-tight">Competition Standings</span>
             </div>
             <button onClick={() => navigate('/student')} className="px-3.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-bold rounded-full border border-[#D8C3AD]/60 text-[#867461] hover:text-[#18181B] bg-white/70 hover:bg-white shadow-[0_1px_0_#E2DDD2] transition-all active:translate-y-0.5 cursor-pointer">
               Home ➔
@@ -122,8 +122,8 @@ export default function Leaderboard() {
 
         <main className="screen-container max-w-4xl mx-auto pt-6 sm:pt-8 md:pt-10 flex-1 flex flex-col gap-6 sm:gap-8">
           <motion.div initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 12 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center text-center mt-2 tactile-card rounded-2xl p-6 bg-white border border-[#D8C3AD]/60 shimmer">
-            <div className="text-4xl sm:text-5xl mb-2 opacity-90">🏆</div>
-            <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl font-extrabold text-[#18181B] tracking-tight leading-none mb-3">Round Leaderboard</h1>
+            <div className="text-3xl sm:text-4xl mb-2 opacity-90">🏆</div>
+            <h1 className="font-serif text-xl sm:text-2xl md:text-4xl font-extrabold text-[#18181B] tracking-tight leading-none mb-3">Round Leaderboard</h1>
             <div className="flex items-center gap-2 mb-3">
               {isLive && <LiveBadge />}
               {data && <span className="font-sans text-xs sm:text-sm font-bold uppercase tracking-wider text-[#867461] bg-[#E5E1D8]/40 px-3 py-1 rounded-full">{data.total} Participant{data.total !== 1 ? 's' : ''}</span>}
@@ -158,14 +158,14 @@ export default function Leaderboard() {
                         className={`flex flex-col items-center gap-2.5 w-24 sm:w-32 md:w-40 lg:w-44 ${isFirst ? 'glow-gold z-10 scale-105' : e.rank === 2 ? 'glow-amber' : ''}`}
                       >
                         <div className="text-center w-full">
-                          <div className="text-4xl sm:text-5xl mb-1.5 drop-shadow-md">{MEDAL[e.rank - 1]}</div>
+                          <div className="text-3xl sm:text-4xl mb-1.5 drop-shadow-md">{MEDAL[e.rank - 1]}</div>
                           <p className={`font-sans text-xs sm:text-sm font-bold truncate ${e.isMe ? 'text-[#DB3320]' : 'text-[#18181B]'}`}>{e.nickname}</p>
                           <p className="font-sans text-[11px] sm:text-xs font-semibold text-[#867461] flex items-center justify-center gap-1 mt-0.5">
                             {formatTime(e.timeTakenMs)} {getSpeedBadge(e.timeTakenMs)}
                           </p>
                         </div>
                         <div className={`w-full ${h} ${bg} border-t-2 border-l-2 border-r-2 ${border} rounded-t-2xl flex items-center justify-center shadow-[inset_0_4px_12px_rgba(255,255,255,0.4)]`}>
-                          <span className={`font-serif text-3xl sm:text-4xl font-extrabold ${text} drop-shadow-sm`}>#{e.rank}</span>
+                          <span className={`font-serif text-xl sm:text-2xl font-extrabold ${text} drop-shadow-sm`}>#{e.rank}</span>
                         </div>
                       </motion.div>
                     );

@@ -191,16 +191,16 @@ export default function StudentAuth() {
           <div className="lg:col-span-6 text-center lg:text-left flex flex-col items-center lg:items-start relative">
             
             {/* Floating Emoji Particles */}
-            <span className="absolute -top-10 left-10 text-3xl float-gentle opacity-80" style={{ animationDelay: '0s' }}>🎯</span>
+            <span className="absolute -top-10 left-10 text-2xl float-gentle opacity-80" style={{ animationDelay: '0s' }}>🎯</span>
             <span className="absolute top-20 -left-6 text-2xl float-gentle opacity-70" style={{ animationDelay: '1s' }}>⚡</span>
-            <span className="absolute top-40 right-10 text-4xl float-gentle opacity-90" style={{ animationDelay: '2s' }}>🔥</span>
-            <span className="absolute -bottom-10 left-1/3 text-3xl float-gentle opacity-80" style={{ animationDelay: '1.5s' }}>🏆</span>
+            <span className="absolute top-40 right-10 text-2xl float-gentle opacity-90" style={{ animationDelay: '2s' }}>🔥</span>
+            <span className="absolute -bottom-10 left-1/3 text-2xl float-gentle opacity-80" style={{ animationDelay: '1.5s' }}>🏆</span>
 
-            <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-[#FFF5F4] border border-[#FCA5A5] mb-5 shadow-sm shimmer relative overflow-hidden">
-              <span className="text-3xl sm:text-4xl relative z-10">🎯</span>
+            <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-[#FFF5F4] border border-[#FCA5A5] mb-5 shadow-sm shimmer relative overflow-hidden">
+              <span className="text-xl sm:text-2xl relative z-10">🎯</span>
             </div>
             
-            <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-semibold text-[#18181B] tracking-tight">
+            <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-semibold text-[#18181B] tracking-tight">
               QuizPop
             </h1>
             <p className="mt-3 text-base sm:text-lg text-[#534434] font-medium max-w-md">
@@ -264,7 +264,7 @@ export default function StudentAuth() {
                 </button>
               </div>
 
-              <h2 className="font-serif text-2xl sm:text-3xl font-medium text-[#18181B] mb-2">
+              <h2 className="font-serif text-xl sm:text-2xl font-medium text-[#18181B] mb-2">
                 {mode === 'register' ? 'Create your account' : 'Welcome back'}
               </h2>
               <p className="text-xs sm:text-sm text-[#534434] mb-6">

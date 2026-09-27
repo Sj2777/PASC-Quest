@@ -158,7 +158,7 @@ export default function ResultPage() {
                   initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 20, scale: 0.7 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   transition={{ delay: i * 0.15, type: 'spring', stiffness: 260 }}
-                  className="text-3xl sm:text-4xl absolute float-gentle"
+                  className="text-2xl sm:text-3xl absolute float-gentle"
                   style={{ left: `calc(50% + ${(i - 1.5) * 40}px)`, animationDelay: `${i * 0.5}s` }}
                 >
                   {e}
@@ -168,7 +168,7 @@ export default function ResultPage() {
           )}
 
           {/* Editorial Headline */}
-          <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-[#18181B] leading-tight">
+          <h1 className="font-serif text-2xl sm:text-3xl md:text-3xl font-bold tracking-tight text-[#18181B] leading-tight">
             {config.title}
           </h1>
 
@@ -179,7 +179,7 @@ export default function ResultPage() {
 
           {/* Points & Streak Feedback */}
           <div className="flex flex-wrap items-center justify-center gap-3 mt-4">
-            <div className={`font-sans font-extrabold text-3xl sm:text-4xl md:text-5xl px-6 py-2 rounded-2xl bg-white border border-[#E5E1D8] shadow-sm ${outcome === 'correct' ? 'text-[#006C49] glow-gold golden-flash' : 'text-[#855300]'}`}>
+            <div className={`font-sans font-extrabold text-2xl sm:text-3xl md:text-3xl px-6 py-2 rounded-2xl bg-white border border-[#E5E1D8] shadow-sm ${outcome === 'correct' ? 'text-[#006C49] glow-gold golden-flash' : 'text-[#855300]'}`}>
               {state.result.awardedPoints != null ? (state.result.awardedPoints === 0 ? '0 pts' : `+${state.result.awardedPoints} pts`) : '0 pts'}
             </div>
             {me?.currentStreak !== undefined && me.currentStreak > 0 && (
@@ -292,7 +292,7 @@ export default function ResultPage() {
                     initial={{ y: -10, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.6, type: "spring" }}
-                    className="absolute -top-6 -right-2 text-4xl float-gentle z-20 drop-shadow-md"
+                    className="absolute -top-6 -right-2 text-3xl float-gentle z-20 drop-shadow-md"
                   >
                     👑
                   </motion.div>

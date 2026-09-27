@@ -214,7 +214,7 @@ export default function Landing() {
   const rankRingClass = totalPts >= 500 ? 'rank-ring-gold' : totalPts >= 200 ? 'rank-ring-silver' : 'rank-ring-bronze';
 
   return (
-    <div className="paper-texture min-h-screen text-[#18181B] selection:bg-[#FFDAD4] selection:text-[#400100] flex flex-col justify-between">
+    <div className="paper-texture min-h-screen text-[#18181B] selection:bg-[#FFDAD4] selection:text-[#400100] flex flex-col justify-between overflow-hidden w-full max-w-full">
       {/* Widescreen 16:9 full-width responsive envelope */}
       <div className="w-full min-h-screen flex flex-col bg-[#FAF8F5] relative pb-28">
         
@@ -223,7 +223,7 @@ export default function Landing() {
           <div className="screen-container flex justify-between items-center py-3 sm:py-4">
             {/* Leading: Student initial badge & Newsreader brand */}
             <div className="flex items-center gap-3">
-              <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-full ring-2 ring-[#E5E1D8] bg-[#F0EDF1] flex items-center justify-center font-bold text-[#855300] text-sm sm:text-base shadow-sm select-none ${rankRingClass}`}>
+              <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full ring-2 ring-[#E5E1D8] bg-[#F0EDF1] flex items-center justify-center font-bold text-[#855300] text-sm sm:text-base shadow-sm select-none ${rankRingClass}`}>
                 {student?.nickname ? student.nickname.charAt(0).toUpperCase() : 'Q'}
               </div>
               <span className="font-serif text-2xl sm:text-3xl font-semibold text-[#855300] tracking-tight">
@@ -238,7 +238,7 @@ export default function Landing() {
                 className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 bg-white rounded-full border border-[#D8C3AD]/60 shadow-[0_2px_0_#E2DDD2] active:translate-y-0.5 transition-all text-xs sm:text-sm font-bold text-[#18181B] select-none ${currentStreak > 2 ? 'fire-particles' : ''} ${currentStreak > 0 ? 'glow-amber' : ''}`}
                 title="Current active streak"
               >
-                <span className="text-base sm:text-lg">🔥</span>
+                <span className="text-sm sm:text-base">🔥</span>
                 <span>{currentStreak} {currentStreak === 1 ? 'day' : 'days'}</span>
               </div>
 
@@ -247,7 +247,7 @@ export default function Landing() {
                 className="flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 bg-white rounded-full border border-[#FDBA74] shadow-[0_2px_0_#FED7AA] active:translate-y-0.5 transition-all text-xs sm:text-sm font-bold text-[#855300] select-none glow-gold"
                 title="Total points earned"
               >
-                <span className="text-base sm:text-lg">⭐</span>
+                <span className="text-sm sm:text-base">⭐</span>
                 <span className="tabular-nums font-extrabold">{totalPts} pts</span>
               </div>
 
@@ -278,7 +278,7 @@ export default function Landing() {
                 <p className="font-sans text-xs sm:text-sm font-bold tracking-wider text-[#867461] uppercase break-words">
                   {timeGreeting}, {student?.nickname || 'STUDENT'}
                 </p>
-                <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl text-[#18181B] font-semibold tracking-tight">
+                <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl text-[#18181B] font-semibold tracking-tight">
                   {tagline}
                 </h1>
               </section>
@@ -408,7 +408,7 @@ export default function Landing() {
                       className="tactile-card rounded-2xl p-5 sm:p-6 text-center bg-white border border-[#FDBA74] shadow-[0_4px_0_#FED7AA] shimmer glow-amber"
                     >
                       <span className="text-4xl block mb-2 float-gentle">🔥</span>
-                      <h3 className="font-serif text-xl sm:text-2xl font-bold text-[#855300]">
+                      <h3 className="font-serif text-lg sm:text-xl font-bold text-[#855300]">
                         {milestone} Day Streak Milestone!
                       </h3>
                       <p className="font-sans text-xs sm:text-sm text-[#534434] mt-1 font-medium">
@@ -424,7 +424,7 @@ export default function Landing() {
                       className="tactile-card rounded-2xl p-5 sm:p-6 text-center bg-[#ECFDF5] border border-[#A7F3D0] shadow-[0_4px_0_#BBF7D0] shimmer glow-green"
                     >
                       <span className="text-4xl block mb-2 float-gentle">🛡️</span>
-                      <h3 className="font-serif text-xl sm:text-2xl font-bold text-[#006C49]">Streak Restored!</h3>
+                      <h3 className="font-serif text-lg sm:text-xl font-bold text-[#006C49]">Streak Restored!</h3>
                       <p className="font-sans text-xs sm:text-sm text-[#065F46] mt-1 font-medium">
                         Your {restoredStreak}-day streak is officially back.
                       </p>
@@ -501,7 +501,7 @@ export default function Landing() {
             {/* Right Column: Daily Quests / Active Questions Grid */}
             <div className="lg:col-span-7 flex flex-col gap-5">
               <div className="flex items-center justify-between pb-1">
-                <h2 className="font-serif text-2xl sm:text-3xl text-[#18181B] font-medium">Available quiz questions</h2>
+                <h2 className="font-serif text-lg sm:text-xl text-[#18181B] font-medium">Available quiz questions</h2>
                 <span className="font-sans text-xs sm:text-sm font-bold text-[#534434] tracking-wider uppercase px-3 py-1.5 rounded-full bg-[#F0EDF1] border border-[#E5E1D8]">
                   {activeCount} ACTIVE
                 </span>
@@ -517,7 +517,7 @@ export default function Landing() {
                   <div className="w-16 h-16 rounded-full bg-[#F0EDF1] flex items-center justify-center text-3xl mb-4 float-gentle">
                     ☕
                   </div>
-                  <h3 className="font-serif text-2xl sm:text-3xl font-bold text-[#18181B]">Nothing live yet</h3>
+                  <h3 className="font-serif text-lg sm:text-xl font-bold text-[#18181B]">Nothing live yet</h3>
                   <p className="font-sans text-sm text-[#867461] mt-2 max-w-sm">
                     No questions are available right now. Check back soon for the next question round!
                   </p>
@@ -589,7 +589,7 @@ export default function Landing() {
                             </span>
                           </div>
 
-                          <h3 className="font-serif text-xl sm:text-2xl text-[#18181B] leading-snug font-medium line-clamp-3">
+                          <h3 className="font-serif text-lg sm:text-xl text-[#18181B] leading-snug font-medium line-clamp-3">
                             {pollItem.text}
                           </h3>
                           <div className="flex flex-wrap items-center gap-2 text-[#534434] font-sans text-xs sm:text-sm mt-1">

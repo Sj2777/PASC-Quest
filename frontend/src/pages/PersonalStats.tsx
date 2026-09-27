@@ -148,7 +148,7 @@ export default function PersonalStats() {
         <header className="w-full sticky top-0 z-40 bg-[#FAF8F5]/90 backdrop-blur-md border-b border-[#E5E1D8]/80 shadow-[0_2px_4px_rgba(39,34,26,0.04)]">
           <div className="screen-container flex justify-between items-center py-3.5 sm:py-4">
             <div className="flex items-center gap-2.5">
-              <span className="font-serif text-2xl sm:text-3xl font-semibold text-[#855300] tracking-tight">
+              <span className="font-serif text-xl sm:text-2xl font-semibold text-[#855300] tracking-tight">
                 Profile & Telemetry
               </span>
             </div>
@@ -193,7 +193,7 @@ export default function PersonalStats() {
                     </div>
                     <div className="flex flex-col min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h1 className="font-serif text-2xl sm:text-3xl text-[#18181B] font-bold tracking-tight truncate">
+                        <h1 className="font-serif text-xl sm:text-2xl text-[#18181B] font-bold tracking-tight truncate">
                           @{me?.nickname || 'Student'}
                         </h1>
                         {me?.branch && (
@@ -236,37 +236,37 @@ export default function PersonalStats() {
                     <div className="grid grid-cols-2 gap-2.5">
                       <div className="rounded-xl p-3 bg-[#FFFBEB] border border-[#FDBA74]/50 flex flex-col glow-amber">
                         <span className="font-sans text-[10px] font-bold uppercase tracking-wider text-[#855300] flex items-center gap-1">⭐ Total Points</span>
-                        <div className="font-sans font-black text-2xl sm:text-3xl text-[#B45309] mt-0.5 leading-tight tabular-nums drop-shadow-sm">
+                        <div className="font-sans font-black text-xl sm:text-2xl text-[#B45309] mt-0.5 leading-tight tabular-nums drop-shadow-sm">
                           {stats.totalPoints}<span className="text-sm font-semibold ml-0.5">pts</span>
                         </div>
                       </div>
                       <div className="rounded-xl p-3 bg-[#FAF8F5] border border-[#D8C3AD]/50 flex flex-col">
                         <span className="font-sans text-[10px] font-bold uppercase tracking-wider text-[#867461] flex items-center gap-1">🎯 Accuracy</span>
-                        <div className="font-sans font-black text-2xl sm:text-3xl text-[#18181B] mt-0.5 leading-tight tabular-nums">
+                        <div className="font-sans font-black text-xl sm:text-2xl text-[#18181B] mt-0.5 leading-tight tabular-nums">
                           {stats.accuracy}<span className="text-sm font-semibold ml-0.5">%</span>
                         </div>
                       </div>
                       <div className="rounded-xl p-3 bg-[#FAF8F5] border border-[#D8C3AD]/50 flex flex-col">
                         <span className="font-sans text-[10px] font-bold uppercase tracking-wider text-[#867461] flex items-center gap-1">⚡ Avg Speed</span>
-                        <div className="font-sans font-black text-2xl sm:text-3xl text-[#18181B] mt-0.5 leading-tight tabular-nums">
+                        <div className="font-sans font-black text-xl sm:text-2xl text-[#18181B] mt-0.5 leading-tight tabular-nums">
                           {stats.avgTimeMs !== null ? (stats.avgTimeMs / 1000).toFixed(1) : '-'}<span className="text-sm font-semibold ml-0.5">s</span>
                         </div>
                       </div>
                       <div className={`rounded-xl p-3 bg-[#FFF0EE] border border-[#FFDAD4] flex flex-col ${stats.currentStreak > 0 ? 'fire-particles' : ''}`}>
                         <span className="font-sans text-[10px] font-bold uppercase tracking-wider text-[#B71607] flex items-center gap-1">🔥 Current Streak</span>
-                        <div className="font-sans font-black text-2xl sm:text-3xl text-[#DB3320] mt-0.5 leading-tight tabular-nums drop-shadow-sm">
+                        <div className="font-sans font-black text-xl sm:text-2xl text-[#DB3320] mt-0.5 leading-tight tabular-nums drop-shadow-sm">
                           {stats.currentStreak}<span className="text-sm font-semibold ml-0.5">d</span>
                         </div>
                       </div>
                       <div className="rounded-xl p-3 bg-[#FFFBEB] border border-[#FDE68A] flex flex-col">
                         <span className="font-sans text-[10px] font-bold uppercase tracking-wider text-[#855300] flex items-center gap-1">🏆 Best Streak</span>
-                        <div className="font-sans font-black text-2xl sm:text-3xl text-[#855300] mt-0.5 leading-tight tabular-nums">
+                        <div className="font-sans font-black text-xl sm:text-2xl text-[#855300] mt-0.5 leading-tight tabular-nums">
                           {stats.bestStreak}<span className="text-sm font-semibold ml-0.5">d</span>
                         </div>
                       </div>
                       <div className="rounded-xl p-3 bg-[#ECFDF5] border border-[#A7F3D0] flex flex-col">
                         <span className="font-sans text-[10px] font-bold uppercase tracking-wider text-[#006C49] flex items-center gap-1">📚 Archived Qs</span>
-                        <div className="font-sans font-black text-2xl sm:text-3xl text-[#006C49] mt-0.5 leading-tight tabular-nums">
+                        <div className="font-sans font-black text-xl sm:text-2xl text-[#006C49] mt-0.5 leading-tight tabular-nums">
                           {stats.questionArchive.length}
                         </div>
                       </div>
@@ -438,7 +438,7 @@ export default function PersonalStats() {
                     <div className="flex items-center justify-between border-b border-[#E5E1D8]/60 pb-3.5">
                       <div className="flex items-center gap-2.5">
                         <span className="text-xl">🗄️</span>
-                        <h2 className="font-serif text-2xl sm:text-3xl text-[#18181B] font-bold">Question Archive</h2>
+                        <h2 className="font-serif text-xl sm:text-2xl text-[#18181B] font-bold">Question Archive</h2>
                       </div>
                       {stats.questionArchive && (
                         <span className="font-sans text-xs sm:text-sm font-bold text-[#867461] bg-[#F4EFEA] px-3.5 py-1 rounded-full border border-[#E5E1D8]">

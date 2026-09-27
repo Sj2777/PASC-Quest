@@ -31,12 +31,12 @@ export default function SocialHub() {
   };
 
   return (
-    <div className="paper-texture min-h-screen text-[#18181B] selection:bg-[#FFDAD4] selection:text-[#400100] flex flex-col justify-between">
+    <div className="paper-texture min-h-screen text-[#18181B] selection:bg-[#FFDAD4] selection:text-[#400100] flex flex-col justify-between overflow-x-hidden w-full max-w-full">
       <div className="w-full min-h-screen flex flex-col bg-[#FAF8F5] relative pb-28">
         <header className="w-full sticky top-0 z-40 bg-[#FAF8F5]/90 backdrop-blur-md border-b border-[#E5E1D8]/80 shadow-[0_2px_4px_rgba(39,34,26,0.04)]">
           <div className="screen-container flex justify-between items-center py-3.5 sm:py-4">
             <div className="flex items-center gap-2.5">
-              <span className="font-serif text-2xl sm:text-3xl font-semibold text-[#855300] tracking-tight">Competition & Rivals</span>
+              <span className="font-serif text-xl sm:text-2xl font-semibold text-[#855300] tracking-tight">Competition & Rivals</span>
             </div>
             <button onClick={() => navigate('/student')} className="px-3.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-bold rounded-full border border-[#D8C3AD]/60 text-[#867461] hover:text-[#18181B] bg-white/70 hover:bg-white shadow-[0_1px_0_#E2DDD2] transition-all active:translate-y-0.5 cursor-pointer">
               Home ➔
@@ -46,7 +46,7 @@ export default function SocialHub() {
 
         <main className="screen-container pt-6 sm:pt-8 md:pt-10 flex-1 flex flex-col gap-6 sm:gap-8">
           <section className="flex flex-col gap-1 text-center sm:text-left">
-            <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl text-[#18181B] font-extrabold tracking-tight leading-tight flex items-center gap-3">
+            <h1 className="font-serif text-xl sm:text-2xl md:text-4xl text-[#18181B] font-extrabold tracking-tight leading-tight flex items-center gap-3">
               ⚔️ The Arena
             </h1>
             <div className="inline-flex mt-2">
@@ -89,7 +89,7 @@ export default function SocialHub() {
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
-                            <span className={`font-serif font-extrabold text-3xl sm:text-4xl w-10 text-center ${isFirst ? 'text-[#F59E0B] drop-shadow-md' : 'text-[#D8C3AD]'}`}>
+                            <span className={`font-serif font-extrabold text-xl sm:text-2xl w-10 text-center ${isFirst ? 'text-[#F59E0B] drop-shadow-md' : 'text-[#D8C3AD]'}`}>
                               #{idx + 1}
                             </span>
                             <div>
@@ -104,7 +104,7 @@ export default function SocialHub() {
                             </div>
                           </div>
                           <div className="flex flex-col items-end">
-                            <div className={`font-sans font-black text-2xl sm:text-3xl tabular-nums ${isFirst ? 'text-[#B45309]' : 'text-[#18181B]'}`}>
+                            <div className={`font-sans font-black text-xl sm:text-2xl tabular-nums ${isFirst ? 'text-[#B45309]' : 'text-[#18181B]'}`}>
                               {entry.accuracy}<span className="text-sm sm:text-base ml-0.5">%</span>
                             </div>
                             <span className="text-[10px] font-bold text-[#867461] uppercase">Accuracy</span>

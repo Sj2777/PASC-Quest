@@ -75,7 +75,7 @@ export default function OverallLeaderboard() {
         <header className="w-full sticky top-0 z-40 bg-[#FAF8F5]/90 backdrop-blur-md border-b border-[#E5E1D8]/80 shadow-[0_2px_4px_rgba(39,34,26,0.04)]">
           <div className="screen-container flex justify-between items-center py-3.5 sm:py-4">
             <div className="flex items-center gap-2.5">
-              <span className="font-serif text-2xl sm:text-3xl font-semibold text-[#855300] tracking-tight">Competition Hall</span>
+              <span className="font-serif text-xl sm:text-2xl font-semibold text-[#855300] tracking-tight">Competition Hall</span>
             </div>
             <button onClick={() => navigate('/student')} className="px-3.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-bold rounded-full border border-[#D8C3AD]/60 text-[#867461] hover:text-[#18181B] bg-white/70 hover:bg-white shadow-[0_1px_0_#E2DDD2] transition-all active:translate-y-0.5 cursor-pointer">
               Home ➔
@@ -86,7 +86,7 @@ export default function OverallLeaderboard() {
         <main className="screen-container max-w-4xl mx-auto pt-6 sm:pt-8 md:pt-10 flex-1 flex flex-col gap-6 sm:gap-8">
           <section className="text-center sm:text-left flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
-              <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl text-[#18181B] font-extrabold tracking-tight leading-tight">Overall Leaderboard</h1>
+              <h1 className="font-serif text-xl sm:text-2xl md:text-4xl text-[#18181B] font-extrabold tracking-tight leading-tight">Overall Leaderboard</h1>
               <p className="font-sans text-xs sm:text-sm text-[#867461] mt-1 uppercase tracking-wider font-bold">Campus-wide Hall of Fame & Cumulative Standings</p>
             </div>
             <div className="inline-flex self-center sm:self-auto p-1 bg-[#E5E1D8]/60 rounded-xl border border-[#D8C3AD]/40 shadow-inner" role="tablist">
@@ -143,7 +143,7 @@ export default function OverallLeaderboard() {
                         transition={{ duration: 0.4, delay: e.rank * 0.1 }}
                         className={`flex flex-col items-center w-24 sm:w-32 md:w-44 ${isFirst ? 'glow-gold z-10 scale-105' : ''}`}
                       >
-                        <span className="text-3xl sm:text-4xl mb-1 drop-shadow-md">{medal}</span>
+                        <span className="text-2xl sm:text-3xl mb-1 drop-shadow-md">{medal}</span>
                         <div className="font-sans font-bold text-xs sm:text-sm text-[#18181B] truncate max-w-full text-center">{e.nickname}</div>
                         <div className="font-sans text-[11px] sm:text-xs font-bold text-[#855300] mb-2 tabular-nums">{e.score} pts</div>
                         <div className={`w-full ${h} ${bg} border-2 ${border} rounded-t-2xl flex flex-col items-center justify-start pt-2 sm:pt-3 shadow-[0_4px_0_#A89F91] transition-all`}>

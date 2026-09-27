@@ -112,7 +112,7 @@ export default function QuestionPage() {
   const BADGE_COLORS = ['bg-[#3B82F6]', 'bg-[#10B981]', 'bg-[#F59E0B]', 'bg-[#8B5CF6]'];
 
   return (
-    <div className="paper-texture min-h-screen text-[#18181B] selection:bg-[#FFDAD4] selection:text-[#400100] flex flex-col justify-between">
+    <div className="paper-texture min-h-screen text-[#18181B] selection:bg-[#FFDAD4] selection:text-[#400100] flex flex-col justify-between overflow-x-hidden w-full max-w-full">
       {isUrgent && <div className="vignette-urgent fixed inset-0 pointer-events-none z-50"></div>}
       
       {/* Widescreen 16:9 full-screen responsive container */}
@@ -148,7 +148,7 @@ export default function QuestionPage() {
                 }`}
               >
                 {/* SVG Countdown Ring */}
-                <div className="relative w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center countdown-ring">
+                <div className="relative w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center countdown-ring">
                   <svg className="absolute top-0 left-0 w-full h-full -rotate-90" viewBox="0 0 40 40">
                     <circle cx="20" cy="20" r="16" fill="none" stroke="currentColor" strokeWidth="4" className={`opacity-20 ${isUrgent ? 'text-[#B71607]' : 'text-[#855300]'}`} />
                     <circle cx="20" cy="20" r="16" fill="none" stroke="currentColor" strokeWidth="4" 
@@ -214,7 +214,7 @@ export default function QuestionPage() {
               <div className="absolute -top-3.5 left-6 bg-[#18181B] text-[#FAF8F5] text-xs font-bold tracking-widest px-3 py-1 rounded uppercase shadow-sm shimmer overflow-hidden">
                 <span className="relative z-10">QUESTION</span>
               </div>
-              <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-[#18181B] leading-snug sm:leading-tight tracking-tight pt-2 font-semibold break-words relative z-10 bg-white">
+              <h1 className="font-serif text-xl sm:text-2xl md:text-3xl text-[#18181B] leading-snug sm:leading-tight tracking-tight pt-2 font-semibold break-words relative z-10 bg-white">
                 {poll.text}
               </h1>
             </motion.div>
@@ -258,7 +258,7 @@ export default function QuestionPage() {
                     <div className="flex items-center gap-3.5 sm:gap-4 min-w-0 pr-2 relative z-10">
                       {/* Left Letter Badge */}
                       <span
-                        className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center font-sans text-base sm:text-lg font-bold flex-shrink-0 transition-colors text-white shadow-sm ${
+                        className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center font-sans text-base sm:text-lg font-bold flex-shrink-0 transition-colors text-white shadow-sm ${
                           isSelected
                             ? 'bg-[#DB3320]'
                             : badgeColor
