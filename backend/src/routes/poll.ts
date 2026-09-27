@@ -63,6 +63,7 @@ router.get('/current', optionalStudentAuth, async (req: Request, res: Response) 
       launchedAt: l.launchedAt.toISOString(),
       expiresAt: new Date(l.launchedAt.getTime() + LAUNCH_LIFETIME_MS).toISOString(),
       completed: completedSet.has(l.id),
+      points: l.question.points,
       // correctIndex is intentionally omitted
     }));
 
@@ -189,6 +190,8 @@ router.post('/attempts', studentAuthMiddleware, async (req: Request, res: Respon
       result = 'WRONG';
     }
 
+    const awardedPoints = result === 'CORRECT' ? q.points : 0;
+
     // Create the attempt with pollLaunchId + studentId
     await prisma.attempt.create({
       data: {
@@ -197,6 +200,7 @@ router.post('/attempts', studentAuthMiddleware, async (req: Request, res: Respon
         selectedOption,
         result,
         timeTakenMs: elapsed,
+        awardedPoints,
       },
     });
 
@@ -204,7 +208,7 @@ router.post('/attempts', studentAuthMiddleware, async (req: Request, res: Respon
       await updateStreakOnCorrectAttempt(studentId);
     }
 
-    res.json({ result: result.toLowerCase(), correctIndex: q.correctIndex });
+    res.json({ result: result.toLowerCase(), correctIndex: q.correctIndex, awardedPoints });
   } catch (err: any) {
     // Prisma unique constraint violation [studentId, pollLaunchId]
     if (err?.code === 'P2002') {

@@ -21,6 +21,7 @@ const QuestionSchema = z.object({
   options: z.array(z.string().min(1)).min(2).max(5),
   correctIndex: z.number().int().min(0).max(4),
   timerSeconds: z.number().int().min(5).max(300),
+  points: z.number().int().min(0).optional().default(0),
   scheduledAt: z.string().datetime().optional().nullable(),
 });
 
@@ -208,7 +209,7 @@ router.post('/questions', adminAuthMiddleware, async (req: Request, res: Respons
     res.status(400).json({ error: 'Invalid input', details: parsed.error.flatten() });
     return;
   }
-  const { text, options, correctIndex, timerSeconds, scheduledAt } = parsed.data;
+  const { text, options, correctIndex, timerSeconds, points, scheduledAt } = parsed.data;
   if (correctIndex >= options.length) {
     res.status(400).json({ error: 'correctIndex out of range' });
     return;
@@ -221,6 +222,7 @@ router.post('/questions', adminAuthMiddleware, async (req: Request, res: Respons
         options,
         correctIndex,
         timerSeconds,
+        points,
         scheduledAt,
         status: scheduledAt ? 'SCHEDULED' : 'DRAFT',
         createdById: adminId,

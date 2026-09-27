@@ -1,8 +1,117 @@
 import { Router, Request, Response } from 'express';
 import prisma from '../lib/prisma';
 import { formatIstDate } from '../lib/dateUtils';
+import { optionalStudentAuth } from '../middleware/studentAuth';
 
 const router = Router();
+
+// GET /api/leaderboards/overall
+// New Overall Leaderboard for Phase 2B
+router.get('/overall', optionalStudentAuth, async (req: Request, res: Response) => {
+  try {
+    const period = (req.query.period as string) || 'all-time';
+
+    if (!['daily', 'weekly', 'all-time'].includes(period)) {
+      return res.status(400).json({ error: 'Invalid period' });
+    }
+
+    const now = new Date();
+    const currentIst = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
+    
+    let startDateUtc: Date | undefined;
+
+    if (period === 'daily') {
+      const startOfIstDay = new Date(Date.UTC(
+        currentIst.getUTCFullYear(),
+        currentIst.getUTCMonth(),
+        currentIst.getUTCDate(),
+        0, 0, 0, 0
+      ));
+      startDateUtc = new Date(startOfIstDay.getTime() - 5.5 * 60 * 60 * 1000);
+    } else if (period === 'weekly') {
+      const dayOfWeek = currentIst.getUTCDay(); // 0 = Sunday, 1 = Monday
+      const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+      const startOfIstWeek = new Date(Date.UTC(
+        currentIst.getUTCFullYear(),
+        currentIst.getUTCMonth(),
+        currentIst.getUTCDate() - diffToMonday,
+        0, 0, 0, 0
+      ));
+      startDateUtc = new Date(startOfIstWeek.getTime() - 5.5 * 60 * 60 * 1000);
+    }
+
+    const where: any = {};
+    if (startDateUtc) {
+      where.submittedAt = { gte: startDateUtc };
+    }
+
+    const attemptStats = await prisma.attempt.groupBy({
+      by: ['studentId'],
+      where,
+      _sum: { awardedPoints: true, timeTakenMs: true },
+      _count: { timeTakenMs: true }
+    });
+
+    if (attemptStats.length === 0) {
+      return res.json({ period, entries: [] });
+    }
+
+    const studentIds = attemptStats.map(s => s.studentId);
+    const students = await prisma.student.findMany({
+      where: { id: { in: studentIds } },
+      select: { id: true, nickname: true, currentStreak: true }
+    });
+    
+    const studentMap = new Map();
+    for (const s of students) {
+      studentMap.set(s.id, s);
+    }
+
+    const entries = attemptStats.map(stat => {
+      const student = studentMap.get(stat.studentId);
+      if (!student) return null;
+
+      const score = stat._sum.awardedPoints ?? 0;
+      const totalTimeMs = stat._sum.timeTakenMs ?? 0;
+      const timeCount = stat._count.timeTakenMs ?? 0;
+      
+      const averageTimeMsRaw = timeCount > 0 ? totalTimeMs / timeCount : Number.MAX_SAFE_INTEGER;
+      
+      return {
+        id: student.id,
+        nickname: student.nickname,
+        score,
+        currentStreak: student.currentStreak,
+        averageTimeMsRaw,
+        averageTimeMs: timeCount > 0 ? Math.round(averageTimeMsRaw) : null
+      };
+    }).filter(e => e !== null);
+
+    entries.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      if (b.currentStreak !== a.currentStreak) return b.currentStreak - a.currentStreak;
+      if (a.averageTimeMsRaw !== b.averageTimeMsRaw) return a.averageTimeMsRaw - b.averageTimeMsRaw;
+      return a.id.localeCompare(b.id);
+    });
+
+    const top10 = entries.slice(0, 10).map((e, index) => ({
+      rank: index + 1,
+      nickname: e.nickname,
+      score: e.score,
+      currentStreak: e.currentStreak,
+      averageTimeMs: e.averageTimeMs
+    }));
+
+    res.json({
+      period,
+      entries: top10
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
 // GET /api/leaderboards/branch-battle
 // Calculates weekly accuracy per branch

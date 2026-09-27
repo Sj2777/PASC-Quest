@@ -185,6 +185,7 @@ model Question {
   options       Json           // array of option strings
   correctIndex  Int
   timerSeconds  Int
+  points        Int            @default(0)
   status        QuestionStatus @default(DRAFT)
   scheduledAt   DateTime?      // NEW: for scheduled auto-launch
   createdAt     DateTime       @default(now())
@@ -248,6 +249,7 @@ model Attempt {
   selectedOption  Int?          // null on timeout
   result          AttemptResult
   timeTakenMs     Int?
+  awardedPoints   Int           @default(0)
   submittedAt     DateTime      @default(now())
 
   // "Predicted before seeing" / confidence-style fields intentionally

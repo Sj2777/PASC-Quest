@@ -7,7 +7,7 @@ export async function getStudentStats(studentId: string) {
   // This app's scale is a college quiz platform, not a scale that needs incremental/cached snapshots.
   // Revisit if the student count grows a lot (e.g. >10k students with 100s of attempts each).
   const allAttempts = await prisma.attempt.findMany({
-    select: { studentId: true, submittedAt: true, result: true, timeTakenMs: true },
+    select: { studentId: true, submittedAt: true, result: true, timeTakenMs: true, awardedPoints: true },
     orderBy: { submittedAt: 'asc' }
   });
 
@@ -26,6 +26,7 @@ export async function getStudentStats(studentId: string) {
   const totalAttemptsCount = targetAttempts.length;
   let totalTime = 0;
   let timeEntries = 0;
+  let totalPoints = 0;
 
   for (const a of targetAttempts) {
     if (a.result === 'CORRECT') correctCount++;
@@ -33,6 +34,7 @@ export async function getStudentStats(studentId: string) {
       totalTime += a.timeTakenMs;
       timeEntries++;
     }
+    totalPoints += a.awardedPoints;
   }
 
   let accuracy: number | null = null;
@@ -79,11 +81,44 @@ export async function getStudentStats(studentId: string) {
     };
   });
 
+  // 5. Question Archive
+  // Fetch all poll launches to find all questions that have ever been launched.
+  // We want exactly one entry per Question, using the most recent PollLaunch.
+  const allLaunches = await prisma.pollLaunch.findMany({
+    orderBy: { launchedAt: 'desc' },
+    include: { question: true }
+  });
+
+  const questionArchiveMap = new Map<string, any>();
+  for (const launch of allLaunches) {
+    if (!questionArchiveMap.has(launch.questionId)) {
+      const q = launch.question;
+      let optionsArr: string[] = [];
+      if (Array.isArray(q.options)) {
+        optionsArr = q.options as string[];
+      }
+      const correctAnswer = optionsArr[q.correctIndex] || '';
+
+      questionArchiveMap.set(launch.questionId, {
+        questionId: q.id,
+        pollLaunchId: launch.id,
+        text: q.text,
+        points: q.points,
+        correctAnswer,
+        launchedAt: launch.launchedAt.toISOString()
+      });
+    }
+  }
+
+  const questionArchive = Array.from(questionArchiveMap.values());
+
   return {
     accuracy,
     avgTimeMs,
     currentStreak: streak.currentStreak,
     bestStreak: streak.bestStreak,
-    rankHistory
+    totalPoints,
+    rankHistory,
+    questionArchive
   };
 }
