@@ -201,7 +201,7 @@ export default function StudentAuth() {
             </div>
             
             <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-semibold text-[#18181B] tracking-tight">
-              QuizPop
+              PASC Quest
             </h1>
             <p className="mt-3 text-base sm:text-lg text-[#534434] font-medium max-w-md">
               Daily aptitude polls for engineers. One live question per round. One shot to claim glory.

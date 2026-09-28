@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 
 async function main() {
   // ── Admins ──────────────────────────────────────────────────────────────────
-  const superAdminEmail = process.env.ADMIN_EMAIL || 'admin@quizpop.dev';
+  const superAdminEmail = process.env.ADMIN_EMAIL || 'admin@PASC Quest.dev';
   const envPassword = process.env.ADMIN_PASSWORD;
   
   if (!envPassword && process.env.NODE_ENV === 'production') {
@@ -34,7 +34,7 @@ async function main() {
   console.log(`   Login with: ${superAdminEmail} / ${adminPassword}`);
 
   if (process.env.NODE_ENV !== 'production') {
-    const staffAdminEmail = 'staff@quizpop.dev';
+    const staffAdminEmail = 'staff@PASC Quest.dev';
   const staffAdminPasswordHash = await bcrypt.hash('admin123', 12);
 
   const staffAdmin = await prisma.admin.upsert({

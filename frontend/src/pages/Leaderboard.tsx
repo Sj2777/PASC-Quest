@@ -6,7 +6,7 @@ import type { LeaderboardEntry, LeaderboardResponse } from '../api';
 import { useLeaderboardWebSocket } from '../useWebSocket';
 
 const MEDAL = ['🥇', '🥈', '🥉'];
-const POLL_INTERVAL_MS = 5000;
+
 
 const resultBadge = (result: LeaderboardEntry['result']) => {
   if (result === 'correct') return { label: '✓ Correct', bg: 'bg-[#E6F8F3]', border: 'border-[#10B981]/40', color: 'text-[#006C49]' };
@@ -80,13 +80,7 @@ export default function Leaderboard() {
 
   useEffect(() => { fetchData(false); }, [fetchData]);
 
-  useEffect(() => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    if (data?.questionStatus === 'live') {
-      intervalRef.current = setInterval(() => fetchData(true), POLL_INTERVAL_MS);
-    }
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [data?.questionStatus, fetchData]);
+
 
   useEffect(() => {
     if (tickRef.current) clearInterval(tickRef.current);
@@ -129,7 +123,7 @@ export default function Leaderboard() {
               {data && <span className="font-sans text-xs sm:text-sm font-bold uppercase tracking-wider text-[#867461] bg-[#E5E1D8]/40 px-3 py-1 rounded-full">{data.total} Participant{data.total !== 1 ? 's' : ''}</span>}
             </div>
             {data && <p className="font-serif text-[#534434] text-sm sm:text-base italic border-l-2 border-[#D8C3AD] pl-4 py-1 mb-2 max-w-lg line-clamp-2">"{data.questionText}"</p>}
-            {lastUpdated && isLive && <p className="font-sans text-xs font-bold text-[#867461] uppercase tracking-wider mt-1">{secondsAgo === 0 ? '✓ Live synced' : `Updated ${secondsAgo}s ago · Refreshes ${POLL_INTERVAL_MS / 1000}s`}</p>}
+            {lastUpdated && isLive && <p className="font-sans text-xs font-bold text-[#867461] uppercase tracking-wider mt-1">✓ Live synced</p>}
           </motion.div>
 
           {loading ? (

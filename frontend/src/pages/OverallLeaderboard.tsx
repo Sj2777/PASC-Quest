@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import { api } from '../api';
 import type { OverallLeaderboardPeriod, OverallLeaderboardResponse } from '../api';
@@ -25,7 +25,10 @@ export default function OverallLeaderboard() {
   const [data, setData] = useState<OverallLeaderboardResponse | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState<OverallLeaderboardPeriod>('all-time');
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const initialPeriod = (searchParams.get('period') as OverallLeaderboardPeriod) || 'all-time';
+  const [period, setPeriod] = useState<OverallLeaderboardPeriod>(initialPeriod);
   const [me, setMe] = useState<{ nickname: string } | null>(null);
   const shouldReduceMotion = useReducedMotion();
 
@@ -143,7 +146,7 @@ export default function OverallLeaderboard() {
                         transition={{ duration: 0.4, delay: e.rank * 0.1 }}
                         className={`flex flex-col items-center w-24 sm:w-32 md:w-44 ${isFirst ? 'glow-gold z-10 scale-105' : ''}`}
                       >
-                        <span className="text-2xl sm:text-3xl mb-1 drop-shadow-md">{medal}</span>
+                        <span className="text-xl sm:text-2xl mb-1 drop-shadow-md">{medal}</span>
                         <div className="font-sans font-bold text-xs sm:text-sm text-[#18181B] truncate max-w-full text-center">{e.nickname}</div>
                         <div className="font-sans text-[11px] sm:text-xs font-bold text-[#855300] mb-2 tabular-nums">{e.score} pts</div>
                         <div className={`w-full ${h} ${bg} border-2 ${border} rounded-t-2xl flex flex-col items-center justify-start pt-2 sm:pt-3 shadow-[0_4px_0_#A89F91] transition-all`}>

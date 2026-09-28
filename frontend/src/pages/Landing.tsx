@@ -227,7 +227,7 @@ export default function Landing() {
                 {student?.nickname ? student.nickname.charAt(0).toUpperCase() : 'Q'}
               </div>
               <span className="font-serif text-2xl sm:text-3xl font-semibold text-[#855300] tracking-tight">
-                QuizPop
+                PASC Quest
               </span>
             </div>
 
@@ -441,24 +441,6 @@ export default function Landing() {
                           </p>
                         </div>
                         <span className="text-3xl select-none">🔥</span>
-                      </div>
-                      <div className="pt-2 border-t border-[#E5E1D8]/60 flex items-center justify-between">
-                        <span className="text-xs text-[#867461]">
-                          Extend / repair protection:
-                        </span>
-                        <button
-                          onClick={handleRenewStreak}
-                          disabled={renewing || totalPts < 50}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-bold font-sans transition-all flex items-center gap-1 cursor-pointer shimmer-fast ${
-                            totalPts >= 50
-                              ? 'bg-[#FFF8ED] text-[#855300] border border-[#FDBA74] hover:bg-[#FFEDD5] shadow-[0_1px_0_#FED7AA] active:translate-y-0.5'
-                              : 'bg-zinc-100 text-zinc-400 border border-zinc-200 cursor-not-allowed shadow-none'
-                          }`}
-                          title="Add +1 day streak using 50 points"
-                        >
-                          <span>🛡️</span>
-                          <span>{renewing ? 'Renewing...' : '+1 Day Streak (50 pts)'}</span>
-                        </button>
                       </div>
                     </section>
                   )}

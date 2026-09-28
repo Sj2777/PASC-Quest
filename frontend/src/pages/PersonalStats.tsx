@@ -273,49 +273,6 @@ export default function PersonalStats() {
                     </div>
                   </div>
 
-                  <div className={`tactile-card rounded-2xl p-4 sm:p-5 bg-white border border-[#D8C3AD]/60 shadow-[0_3px_0_#E2DDD2] flex flex-col gap-3 ${stats.totalPoints >= 50 ? 'glow-amber' : ''}`}>
-                    <div className="flex items-center justify-between border-b border-[#E5E1D8]/60 pb-2.5">
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg">🛡️</span>
-                        <span className="font-serif text-base font-bold text-[#18181B]">Streak Protection</span>
-                      </div>
-                      <span className="font-sans text-[10px] font-bold text-[#855300] bg-[#FFFBEB] px-2.5 py-0.5 rounded-full border border-[#F59E0B]/30 uppercase tracking-wide">
-                        50 pts / day
-                      </span>
-                    </div>
-                    <p className="font-sans text-xs text-[#534434]">
-                      Lost your streak or need +1 day boost? Spend <strong>50 points</strong> to restore or advance your streak by 1 day.
-                    </p>
-                    <div className="flex items-center justify-between pt-1">
-                      <span className="font-sans text-xs font-bold text-[#867461]">
-                        Available: <strong className="text-[#855300]">{stats.totalPoints} pts</strong>
-                      </span>
-                      <button
-                        onClick={handleRenewStreak}
-                        disabled={renewing || stats.totalPoints < 50}
-                        className={`px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs sm:text-sm font-bold font-sans transition-all flex items-center gap-1.5 cursor-pointer ${
-                          stats.totalPoints >= 50
-                            ? 'tactile-btn-primary bg-[#DB3320] text-white hover:bg-[#B71607] shadow-[0_2px_0_#8E1A0C] active:translate-y-0.5 shimmer-fast'
-                            : 'bg-zinc-200 text-zinc-400 border border-zinc-300 cursor-not-allowed shadow-none'
-                        }`}
-                        title={stats.totalPoints < 50 ? 'Requires 50 points' : 'Renew or advance streak'}
-                      >
-                        <span>🔥</span>
-                        <span>{renewing ? 'Processing...' : 'Renew Streak (50 pts)'}</span>
-                      </button>
-                    </div>
-                    {renewFeedback && (
-                      <div
-                        className={`p-2.5 rounded-xl text-xs font-bold border transition-all ${
-                          renewFeedback.isError
-                            ? 'bg-[#FFF0EE] border-[#FFDAD4] text-[#B71607]'
-                            : 'bg-[#ECFDF5] border-[#A7F3D0] text-[#006C49]'
-                        }`}
-                      >
-                        {renewFeedback.text}
-                      </div>
-                    )}
-                  </div>
 
                   <div className="tactile-card card-lift rounded-2xl p-4 sm:p-5 bg-white border border-[#D8C3AD]/60 shadow-[0_3px_0_#E2DDD2] flex flex-col gap-3.5">
                     <div className="flex items-center justify-between gap-2 border-b border-[#E5E1D8]/60 pb-3">

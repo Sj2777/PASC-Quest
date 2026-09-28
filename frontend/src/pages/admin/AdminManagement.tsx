@@ -101,7 +101,7 @@ export default function AdminManagement() {
       <aside className="w-64 bg-white border-r border-[#E5E1D8] flex flex-col flex-shrink-0 sticky top-0 h-screen hidden md:flex">
         <div className="h-16 flex items-center px-6 border-b border-[#E5E1D8]">
           <span className="text-xl mr-2">🎯</span>
-          <span className="font-serif font-semibold text-lg text-[#18181B]">QuizPop Admin</span>
+          <span className="font-serif font-semibold text-lg text-[#18181B]">PASC Quest Admin</span>
         </div>
         <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
           <Link to={`${adminBase}/dashboard`} className="flex items-center px-3 py-2.5 text-[#534434] hover:bg-[#FAF8F5] hover:text-[#18181B] rounded-md font-semibold text-sm transition-colors">
@@ -134,7 +134,7 @@ export default function AdminManagement() {
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
             </button>
             <span className="text-xl">🎯</span>
-            <span className="font-serif font-semibold text-lg text-[#18181B]">QuizPop</span>
+            <span className="font-serif font-semibold text-lg text-[#18181B]">PASC Quest</span>
           </div>
           <div className="hidden md:block" />
           <div className="flex items-center gap-4">
@@ -151,7 +151,7 @@ export default function AdminManagement() {
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
               <div>
                 <h1 className="font-serif text-3xl font-medium text-[#18181B]">Admin Management</h1>
-                <p className="font-sans text-sm text-[#534434] mt-1.5">Provision and manage QuizPop administrative access.</p>
+                <p className="font-sans text-sm text-[#534434] mt-1.5">Provision and manage PASC Quest administrative access.</p>
               </div>
             </div>
 
@@ -269,7 +269,7 @@ export default function AdminManagement() {
             <div className="h-16 flex items-center justify-between px-6 border-b border-[#E5E1D8]">
               <div className="flex items-center gap-2">
                 <span className="text-xl">🎯</span>
-                <span className="font-serif font-semibold text-lg text-[#18181B]">QuizPop Admin</span>
+                <span className="font-serif font-semibold text-lg text-[#18181B]">PASC Quest Admin</span>
               </div>
               <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 -mr-2 text-[#867461] hover:bg-[#FAF8F5] rounded-md">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>

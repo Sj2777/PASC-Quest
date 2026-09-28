@@ -105,7 +105,7 @@ export default function ResultPage() {
   const diffTime = (myTime && speedKing) ? myTime - speedKing.timeTakenMs : null;
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(`I just scored ${state.result.awardedPoints || 0} pts on QuizPop! Can you beat me?`);
+    navigator.clipboard.writeText(`I just scored ${state.result.awardedPoints || 0} pts on PASC Quest! Can you beat me?`);
   };
 
   return (
@@ -453,7 +453,7 @@ export default function ResultPage() {
                 {/* Secondary Varsity White Button */}
                 <button
                   type="button"
-                  onClick={() => navigate(`/leaderboard/${targetLaunchId}`)}
+                  onClick={() => navigate(`/student/leaderboard?period=daily`)}
                   className="w-1/2 py-3.5 px-3 rounded-xl font-sans font-bold text-sm sm:text-base bg-white text-[#18181B] border border-[#E5E1D8] shadow-[0_3px_0_#DDD8CE] hover:border-[#867461] active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-2 cursor-pointer tactile-btn-white"
                 >
                   <span>🏆 Leaderboard</span>

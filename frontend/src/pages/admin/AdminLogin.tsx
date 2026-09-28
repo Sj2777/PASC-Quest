@@ -92,7 +92,7 @@ export default function AdminLogin() {
         
         <div className="text-center mt-8">
           <p className="text-xs font-medium text-[#867461]">
-            QuizPop Administrative Operations
+            PASC Quest Administrative Operations
           </p>
         </div>
       </div>
