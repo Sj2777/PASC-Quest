@@ -3,12 +3,6 @@ import { motion } from 'framer-motion';
 
 const CREW = [
   {
-    name: 'Suhani Satav',
-    role: 'Frontend & UI Specialist',
-    linkedin: 'https://www.linkedin.com/in/suhani-s-s-a2a18b330',
-    image: '/suhani.jpg',
-  },
-  {
     name: 'Shreya Jahagirdar',
     role: 'Backend & Systems Architect',
     linkedin: 'https://www.linkedin.com/in/shreya-jahagirdar-a53b60385',
@@ -19,6 +13,12 @@ const CREW = [
     role: 'Fullstack Engineer & DevOps',
     linkedin: 'https://www.linkedin.com/in/parth-shah-26154a372',
     image: '/parth.jpg',
+  },
+  {
+    name: 'Suhani Satav',
+    role: 'Frontend & UI Specialist',
+    linkedin: 'https://www.linkedin.com/in/suhani-s-s-a2a18b330',
+    image: '/suhani.jpg',
   },
 ];
 
