@@ -6,16 +6,19 @@ const CREW = [
     name: 'Suhani Satav',
     role: 'Frontend & UI Specialist',
     linkedin: 'https://www.linkedin.com/in/suhani-s-s-a2a18b330',
+    image: '/suhani.jpg',
   },
   {
     name: 'Shreya Jahagirdar',
     role: 'Backend & Systems Architect',
     linkedin: 'https://www.linkedin.com/in/shreya-jahagirdar-a53b60385',
+    image: '/shreya.jpg',
   },
   {
     name: 'Parth Shah',
     role: 'Fullstack Engineer & DevOps',
     linkedin: 'https://www.linkedin.com/in/parth-shah-26154a372',
+    image: '/parth.jpg',
   },
 ];
 
@@ -59,8 +62,8 @@ export default function Developers() {
               transition={{ delay: 0.1 * i }}
               className="glass-card bg-white/80 p-8 rounded-2xl border border-[#E5E1D8] shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col items-center"
             >
-              <div className="w-20 h-20 bg-[#F0EDF1] rounded-full flex items-center justify-center text-3xl mb-4 border-2 border-[#F59E0B]/20">
-                {member.name.charAt(0)}
+              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden mb-5 border-4 border-white shadow-lg ring-4 ring-[#F59E0B]/20 relative">
+                <img src={member.image} alt={member.name} className="w-full h-full object-cover" />
               </div>
               <h3 className="font-bold text-lg text-[#18181B] mb-1">{member.name}</h3>
               {/* <p className="text-xs text-[#867461] uppercase tracking-wider font-semibold mb-6">{member.role}</p> */}
