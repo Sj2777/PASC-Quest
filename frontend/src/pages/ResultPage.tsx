@@ -59,8 +59,8 @@ export default function ResultPage() {
 
   if (!state) return null;
 
-  const { result, poll, pollLaunchId, questionId } = state;
-  const targetLaunchId = pollLaunchId || poll.pollLaunchId || questionId;
+  const { result, poll } = state;
+
   const { result: outcome, correctIndex } = result;
 
   const config = {

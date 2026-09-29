@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import { api } from '../api';
@@ -57,9 +57,9 @@ export default function Leaderboard() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const [secondsAgo, setSecondsAgo] = useState(0);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+
+
   const shouldReduceMotion = useReducedMotion();
 
   const fetchData = useCallback(async (silent = false) => {
@@ -69,7 +69,7 @@ export default function Leaderboard() {
       const res = await api.getLeaderboard(targetId);
       setData(res);
       setLastUpdated(new Date());
-      setSecondsAgo(0);
+
       setError('');
     } catch {
       setError('Could not load leaderboard.');
@@ -81,12 +81,6 @@ export default function Leaderboard() {
   useEffect(() => { fetchData(false); }, [fetchData]);
 
 
-
-  useEffect(() => {
-    if (tickRef.current) clearInterval(tickRef.current);
-    tickRef.current = setInterval(() => setSecondsAgo((s) => s + 1), 1000);
-    return () => { if (tickRef.current) clearInterval(tickRef.current); };
-  }, [lastUpdated]);
 
   useLeaderboardWebSocket((event) => {
     if (event.scope === 'poll' && event.pollLaunchId === targetId) {

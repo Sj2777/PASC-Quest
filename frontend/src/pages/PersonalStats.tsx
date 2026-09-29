@@ -15,8 +15,8 @@ export default function PersonalStats() {
   const [followInput, setFollowInput] = useState('');
   const [followActionLoading, setFollowActionLoading] = useState(false);
   const [socialMessage, setSocialMessage] = useState<{ text: string; isError?: boolean } | null>(null);
-  const [renewing, setRenewing] = useState(false);
-  const [renewFeedback, setRenewFeedback] = useState<{ text: string; isError?: boolean } | null>(null);
+
+
   const shouldReduceMotion = useReducedMotion();
 
   useEffect(() => {
@@ -97,50 +97,6 @@ export default function PersonalStats() {
       setFollowActionLoading(false);
     }
   };
-
-  const handleRenewStreak = async () => {
-    if (renewing) return;
-    setRenewing(true);
-    setRenewFeedback(null);
-    try {
-      const res = await api.renewStreak();
-      setStats((prev) =>
-        prev
-          ? {
-              ...prev,
-              currentStreak: res.currentStreak,
-              bestStreak: res.bestStreak,
-              totalPoints: res.totalPoints,
-            }
-          : null
-      );
-      setMe((prev) =>
-        prev
-          ? {
-              ...prev,
-              currentStreak: res.currentStreak,
-              bestStreak: res.bestStreak,
-              totalPoints: res.totalPoints,
-            }
-          : null
-      );
-      setRenewFeedback({ text: `Streak renewed to ${res.currentStreak} day(s)! (-50 pts)`, isError: false });
-    } catch (err: any) {
-      setRenewFeedback({
-        text: err?.error || err?.message || 'Failed to renew streak.',
-        isError: true,
-      });
-    } finally {
-      setRenewing(false);
-    }
-  };
-
-  useEffect(() => {
-    if (renewFeedback) {
-      const t = setTimeout(() => setRenewFeedback(null), 5000);
-      return () => clearTimeout(t);
-    }
-  }, [renewFeedback]);
 
   return (
     <div className="paper-texture min-h-screen text-[#18181B] selection:bg-[#FFDAD4] selection:text-[#400100] flex flex-col justify-between relative">
