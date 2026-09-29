@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../api';
 
@@ -235,6 +235,13 @@ export default function StudentAuth() {
                   <p className="font-sans text-xs text-[#534434] mt-0.5">Rival campus branches compete for podium dominance.</p>
                 </div>
               </div>
+            </div>
+            {/* Developer Credits Link */}
+            <div className="mt-8 lg:mt-12 w-full max-w-md text-center lg:text-left">
+              <Link to="/developers" className="inline-flex items-center gap-2 px-4 py-2 bg-white/60 hover:bg-white border border-[#E5E1D8] rounded-xl text-sm font-bold text-[#534434] hover:text-[#F59E0B] hover:border-[#F59E0B]/50 transition-all card-lift shadow-sm">
+                <span>Meet the Crew</span>
+                <span className="text-[#F59E0B]">→</span>
+              </Link>
             </div>
           </div>
 

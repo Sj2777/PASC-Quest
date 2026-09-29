@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import Landing from './pages/Landing';
 import StudentAuth from './pages/StudentAuth';
+import Developers from './pages/Developers';
 import QuestionPage from './pages/QuestionPage';
 import ResultPage from './pages/ResultPage';
 import Leaderboard from './pages/Leaderboard';
@@ -44,6 +45,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<StudentAuth />} />
         <Route path="/auth" element={<StudentAuth />} />
+        <Route path="/developers" element={<Developers />} />
         
         {/* Student flow */}
         <Route path="/student" element={<Landing />} />
